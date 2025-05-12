@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, JSX } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Clock, HelpCircle, Star, Trophy } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import NavBar from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { use } from "react"
 
 // Tipos para las actividades
 type ActivityType = "teoria" | "ejercicio" | "desafio" | "quiz"
@@ -20,9 +21,33 @@ interface Activity {
   status: ActivityStatus
   duration: number // en minutos
   points: number
+  badge?: {
+    text: string
+    color: string
+    icon: string
+  }
+  highlight?: boolean
 }
 
-export default function NivelPage({ params }: { params: { seccion: string; nivel: string } }) {
+// Definir un tipo más completo para nivelInfo
+interface NivelInfo {
+  seccionTitle: string;
+  title: string;
+  description: string;
+  duration: number;
+  totalPoints: number;
+  activityDescription: string;
+  nextLevel: {
+    title: string;
+    description: string;
+  };
+  recursos: { id: string; name: string; url: string; icon: JSX.Element; description: string }[];
+  activities: Activity[];
+  logros: { title: string; description: string; icon: JSX.Element; color: string }[];
+}
+
+export default function NivelPage({ params }: { params: Promise<{ seccion: string; nivel: string }> }) {
+  const { seccion, nivel } = use(params)
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"actividades" | "recursos" | "progreso">("actividades")
   const [activities, setActivities] = useState<Activity[]>([])
@@ -30,11 +55,11 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
   const initialRenderRef = useRef(true)
 
   // Decodificar los parámetros de la URL
-  const seccionId = decodeURIComponent(params.seccion)
-  const nivelId = decodeURIComponent(params.nivel)
+  const seccionId = decodeURIComponent(seccion)
+  const nivelId = decodeURIComponent(nivel)
 
   // Obtener información del nivel según los parámetros
-  const nivelInfo = getNivelInfo(seccionId, nivelId)
+  const nivelInfo: NivelInfo = getNivelInfo(seccionId, nivelId) as NivelInfo
 
   // Cargar el progreso guardado
   useEffect(() => {
@@ -43,7 +68,11 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
       initialRenderRef.current = false
 
       // Inicializar actividades
-      const updatedActivities = [...nivelInfo.activities]
+      const updatedActivities: Activity[] = [...nivelInfo.activities].map((activity) => ({
+        ...activity,
+        type: activity.type as ActivityType,
+        status: activity.status as ActivityStatus,
+      }))
       let completedCount = 0
 
       // Verificar el progreso guardado para cada actividad
@@ -199,19 +228,20 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
                       <div
                         key={activity.id}
                         className={cn(
-                          "bg-[#1a1d23] rounded-lg border p-4 transition-all",
+                          "bg-[#1a1d23] rounded-lg border p-4 transition-all relative overflow-hidden group",
                           activity.status === "completed"
                             ? "border-green-500/30"
                             : activity.status === "current"
                               ? "border-blue-500/30"
                               : "border-gray-700 opacity-70",
+                          activity.highlight && "hover:scale-[1.03] hover:shadow-2xl hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 focus-within:scale-[1.03] focus-within:shadow-2xl focus-within:bg-gradient-to-r focus-within:from-yellow-400 focus-within:via-pink-500 focus-within:to-purple-500 animate-pop"
                         )}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div
                               className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center",
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                                 activity.type === "teoria"
                                   ? "bg-blue-500/20 text-blue-400"
                                   : activity.type === "ejercicio"
@@ -219,13 +249,14 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
                                     : activity.type === "desafio"
                                       ? "bg-yellow-500/20 text-yellow-400"
                                       : "bg-purple-500/20 text-purple-400",
+                                activity.highlight && "group-hover:ring-4 group-hover:ring-pink-400/30 group-hover:animate-bounce group-focus:ring-4 group-focus:ring-pink-400/30 group-focus:animate-bounce"
                               )}
                             >
-                              {getActivityIcon(activity.type)}
+                              {activity.type === "desafio" && activity.highlight ? <Star className="h-6 w-6 text-yellow-400 drop-shadow-lg" /> : getActivityIcon(activity.type)}
                             </div>
                             <div>
-                              <h3 className="font-medium">{activity.title}</h3>
-                              <p className="text-sm text-gray-400">{activity.description}</p>
+                              <h3 className={cn("font-medium transition-all duration-300", activity.highlight && "group-hover:text-white group-hover:drop-shadow-lg group-hover:animate-pulse group-focus:text-white group-focus:drop-shadow-lg group-focus:animate-pulse")}>{activity.title}</h3>
+                              <p className={cn("text-sm text-gray-400 transition-all duration-300", activity.highlight && "group-hover:text-white/90 group-focus:text-white/90")}>{activity.description}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -249,6 +280,7 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
                                   : activity.status === "current"
                                     ? "bg-blue-600 hover:bg-blue-700"
                                     : "bg-gray-700",
+                                activity.highlight && "group-hover:shadow-lg group-hover:scale-105 group-focus:shadow-lg group-focus:scale-105 animate-pop"
                               )}
                             >
                               {activity.status === "completed"
@@ -259,6 +291,9 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
                             </Button>
                           </div>
                         </div>
+                        {activity.badge && (
+                          <div className={`mt-2 text-xs font-semibold text-white bg-gradient-to-r ${activity.badge.color} p-1 rounded-full inline-flex items-center shadow-lg animate-bounce`}> <span className="mr-1">✨</span> {activity.badge.text} </div>
+                        )}
                       </div>
                     ))
                   : // Mostrar las actividades de nivelInfo si activities está vacío
@@ -336,11 +371,11 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
               <h2 className="text-xl font-bold mb-4">Próximo nivel</h2>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">{nivelInfo.nextLevel.title}</h3>
-                  <p className="text-sm text-gray-400">{nivelInfo.nextLevel.description}</p>
+                  <h3 className="font-medium">Clasificación y agrupamiento</h3>
+                  <p className="text-sm text-gray-400">Aprende a organizar elementos según sus características comunes y a crear categorías lógicas.</p>
                 </div>
                 <Button variant="outline" className="border-gray-700 text-gray-400" disabled={true}>
-                  Completar nivel actual
+                  Desbloquea completando este nivel
                 </Button>
               </div>
             </div>
@@ -360,7 +395,7 @@ export default function NivelPage({ params }: { params: { seccion: string; nivel
                   <div className="flex items-center gap-3">
                     <div className="bg-blue-500/20 text-blue-400 p-2 rounded-full">{recurso.icon}</div>
                     <div>
-                      <h3 className="font-medium">{recurso.title}</h3>
+                      <h3 className="font-medium">{recurso.name}</h3>
                       <p className="text-sm text-gray-400">{recurso.description}</p>
                     </div>
                   </div>
@@ -448,100 +483,71 @@ function getActivityIcon(type: ActivityType) {
 }
 
 // Función para obtener la información del nivel según los parámetros
-function getNivelInfo(seccionId: string, nivelId: string) {
-  // Sección 1: Explora tu lógica
+function getNivelInfo(seccionId: string, nivelId: string): NivelInfo {
   if (seccionId === "1") {
-    // Nivel 1: Reconocimiento de patrones
     if (nivelId === "1") {
       return {
-        seccionTitle: "Explora tu lógica",
-        title: "Reconocimiento de patrones",
-        description: "Aprende a identificar patrones y secuencias en diferentes contextos.",
-        progress: 25,
-        duration: 30, // minutos
-        totalPoints: 150,
-        activityDescription:
-          "En este nivel aprenderás a identificar patrones visuales y secuencias lógicas. Desarrollarás tu capacidad de observación y análisis para reconocer regularidades en diferentes elementos.",
-        activities: [
-          {
-            id: "1-1-1",
-            type: "ejercicio",
-            title: "Observa y Reconoce",
-            description: "Identifica patrones visuales y selecciona el siguiente elemento en la secuencia.",
-            status: "current",
-            duration: 5,
-            points: 50,
-          },
-          {
-            id: "1-1-2",
-            type: "desafio",
-            title: "Patrones Complejos",
-            description: "Enfrenta patrones más complejos con múltiples variables.",
-            status: "locked",
-            duration: 10,
-            points: 75,
-          },
-          {
-            id: "1-1-3",
-            type: "quiz",
-            title: "Evaluación de Patrones",
-            description: "Pon a prueba tu comprensión de patrones con este cuestionario.",
-            status: "locked",
-            duration: 15,
-            points: 100,
-          },
-        ],
-        nextLevel: {
-          title: "Clasificación de información",
-          description: "Aprende a organizar y clasificar elementos según sus características.",
-        },
-        recursos: [
-          {
-            title: "Guía de patrones visuales",
-            description: "Un documento con explicaciones sobre cómo identificar patrones visuales.",
-            icon: <HelpCircle className="h-5 w-5" />,
-            url: "#",
-          },
-          {
-            title: "Video: Reconocimiento de patrones",
-            description: "Un video tutorial sobre técnicas para reconocer patrones.",
-            icon: <HelpCircle className="h-5 w-5" />,
-            url: "#",
-          },
-        ],
-        logros: [
-          {
-            title: "Observador",
-            description: "Completaste tu primera actividad de reconocimiento de patrones",
-            icon: <Star className="h-6 w-6 text-yellow-400" />,
-            color: "bg-yellow-500/20 text-yellow-400",
-          },
-          {
-            title: "Analista",
-            description: "Identificaste correctamente 10 patrones diferentes",
-            icon: <Trophy className="h-6 w-6 text-green-400" />,
-            color: "bg-green-500/20 text-green-400",
-          },
-        ],
-      }
+  seccionTitle: "Explora tu lógica",
+  title: "Reconocimiento de patrones",
+  description: "Aprende a identificar patrones y secuencias en diferentes contextos.",
+  duration: 30,
+  totalPoints: 150,
+  activityDescription: "En este nivel aprenderás a identificar patrones visuales y secuencias lógicas. Desarrollarás tu capacidad de observación y análisis para reconocer regularidades en diferentes elementos.",
+  nextLevel: {
+    title: "Patrones Avanzados",
+    description: "Explora patrones más complejos y desafiantes.",
+  },
+  recursos: [
+    { id: "1", name: "Guía de patrones", url: "/recursos/guia-patrones", icon: <HelpCircle className="h-5 w-5" />, description: "Una guía completa para aprender a identificar patrones." },
+    {
+      id: "2", name: "Ejercicios prácticos", url: "/recursos/ejercicios-practicos", icon: <Star className="h-5 w-5" />,
+      description: ""
+    },
+  ],
+  activities: [
+    {
+      id: "1-1-1",
+      type: "ejercicio",
+      title: "Observa y Reconoce",
+      description: "Identifica patrones visuales y selecciona el siguiente elemento en la secuencia.",
+      status: "current",
+      duration: 5,
+      points: 50,
+    },
+    {
+      id: "1-1-2",
+      type: "desafio",
+      title: "Desafío: ¿Quién no encaja aquí?",
+      description: "Pon a prueba tu lógica visual: observa la secuencia y detecta el elemento que no pertenece al patrón.",
+      status: "locked",
+      duration: 7,
+      points: 75,
+      badge: {
+        text: "¡Nuevo desafío!",
+        color: "from-yellow-400 via-pink-500 to-purple-500",
+        icon: "🎯"
+      },
+      highlight: true // Para aplicar gradiente animado y efecto pop
+    },
+    {
+      id: "1-1-3",
+      type: "quiz",
+      title: "Crea tu propio patrón",
+      description: "Usa tu creatividad y lógica para construir una secuencia original. Arrastra o haz clic en los elementos para formar un patrón lógico y desafía tu pensamiento computacional.",
+      status: "locked",
+      duration: 10,
+      points: 100,
+      badge: {
+        text: "¡Creatividad!",
+        color: "from-pink-400 via-yellow-400 to-purple-400",
+        icon: "✨"
+      },
+      highlight: true
+    },
+  ],
+  logros: []
+};
     }
   }
-
-  // Datos por defecto si no coincide con ningún nivel específico
-  return {
-    seccionTitle: "Sección",
-    title: "Nivel no encontrado",
-    description: "La información de este nivel no está disponible.",
-    progress: 0,
-    duration: 0,
-    totalPoints: 0,
-    activityDescription: "No hay actividades disponibles para este nivel.",
-    activities: [],
-    nextLevel: {
-      title: "No disponible",
-      description: "No hay información sobre el siguiente nivel.",
-    },
-    recursos: [],
-    logros: [],
-  }
+  throw new Error("Nivel no encontrado");
 }

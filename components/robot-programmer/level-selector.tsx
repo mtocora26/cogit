@@ -51,7 +51,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {levels.map((level, index) => {
           const isCompleted = completedLevels.includes(index)
-          const isLocked = index > 0 && !completedLevels.includes(index - 1) && !isCompleted
+          const isLocked = false // SIEMPRE desbloqueado
 
           return (
             <div

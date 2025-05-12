@@ -6,15 +6,17 @@ import { ArrowLeft, CheckCircle, Clock, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
-import PatternRecognition from "@/components/misiones/seccion1/nivel1/pattern-recognition"
-import ComplexPatterns from "@/components/misiones/seccion1/nivel1/complex-patterns"
-import PatternEvaluation from "@/components/misiones/seccion1/nivel1/pattern-evaluation"
+import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition"
+import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
+import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
+import { use } from "react"
 
 export default function ActividadPage({
   params,
 }: {
-  params: { seccion: string; nivel: string; actividad: string }
+  params: Promise<{ seccion: string; nivel: string; actividad: string }>
 }) {
+  const { seccion, nivel, actividad } = use(params)
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
   const [activitySuccess, setActivitySuccess] = useState(false)
@@ -23,9 +25,9 @@ export default function ActividadPage({
   const [remainingLives, setRemainingLives] = useState(0)
 
   // Decodificar los parámetros de la URL
-  const seccionId = decodeURIComponent(params.seccion)
-  const nivelId = decodeURIComponent(params.nivel)
-  const actividadId = decodeURIComponent(params.actividad)
+  const seccionId = decodeURIComponent(seccion)
+  const nivelId = decodeURIComponent(nivel)
+  const actividadId = decodeURIComponent(actividad)
 
   // Obtener información de la actividad según los parámetros
   const actividadInfo = getActividadInfo(seccionId, nivelId, actividadId)
@@ -35,19 +37,19 @@ export default function ActividadPage({
     router.push(`/misiones/${seccionId}/${nivelId}`)
   }
 
-  // Función para completar la actividad
-  const handleActivityComplete = (success: boolean, time: number, score: number) => {
+  // Cambiar la función para aceptar score opcional
+  const handleActivityComplete = (success: boolean, time: number, score?: number) => {
     setIsCompleted(true)
     setActivitySuccess(success)
     setActivityTime(time)
-    setActivityScore(score)
+    setActivityScore(score ?? 0)
 
     // Guardar el progreso en localStorage
     const activityKey = `activity_${seccionId}_${nivelId}_${actividadId}`
     const activityData = {
       completed: success,
       time,
-      score,
+      score: score ?? 0,
       date: new Date().toISOString(),
     }
     localStorage.setItem(activityKey, JSON.stringify(activityData))
@@ -65,12 +67,13 @@ export default function ActividadPage({
     if (seccionId === "1") {
       // Nivel 1: Reconocimiento de patrones
       if (nivelId === "1") {
+        // Siempre permitir acceso a las actividades principales
         if (actividadId === "1-1-1") {
           return <PatternRecognition onComplete={handleActivityComplete} />
         } else if (actividadId === "1-1-2") {
-          return <ComplexPatterns onComplete={handleActivityComplete} />
+          return <OutlierPattern onComplete={handleActivityComplete} />
         } else if (actividadId === "1-1-3") {
-          return <PatternEvaluation onComplete={handleActivityComplete} />
+          return <PatternCreator onComplete={handleActivityComplete} />
         }
       }
     }
@@ -178,24 +181,24 @@ function getActividadInfo(seccionId: string, nivelId: string, actividadId: strin
     }
   }
 
-  // Para la actividad de patrones complejos
+  // Para la actividad de encontrar el intruso
   if (seccionId === "1" && nivelId === "1" && actividadId === "1-1-2") {
     return {
       nivelTitle: "Reconocimiento de patrones",
-      title: "Patrones Complejos",
-      description: "Enfrenta patrones más complejos con múltiples variables y reglas.",
-      duration: 10,
+      title: "Desafío: ¿Quién no encaja aquí?",
+      description: "Pon a prueba tu lógica visual: observa la secuencia y detecta el elemento que no pertenece al patrón.",
+      duration: 7,
       points: 75,
     }
   }
 
-  // Para la actividad de evaluación de patrones
+  // Para la actividad de crear tu propio patrón
   if (seccionId === "1" && nivelId === "1" && actividadId === "1-1-3") {
     return {
       nivelTitle: "Reconocimiento de patrones",
-      title: "Evaluación de Patrones",
-      description: "Pon a prueba tu comprensión de patrones identificando errores en secuencias.",
-      duration: 15,
+      title: "Crea tu propio patrón",
+      description: "Usa tu creatividad y lógica para construir una secuencia original. Arrastra o haz clic en los elementos para formar un patrón lógico y desafía tu pensamiento computacional.",
+      duration: 10,
       points: 100,
     }
   }

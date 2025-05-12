@@ -122,6 +122,66 @@ export function getLevels(): Level[] {
       availableCommands: ["forward", "turnRight", "turnLeft", "light"],
       commandLimit: 30,
     },
+
+    // Nivel 6: Zigzag
+    {
+      id: 6,
+      name: "Zigzag Difícil",
+      difficulty: "Difícil",
+      description: "Un nivel zigzag para poner a prueba tu lógica. Llega a la meta esquivando obstáculos.",
+      board: [
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0],
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0],
+      ],
+      startPosition: { x: 0, y: 2, direction: 1 },
+      targetCells: [{ x: 4, y: 2 }],
+      availableCommands: ["forward", "turnRight", "turnLeft", "light"],
+      commandLimit: 18,
+    },
+    // Nivel 7: Recorrido Completo
+    {
+      id: 7,
+      name: "Recorrido Completo",
+      difficulty: "Difícil",
+      description: "Debes encender todas las casillas del borde del tablero.",
+      board: [
+        [0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 0],
+        [0, 1, 0, 1, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0],
+      ],
+      startPosition: { x: 0, y: 0, direction: 1 },
+      targetCells: [
+        { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },
+        { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 },
+        { x: 3, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 4 }, { x: 0, y: 4 },
+        { x: 0, y: 3 }, { x: 0, y: 2 }, { x: 0, y: 1 }
+      ],
+      availableCommands: ["forward", "turnRight", "turnLeft", "light"],
+      commandLimit: 40,
+    },
+    // Nivel 8: Plantilla Libre
+    {
+      id: 8,
+      name: "Desafío Libre",
+      difficulty: "Extra",
+      description: "Crea tu propio reto o usa este nivel para experimentar.",
+      board: [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+      ],
+      startPosition: { x: 2, y: 2, direction: 0 },
+      targetCells: [{ x: 4, y: 4 }],
+      availableCommands: ["forward", "turnRight", "turnLeft", "light"],
+      commandLimit: 20,
+    },
   ]
 }
 

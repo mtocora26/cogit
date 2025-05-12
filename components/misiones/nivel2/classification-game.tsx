@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd"
+import { DndContext, useDroppable, useDraggable } from "@dnd-kit/core"
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -16,44 +17,44 @@ type CategoryType = "fruits" | "tools" | "shapes" | "animals" | "vehicles"
 // Definición de los elementos para cada categoría
 const categoryItems = {
   fruits: [
-    { id: "apple", content: "🍎", category: "fruits" },
-    { id: "banana", content: "🍌", category: "fruits" },
-    { id: "orange", content: "🍊", category: "fruits" },
-    { id: "grapes", content: "🍇", category: "fruits" },
-    { id: "watermelon", content: "🍉", category: "fruits" },
-    { id: "strawberry", content: "🍓", category: "fruits" },
+    { id: "apple", content: "🍎", category: "fruits" as CategoryType },
+    { id: "banana", content: "🍌", category: "fruits" as CategoryType },
+    { id: "orange", content: "🍊", category: "fruits" as CategoryType },
+    { id: "grapes", content: "🍇", category: "fruits" as CategoryType },
+    { id: "watermelon", content: "🍉", category: "fruits" as CategoryType },
+    { id: "strawberry", content: "🍓", category: "fruits" as CategoryType },
   ],
   tools: [
-    { id: "hammer", content: "🔨", category: "tools" },
-    { id: "wrench", content: "🔧", category: "tools" },
-    { id: "screwdriver", content: "🪛", category: "tools" },
-    { id: "saw", content: "🪚", category: "tools" },
-    { id: "axe", content: "🪓", category: "tools" },
-    { id: "pliers", content: "🗜️", category: "tools" },
+    { id: "hammer", content: "🔨", category: "tools" as CategoryType },
+    { id: "wrench", content: "🔧", category: "tools" as CategoryType },
+    { id: "screwdriver", content: "🪛", category: "tools" as CategoryType },
+    { id: "saw", content: "🪚", category: "tools" as CategoryType },
+    { id: "axe", content: "🪓", category: "tools" as CategoryType },
+    { id: "pliers", content: "🗜️", category: "tools" as CategoryType },
   ],
   shapes: [
-    { id: "circle", content: "⭕", category: "shapes" },
-    { id: "square", content: "⬛", category: "shapes" },
-    { id: "triangle", content: "🔺", category: "shapes" },
-    { id: "diamond", content: "🔷", category: "shapes" },
-    { id: "rectangle", content: "▬", category: "shapes" },
-    { id: "star", content: "⭐", category: "shapes" },
+    { id: "circle", content: "⭕", category: "shapes" as CategoryType },
+    { id: "square", content: "⬛", category: "shapes" as CategoryType },
+    { id: "triangle", content: "🔺", category: "shapes" as CategoryType },
+    { id: "diamond", content: "🔷", category: "shapes" as CategoryType },
+    { id: "rectangle", content: "▬", category: "shapes" as CategoryType },
+    { id: "star", content: "⭐", category: "shapes" as CategoryType },
   ],
   animals: [
-    { id: "dog", content: "🐕", category: "animals" },
-    { id: "cat", content: "🐈", category: "animals" },
-    { id: "rabbit", content: "🐇", category: "animals" },
-    { id: "horse", content: "🐎", category: "animals" },
-    { id: "elephant", content: "🐘", category: "animals" },
-    { id: "lion", content: "🦁", category: "animals" },
+    { id: "dog", content: "🐕", category: "animals" as CategoryType },
+    { id: "cat", content: "🐈", category: "animals" as CategoryType },
+    { id: "rabbit", content: "🐇", category: "animals" as CategoryType },
+    { id: "horse", content: "🐎", category: "animals" as CategoryType },
+    { id: "elephant", content: "🐘", category: "animals" as CategoryType },
+    { id: "lion", content: "🦁", category: "animals" as CategoryType },
   ],
   vehicles: [
-    { id: "car", content: "🚗", category: "vehicles" },
-    { id: "bus", content: "🚌", category: "vehicles" },
-    { id: "train", content: "🚂", category: "vehicles" },
-    { id: "airplane", content: "✈️", category: "vehicles" },
-    { id: "ship", content: "🚢", category: "vehicles" },
-    { id: "motorcycle", content: "🏍️", category: "vehicles" },
+    { id: "car", content: "🚗", category: "vehicles" as CategoryType },
+    { id: "bus", content: "🚌", category: "vehicles" as CategoryType },
+    { id: "train", content: "🚂", category: "vehicles" as CategoryType },
+    { id: "airplane", content: "✈️", category: "vehicles" as CategoryType },
+    { id: "ship", content: "🚢", category: "vehicles" as CategoryType },
+    { id: "motorcycle", content: "🏍️", category: "vehicles" as CategoryType },
   ],
 }
 
@@ -132,16 +133,16 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
   }
 
   // Manejar el arrastre y soltar
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event
 
     // Si no hay destino, el elemento fue soltado fuera de un área válida
-    if (!destination) return
+    if (!over) return
 
     // Si el origen es "items" y el destino es una categoría
-    if (source.droppableId === "items" && destination.droppableId !== "items") {
-      const category = destination.droppableId as CategoryType
-      const itemIndex = source.index
+    if (active.data.current.droppableId === "items" && over.id !== "items") {
+      const category = over.id as CategoryType
+      const itemIndex = active.data.current.index
       const item = items[itemIndex]
 
       // Eliminar el elemento de la lista de items
@@ -191,74 +192,60 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
         </div>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToHorizontalAxis]}>
         {/* Categorías */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {categories.map((category) => (
-            <div key={category} className="bg-[#1a1d23] rounded-lg p-4 border border-gray-700">
-              <h3 className="text-lg font-bold mb-4 text-center">{categoryNames[category]}</h3>
-              <Droppable droppableId={category} direction="horizontal">
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn(
-                      "min-h-[100px] flex flex-wrap gap-2 p-2 rounded-lg border border-dashed",
-                      snapshot.isDraggingOver ? "border-blue-500 bg-blue-500/10" : "border-gray-600",
-                    )}
-                  >
-                    {itemsInCategories[category]?.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "w-12 h-12 flex items-center justify-center text-2xl rounded-lg",
-                          item.category === category ? "bg-green-500/20" : "bg-red-500/20",
-                        )}
-                      >
-                        {item.content}
-                      </div>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
-        </div>
-
-        {/* Elementos para clasificar */}
-        <Droppable droppableId="items" direction="horizontal">
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={cn(
-                "min-h-[100px] flex flex-wrap gap-4 p-4 rounded-lg border border-dashed",
-                snapshot.isDraggingOver ? "border-purple-500 bg-purple-500/10" : "border-gray-600",
-              )}
-            >
-              {items.map((item, index) => (
-                <Draggable key={item.id} draggableId={item.id} index={index}>
-                  {(provided, snapshot) => (
+          {categories.map((category) => {
+            const { setNodeRef: setDroppableRef } = useDroppable({
+              id: category,
+            })
+            return (
+              <div
+                key={category}
+                ref={setDroppableRef}
+                className="bg-[#1a1d23] rounded-lg p-4 border border-gray-700"
+              >
+                <h3 className="text-lg font-bold mb-4 text-center">{categoryNames[category]}</h3>
+                <div className="min-h-[100px] flex flex-wrap gap-2 p-2 rounded-lg border border-dashed">
+                  {itemsInCategories[category]?.map((item) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
+                      key={item.id}
                       className={cn(
-                        "w-16 h-16 flex items-center justify-center text-3xl bg-[#2a2f3a] rounded-lg border border-gray-700",
-                        snapshot.isDragging && "border-purple-500 shadow-lg",
+                        "w-12 h-12 flex items-center justify-center text-2xl rounded-lg",
+                        item.category === category ? "bg-green-500/20" : "bg-red-500/20",
                       )}
                     >
                       {item.content}
                     </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Elementos para clasificar */}
+        <div className="min-h-[100px] flex flex-wrap gap-4 p-4 rounded-lg border border-dashed">
+          {items.map((item) => {
+            const { attributes, listeners, setNodeRef: setDraggableRef } = useDraggable({
+              id: item.id,
+            })
+            return (
+              <div
+                key={item.id}
+                ref={setDraggableRef}
+                {...listeners}
+                {...attributes}
+                className={cn(
+                  "w-16 h-16 flex items-center justify-center text-3xl bg-[#2a2f3a] rounded-lg border border-gray-700",
+                )}
+              >
+                {item.content}
+              </div>
+            )
+          })}
+        </div>
+      </DndContext>
 
       {isComplete && (
         <div className="mt-8 flex flex-col items-center">

@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
+import confetti from "canvas-confetti"
 
 interface PatternRecognitionProps {
-  onComplete: (success: boolean, time: number) => void
+  onComplete: (success: boolean, time: number, score?: number) => void
 }
 
 // Definición de los tipos de patrones
@@ -61,6 +63,36 @@ const generatePattern = (type: PatternType, length: number) => {
   return pattern
 }
 
+// Detecta el ciclo base considerando cualquier desplazamiento
+function findCyclicBase(pat: string[]): string[] {
+  for (let size = 1; size <= Math.floor(pat.length / 2); size++) {
+    const base = pat.slice(0, size);
+    let isCycle = true;
+    for (let shift = 0; shift < size; shift++) {
+      isCycle = true;
+      for (let i = 0; i < pat.length; i++) {
+        if (pat[i] !== base[(i + shift) % size]) {
+          isCycle = false;
+          break;
+        }
+      }
+      if (isCycle) return base;
+    }
+  }
+  return pat;
+}
+
+// Valida si un patrón es perfectamente cíclico
+function isPerfectCycle(pat: string[]): boolean {
+  const base = findCyclicBase(pat);
+  for (let i = 0; i < pat.length; i++) {
+    if (pat[i] !== base[i % base.length]) return false;
+  }
+  return true;
+}
+
+const CELEBRATION_SCORE = 4
+
 export default function PatternRecognition({ onComplete }: PatternRecognitionProps) {
   const [patternType, setPatternType] = useState<PatternType>("color")
   const [pattern, setPattern] = useState<string[]>([])
@@ -69,62 +101,127 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [score, setScore] = useState(0)
   const [round, setRound] = useState(1)
-  const [startTime, setStartTime] = useState(Date.now())
+  const [startTime, setStartTime] = useState<number | null>(null)
   const [timeElapsed, setTimeElapsed] = useState(0)
+  const [showExplanation, setShowExplanation] = useState(false)
+  const [patternExplanation, setPatternExplanation] = useState("")
+  const [mounted, setMounted] = useState(false)
+  const [incorrectRounds, setIncorrectRounds] = useState<{pattern: string[], type: PatternType, answer: string, userAnswer: string}[]>([])
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewIndex, setReviewIndex] = useState(0)
+  const [lives, setLives] = useState(3)
+  const [cycleDebug, setCycleDebug] = useState<{base: string[], answer: string, error?: string}|null>(null)
   const maxRounds = 5
 
-  // Inicializar el juego
+  // Solo generar patrones y tiempo cuando el componente está montado en el cliente
   useEffect(() => {
-    startNewRound()
+    setMounted(true)
   }, [])
 
-  // Actualizar el tiempo transcurrido
   useEffect(() => {
+    if (mounted) {
+      setStartTime(Date.now())
+      startNewRound()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted])
+
+  useEffect(() => {
+    if (!startTime) return
     const timer = setInterval(() => {
       setTimeElapsed(Math.floor((Date.now() - startTime) / 1000))
     }, 1000)
-
     return () => clearInterval(timer)
   }, [startTime])
 
-  // Iniciar una nueva ronda
-  const startNewRound = () => {
-    // Elegir un tipo de patrón aleatorio
-    const types: PatternType[] = ["color", "shape", "number", "direction"]
-    const newType = types[Math.floor(Math.random() * types.length)]
-    setPatternType(newType)
+  if (!mounted) return null
 
-    // Generar un nuevo patrón
-    const patternLength = 4 + Math.min(round, 3) // Aumenta la dificultad con cada ronda
-    const newPattern = generatePattern(newType, patternLength)
-    setPattern(newPattern)
-
-    // Generar opciones (incluye la respuesta correcta)
-    const correctAnswer = getNextInPattern(newPattern)
-    const elements = patternElements[newType].filter((e) => e !== correctAnswer)
-    const shuffledElements = [...elements].sort(() => Math.random() - 0.5)
-    const newOptions = [correctAnswer, ...shuffledElements.slice(0, 3)]
-    setOptions(newOptions.sort(() => Math.random() - 0.5))
-
-    setSelectedOption(null)
-    setIsCorrect(null)
-  }
-
-  // Determinar el siguiente elemento en el patrón
-  const getNextInPattern = (pat: string[]): string => {
-    // Detectar el tipo de patrón
+  // Explicación del patrón
+  const explainPattern = (pat: string[]): string => {
     if (pat[0] === pat[2] && pat[1] === pat[3]) {
-      // Alternancia (A,B,A,B)
-      return pat[pat.length % 2]
+      return "Alternancia: el patrón alterna entre dos elementos (A, B, A, B, ...)."
     } else if (pat[0] === pat[1] && pat[2] === pat[3]) {
-      // Repetición (A,A,B,B)
-      return pat[pat.length % 4 < 2 ? 0 : 2]
+      return "Repetición: dos elementos se repiten en bloques (A, A, B, B, ...)."
     } else {
-      // Incremento o patrón más complejo
-      // Asumimos que es cíclico
-      return pat[pat.length % pat.length]
+      return "Secuencia cíclica: los elementos avanzan en orden y se repiten (A, B, C, A, ...)."
     }
   }
+
+  // Generar opciones (incluye la respuesta correcta y evita duplicados)
+  const generateOptions = (correctAnswer: string, elements: string[], count = 4) => {
+    const filtered = elements.filter(e => e !== correctAnswer)
+    const shuffled = [...filtered].sort(() => Math.random() - 0.5)
+    const options = [correctAnswer, ...shuffled].slice(0, count)
+    // Barajar para que la respuesta no siempre esté en la misma posición
+    return options.sort(() => Math.random() - 0.5)
+  }
+
+  // Iniciar una nueva ronda (normal o de repaso)
+  const startNewRound = (isReview = false) => {
+    let newType: PatternType;
+    let newPattern: string[];
+    if (isReview && incorrectRounds.length > 0) {
+      const review = incorrectRounds[reviewIndex]
+      newType = review.type
+      newPattern = review.pattern
+      setPatternType(newType)
+      setPattern(newPattern)
+      const correctAnswer = getNextInPattern(newPattern)
+      setOptions(generateOptions(correctAnswer, patternElements[newType]))
+    } else {
+      const types: PatternType[] = ["color", "shape", "number", "direction"]
+      newType = types[Math.floor(Math.random() * types.length)]
+      setPatternType(newType)
+      const patternLength = 4 + Math.min(round, 3)
+      newPattern = generatePattern(newType, patternLength)
+      setPattern(newPattern)
+      const correctAnswer = getNextInPattern(newPattern)
+      setOptions(generateOptions(correctAnswer, patternElements[newType]))
+    }
+    setSelectedOption(null)
+    setIsCorrect(null)
+    setShowExplanation(false)
+    setPatternExplanation("")
+
+    // Validación y logs de depuración
+    let debugBase: string[] = [];
+    let debugAnswer = "";
+    let debugError = undefined;
+    if (newType && newPattern && newPattern.length > 0) {
+      if (isReview && incorrectRounds.length > 0) {
+        debugBase = findCyclicBase(newPattern);
+        debugAnswer = getNextInPattern(newPattern);
+        if (!isPerfectCycle(newPattern)) debugError = "¡Advertencia: el patrón mostrado no es perfectamente cíclico!";
+      } else {
+        debugBase = findCyclicBase(newPattern);
+        debugAnswer = getNextInPattern(newPattern);
+        if (!isPerfectCycle(newPattern)) debugError = "¡Advertencia: el patrón mostrado no es perfectamente cíclico!";
+      }
+      setCycleDebug({base: debugBase, answer: debugAnswer, error: debugError});
+      // Log para desarrollador
+      if (typeof window !== 'undefined') {
+        console.log("[Pattern Debug] Base:", debugBase, "Pattern:", newPattern, "Expected:", debugAnswer, debugError ? debugError : "");
+      }
+    }
+  }
+
+  const getNextInPattern = (pat: string[]): string => {
+    if (pat[0] === pat[2] && pat[1] === pat[3]) {
+      // Alternancia (A,B,A,B)
+      return pat[pat.length % 2];
+    } else if (pat[0] === pat[1] && pat[2] === pat[3]) {
+      // Repetición (A,A,B,B)
+      return pat[pat.length % 4 < 2 ? 0 : 2];
+    } else {
+      // Secuencia cíclica robusta
+      const base = findCyclicBase(pat);
+      // Buscar la posición del último elemento mostrado dentro del ciclo base
+      const last = pat[pat.length - 1];
+      const idx = base.findIndex((v) => v === last);
+      if (idx === -1) return base[0];
+      return base[(idx + 1) % base.length];
+    }
+  };
 
   // Manejar la selección de una opción
   const handleOptionSelect = (option: string) => {
@@ -134,21 +231,56 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
     const correctAnswer = getNextInPattern(pattern)
     const correct = option === correctAnswer
     setIsCorrect(correct)
+    setPatternExplanation(explainPattern(pattern))
+    setShowExplanation(true)
 
     if (correct) {
       setScore(score + 1)
+      if (score + 1 >= CELEBRATION_SCORE) {
+        setTimeout(() => confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } }), 500)
+      }
+      // Avance automático tras acierto
+      setTimeout(() => handleContinue(), 1200)
+    } else {
+      // Guardar ronda incorrecta para repaso
+      if (!reviewMode) {
+        setIncorrectRounds([...incorrectRounds, {pattern, type: patternType, answer: correctAnswer, userAnswer: option}])
+        setLives(l => l - 1)
+      }
+      // No avanzar automáticamente, mostrar botón
     }
+  }
 
-    // Esperar un momento para mostrar el feedback y luego pasar a la siguiente ronda
-    setTimeout(() => {
+  // Avanzar a la siguiente ronda o repaso al presionar 'Continuar'
+  const handleContinue = () => {
+    setShowExplanation(false)
+    if (!reviewMode) {
+      if (lives <= 0) {
+        // Sin vidas, termina la actividad
+        onComplete(score >= 3, timeElapsed, score)
+        return
+      }
       if (round < maxRounds) {
         setRound(round + 1)
         startNewRound()
+      } else if (incorrectRounds.length > 0 && lives > 0) {
+        setReviewMode(true)
+        setReviewIndex(0)
+        setTimeout(() => startNewRound(true), 300)
       } else {
-        // Juego completado
-        onComplete(score >= 3, timeElapsed)
+        // Juego completado sin errores o sin vidas
+        onComplete(score >= 3, timeElapsed, score)
       }
-    }, 1500)
+    } else {
+      // Repaso
+      if (reviewIndex < incorrectRounds.length - 1) {
+        setReviewIndex(reviewIndex + 1)
+        setTimeout(() => startNewRound(true), 300)
+      } else {
+        // Fin del repaso
+        onComplete(score >= 3, timeElapsed, score)
+      }
+    }
   }
 
   // Obtener el título según el tipo de patrón
@@ -168,79 +300,142 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
   }
 
   return (
-    <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">{getPatternTitle()}</h2>
-        <p className="text-gray-400 mt-1">Observa el patrón y selecciona el siguiente elemento</p>
+    <motion.div
+      className="bg-gradient-to-br from-[#232946] to-[#16161a] rounded-2xl p-4 md:p-8 border-2 border-purple-700 shadow-2xl max-w-xl mx-auto min-h-[70vh] flex flex-col justify-between overflow-y-auto"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+    >
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-extrabold text-purple-400 drop-shadow-lg animate-pulse">{getPatternTitle()}</h2>
+        <p className="text-gray-300 mt-2 text-lg">¿Cuál es el siguiente elemento en la secuencia?</p>
       </div>
-
-      <div className="flex justify-center items-center mb-8">
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Ronda:</div>
-          <div className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
+      <div className="flex justify-center items-center mb-8 gap-6">
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-gray-400 mb-1">Ronda</span>
+          <div className="bg-blue-600/30 text-blue-300 px-3 py-1 rounded-full text-lg font-bold">
             {round}/{maxRounds}
           </div>
         </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Puntuación:</div>
-          <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-sm">
-            {score}/{maxRounds}
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-gray-400 mb-1">Puntos</span>
+          <div className="bg-green-600/30 text-green-300 px-3 py-1 rounded-full text-lg font-bold">
+            {score}
           </div>
         </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Tiempo:</div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">{timeElapsed}s</div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-gray-400 mb-1">Tiempo</span>
+          <div className="bg-purple-600/30 text-purple-300 px-3 py-1 rounded-full text-lg font-bold">
+            {timeElapsed}s
+          </div>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-gray-400 mb-1">Vidas</span>
+          <div className={cn(
+            "bg-red-600/30 text-red-300 px-3 py-1 rounded-full text-lg font-bold flex gap-1 items-center",
+            lives === 1 && "animate-pulse"
+          )}>
+            {Array.from({length: lives}).map((_, i) => <span key={i}>❤️</span>)}
+            <span className="ml-2">{lives}</span>
+          </div>
         </div>
       </div>
-
-      <div className="flex flex-col items-center">
-        {/* Patrón */}
+      <div className="w-full h-3 bg-gray-800 rounded-full mb-8 overflow-hidden">
+        <motion.div
+          className="h-3 bg-gradient-to-r from-purple-500 to-blue-400 rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${(round / maxRounds) * 100}%` }}
+          transition={{ duration: 0.7 }}
+        />
+      </div>
+      <div className="flex flex-col items-center flex-1 justify-center">
         <div className="flex items-center justify-center gap-4 mb-8">
           {pattern.map((item, index) => (
-            <div
+            <motion.div
               key={index}
-              className="w-16 h-16 flex items-center justify-center text-3xl bg-[#1a1d23] rounded-lg border border-gray-700"
+              className="w-16 h-16 flex items-center justify-center text-4xl bg-[#232946] rounded-xl border-2 border-purple-700 shadow-lg"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: index * 0.08 }}
             >
               {item}
-            </div>
+            </motion.div>
           ))}
-          <div className="w-16 h-16 flex items-center justify-center text-3xl bg-[#1a1d23] rounded-lg border border-gray-700 border-dashed">
+          <motion.div
+            className="w-16 h-16 flex items-center justify-center text-4xl bg-[#232946] rounded-xl border-2 border-dashed border-purple-400 animate-bounce"
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: pattern.length * 0.08 }}
+          >
             ?
-          </div>
+          </motion.div>
         </div>
-
-        {/* Opciones */}
-        <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 w-full max-w-md">
           {options.map((option, index) => (
-            <Button
+            <motion.div
               key={index}
-              className={cn(
-                "h-20 text-3xl relative",
-                selectedOption === option && isCorrect === true
-                  ? "bg-green-600 hover:bg-green-700"
-                  : selectedOption === option && isCorrect === false
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-[#1a1d23] hover:bg-[#2a2f3a]",
-              )}
-              onClick={() => handleOptionSelect(option)}
-              disabled={isCorrect !== null}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08 }}
+              className="relative"
             >
-              {option}
-              {selectedOption === option && isCorrect !== null && (
-                <div className="absolute -top-2 -right-2">
-                  {isCorrect ? (
-                    <CheckCircle className="h-6 w-6 text-green-400" />
-                  ) : (
-                    <XCircle className="h-6 w-6 text-red-400" />
+              <Button
+                className={cn(
+                  "h-16 md:h-20 text-3xl md:text-4xl w-full rounded-xl border-2 border-transparent transition-all duration-200 py-2 md:py-4",
+                  selectedOption === option && isCorrect === true
+                    ? "bg-green-600/90 border-green-400 text-white shadow-xl"
+                    : selectedOption === option && isCorrect === false
+                      ? "bg-red-600/90 border-red-400 text-white shadow-xl"
+                      : "bg-[#232946] hover:bg-purple-900/40 text-purple-200",
+                )}
+                onClick={() => handleOptionSelect(option)}
+                disabled={isCorrect !== null}
+              >
+                {option}
+                <AnimatePresence>
+                  {selectedOption === option && isCorrect !== null && (
+                    <motion.div
+                      className="absolute -top-2 -right-2"
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                    >
+                      {isCorrect ? (
+                        <CheckCircle className="h-7 w-7 text-green-300 drop-shadow-lg" />
+                      ) : (
+                        <XCircle className="h-7 w-7 text-red-300 drop-shadow-lg" />
+                      )}
+                    </motion.div>
                   )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+        <AnimatePresence>
+          {showExplanation && (
+            <motion.div
+              className="mt-8 text-center text-lg text-purple-300 bg-[#232946] rounded-xl p-4 border border-purple-700 shadow"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+            >
+              <span className="font-bold">Explicación:</span> {patternExplanation}
+              {/* Solo mostrar botón si la respuesta es incorrecta */}
+              {!isCorrect && (
+                <div className="mt-4">
+                  <Button onClick={handleContinue} className="bg-blue-600 hover:bg-blue-700">Continuar</Button>
                 </div>
               )}
-            </Button>
-          ))}
-        </div>
+              {reviewMode && selectedOption !== getNextInPattern(pattern) && (
+                <div className="mt-2 text-sm text-red-300">Tu respuesta: {selectedOption} | Correcta: {getNextInPattern(pattern)}</div>
+              )}
+              {cycleDebug && cycleDebug.error && (
+                <div className="mt-2 text-sm text-yellow-400 font-bold">{cycleDebug.error}</div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   )
 }

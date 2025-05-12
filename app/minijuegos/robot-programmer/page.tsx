@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import GameBoard from "@/components/robot-programmer/game-board"
 import CommandZone from "@/components/robot-programmer/command-zone"
-import InstructionPanel from "@/components/robot-programmer/instruction-panel"
 import LevelSelector from "@/components/robot-programmer/level-selector"
 import { getLevels, validateSolution } from "@/lib/robot-programmer"
 import { formatTime } from "@/lib/utils"
 import Image from "next/image"
+import RobotSVG from "@/components/robot-programmer/robot-svg"
+import { useIsMobile } from "@/components/ui/use-mobile"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import InstructionPanel from "@/components/robot-programmer/instruction-panel"
+import * as React from "react"
 
 export default function RobotProgrammerPage() {
   const router = useRouter()
@@ -31,6 +35,8 @@ export default function RobotProgrammerPage() {
   const [steps, setSteps] = useState(0)
   const [lives, setLives] = useState(3)
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
+  const [robot3D, setRobot3D] = useState(false)
+  const isMobile = useIsMobile()
 
   // Iniciar el juego con un nivel seleccionado
   const startLevel = (levelIndex: number) => {
@@ -93,6 +99,15 @@ export default function RobotProgrammerPage() {
       setCommands([...commands, command])
     }
   }
+
+  // Soporte para arrastrar y soltar comandos
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail) addCommand(e.detail)
+    }
+    window.addEventListener("add-command", handler)
+    return () => window.removeEventListener("add-command", handler)
+  }, [commands, isExecuting, commandLimit])
 
   // Eliminar un comando de la lista
   const removeCommand = (index: number) => {
@@ -247,6 +262,10 @@ export default function RobotProgrammerPage() {
     }
   }
 
+  // Determinar el estado de ánimo del robot
+  let robotMood: "happy" | "sad" | "neutral" = "neutral"
+  if (isComplete) robotMood = isSuccess ? "happy" : "sad"
+
   return (
     <div className="min-h-screen bg-[#1a1d23] text-white">
       {/* Navbar */}
@@ -265,11 +284,21 @@ export default function RobotProgrammerPage() {
             Volver a Minijuegos
           </Button>
           <h1 className="text-2xl font-bold">Robot Programmer</h1>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400">Robot 3D</span>
+            <input
+              type="checkbox"
+              checked={robot3D}
+              onChange={() => setRobot3D((v) => !v)}
+              className="accent-purple-500 w-5 h-5"
+              aria-label="Alternar robot 3D"
+            />
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-2 py-4">
         {showLevelSelector ? (
           <div className="relative">
             <div className="absolute inset-0 z-0">
@@ -290,193 +319,122 @@ export default function RobotProgrammerPage() {
             </div>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Left Column - Game Info */}
-            <div className="md:col-span-1 space-y-6">
-              <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
-                <h2 className="text-xl font-bold mb-4">Información</h2>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-500" />
-                      <span>Nivel:</span>
-                    </div>
-                    <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold">
-                      {currentLevel + 1}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-blue-400" />
-                      <span>Tiempo:</span>
-                    </div>
-                    <span className="font-mono">{formatTime(time)}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-purple-400" />
-                      <span>Comandos:</span>
-                    </div>
-                    <span>
-                      {commands.length}/{commandLimit}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-red-400" />
-                      <span>Vidas:</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {[...Array(3)].map((_, i) => (
-                        <Heart
-                          key={i}
-                          className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-gray-600"}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {bestTimes[currentLevel] && (
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-yellow-400" />
-                        <span>Mejor tiempo:</span>
-                      </div>
-                      <span className="font-mono">{formatTime(bestTimes[currentLevel])}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full border-gray-700 hover:bg-gray-800"
-                    onClick={handleBackToLevels}
-                  >
-                    Cambiar nivel
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="w-full border-gray-700 hover:bg-gray-800"
-                    onClick={resetLevel}
-                    disabled={isExecuting}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Reiniciar
-                  </Button>
-
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={executeCommands}
-                    disabled={isExecuting || commands.length === 0 || isComplete}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Ejecutar
-                  </Button>
-                </div>
-              </div>
-
-              <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
-                <div className="flex items-center gap-2 mb-4">
-                  <Info className="h-5 w-5 text-blue-400" />
-                  <h2 className="text-xl font-bold">Instrucciones</h2>
-                </div>
-
-                <p className="text-gray-300 text-sm mb-4">{levels[currentLevel].description}</p>
-
-                <ul className="space-y-2 text-sm text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <div className="min-w-4 text-blue-400">•</div>
-                    <div>Arrastra comandos desde el panel de instrucciones a la zona de comandos.</div>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="min-w-4 text-blue-400">•</div>
-                    <div>Haz clic en "Ejecutar" para ver cómo el robot sigue tus instrucciones.</div>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="min-w-4 text-blue-400">•</div>
-                    <div>El objetivo es encender todas las casillas marcadas.</div>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="min-w-4 text-blue-400">•</div>
-                    <div>Tienes 3 vidas. Pierdes una vida si tu solución no es correcta.</div>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Instruction Panel */}
-              <InstructionPanel
-                onAddCommand={addCommand}
-                availableCommands={levels[currentLevel].availableCommands}
-                disabled={isExecuting || commands.length >= commandLimit || isComplete}
-              />
-            </div>
-
-            {/* Center and Right Columns - Game Board and Command Zone */}
-            <div className="md:col-span-2">
-              {isComplete ? (
-                <div className="bg-[#1e2330] rounded-lg p-8 text-center border border-gray-800 h-full flex flex-col items-center justify-center">
-                  <div
-                    className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
-                      isSuccess ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
-                    }`}
-                  >
-                    {isSuccess ? <Trophy className="h-10 w-10" /> : <RotateCcw className="h-10 w-10" />}
-                  </div>
-
-                  <h2 className="text-3xl font-bold mb-4">
-                    {isSuccess ? "¡Nivel Completado!" : "¡Se acabaron las vidas!"}
-                  </h2>
-
-                  <p className="text-xl text-gray-300 mb-6">
-                    {isSuccess
-                      ? `Has completado el nivel ${currentLevel + 1} en ${formatTime(time)} con ${commands.length} comandos.`
-                      : "No has logrado encender todas las casillas objetivo. ¡Revisa tu algoritmo!"}
-                  </p>
-
-                  <div className="flex gap-4">
-                    {isSuccess && currentLevel < levels.length - 1 ? (
-                      <Button className="bg-green-600 hover:bg-green-700" onClick={goToNextLevel}>
-                        Siguiente Nivel
-                      </Button>
-                    ) : (
-                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={resetLevel}>
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        Intentar de nuevo
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="outline"
-                      className="border-gray-700 hover:bg-gray-800"
-                      onClick={handleBackToLevels}
-                    >
-                      Cambiar nivel
+          <div className="flex flex-col md:flex-row gap-4 items-start justify-center">
+            {/* Panel de comandos disponibles a la izquierda */}
+            <div className="w-full md:w-[300px] flex-shrink-0 flex flex-col gap-2 items-center md:items-stretch order-1 md:order-none">
+              <div className="flex w-full justify-between items-center mb-1">
+                <h3 className="text-lg font-bold text-center flex-1">Comandos</h3>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="icon" variant="ghost" className="ml-2" title="Ver instrucciones">
+                      <Info className="h-5 w-5 text-blue-400" />
                     </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="max-w-xs text-sm">
+                    <div className="font-bold mb-2">Instrucciones</div>
+                    <div className="mb-2 text-gray-300">{levels[currentLevel].description}</div>
+                    <ul className="space-y-1 text-gray-400">
+                      <li>Arrastra comandos desde el panel de instrucciones a la zona de comandos.</li>
+                      <li>Haz clic en "Ejecutar" para ver cómo el robot sigue tus instrucciones.</li>
+                      <li>El objetivo es encender todas las casillas marcadas.</li>
+                      <li>Tienes 3 vidas. Pierdes una vida si tu solución no es correcta.</li>
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="w-full">
+                <InstructionPanel
+                  onAddCommand={addCommand}
+                  availableCommands={levels[currentLevel].availableCommands}
+                  disabled={isExecuting || commands.length >= commandLimit || isComplete}
+                />
+              </div>
+            </div>
+            {/* Main game area: tablero y robot */}
+            <div className="flex-1 flex flex-col items-center order-2 md:order-none">
+              <div className="relative w-full max-w-[480px] aspect-square mx-auto">
+                <GameBoard
+                  board={levels[currentLevel].board}
+                  robotPosition={robotPosition}
+                  targetCells={levels[currentLevel].targetCells}
+                  litCells={litCells}
+                  robot3D={robot3D}
+                  compact
+                />
+                {/* Robot SVG perfectamente centrado en la celda, sin flecha ni círculo de seguimiento, solo sombra/glow */}
+                {!robot3D && (
+                  <div
+                    className="absolute z-10 pointer-events-none"
+                    style={{
+                      left: `calc((100% / ${levels[currentLevel].board[0].length}) * ${robotPosition.x})`,
+                      top: `calc((100% / ${levels[currentLevel].board.length}) * ${robotPosition.y})`,
+                      width: `calc(100% / ${levels[currentLevel].board[0].length})`,
+                      height: `calc(100% / ${levels[currentLevel].board.length})`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "left 0.4s cubic-bezier(.4,2,.6,1), top 0.4s cubic-bezier(.4,2,.6,1)"
+                    }}
+                  >
+                    <div style={{ filter: 'drop-shadow(0 8px 24px #818cf8cc) drop-shadow(0 0px 8px #38d9a9cc)' }}>
+                      <RobotSVG direction={0} size={56} mood={robotMood} animate={!isComplete} />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <GameBoard
-                    board={levels[currentLevel].board}
-                    robotPosition={robotPosition}
-                    targetCells={levels[currentLevel].targetCells}
-                    litCells={litCells}
-                  />
-
-                  <CommandZone
-                    commands={commands}
-                    onRemoveCommand={removeCommand}
-                    isExecuting={isExecuting}
-                    currentStep={steps}
-                  />
-                </div>
+                )}
+                {robot3D && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 rounded-lg">
+                    <span className="text-purple-300 text-lg font-bold">[Robot 3D experimental aquí]</span>
+                  </div>
+                )}
+              </div>
+              {/* Botón para avanzar al siguiente nivel */}
+              {isComplete && isSuccess && currentLevel < levels.length - 1 && (
+                <Button
+                  className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => startLevel(currentLevel + 1)}
+                >
+                  Siguiente nivel
+                </Button>
               )}
+            </div>
+            {/* Panel de secuencia de comandos a la derecha */}
+            <div className="w-full md:w-[320px] flex-shrink-0 flex flex-col gap-2 items-center md:items-stretch order-3 md:order-none">
+              <div className="bg-[#1e2330] rounded-lg p-4 border border-gray-800 w-full">
+                <CommandZone
+                  commands={commands}
+                  onRemoveCommand={removeCommand}
+                  isExecuting={isExecuting}
+                  currentStep={steps}
+                  vertical
+                />
+              </div>
+              {/* Botones principales debajo de comandos */}
+              <div className="flex flex-col gap-2 w-full mt-2">
+                <Button
+                  className="bg-green-600 hover:bg-green-700 w-full"
+                  onClick={executeCommands}
+                  disabled={isExecuting || commands.length === 0 || isComplete}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Ejecutar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-gray-700 hover:bg-gray-800 w-full"
+                  onClick={resetLevel}
+                  disabled={isExecuting}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reiniciar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-gray-700 hover:bg-gray-800 w-full"
+                  onClick={handleBackToLevels}
+                >
+                  Cambiar nivel
+                </Button>
+              </div>
             </div>
           </div>
         )}
