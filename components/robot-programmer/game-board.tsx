@@ -7,9 +7,11 @@ interface GameBoardProps {
   robotPosition: { x: number; y: number; direction: number }
   targetCells: { x: number; y: number }[]
   litCells: { x: number; y: number }[]
+  robot3D?: boolean
+  compact?: boolean // Nuevo prop para modo compacto
 }
 
-export default function GameBoard({ board, robotPosition, targetCells, litCells }: GameBoardProps) {
+export default function GameBoard({ board, robotPosition, targetCells, litCells, robot3D, compact = false }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Dibujar el tablero cuando cambian las props
@@ -20,15 +22,16 @@ export default function GameBoard({ board, robotPosition, targetCells, litCells 
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
+    // Tamaño más grande y responsivo
     const cellSize = Math.min(canvas.width / board[0].length, canvas.height / board.length)
     const offsetX = (canvas.width - cellSize * board[0].length) / 2
     const offsetY = (canvas.height - cellSize * board.length) / 2
 
-    // Limpiar el canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Dibujar el fondo
-    ctx.fillStyle = "#1a1d23"
+    // Fondo con gradiente sutil
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+    gradient.addColorStop(0, "#23283a")
+    gradient.addColorStop(1, "#1a1d23")
+    ctx.fillStyle = gradient
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Dibujar el tablero
@@ -37,99 +40,120 @@ export default function GameBoard({ board, robotPosition, targetCells, litCells 
         const cellX = offsetX + x * cellSize
         const cellY = offsetY + y * cellSize
 
-        // Dibujar celda
+        // Obstáculo
         if (board[y][x] === 1) {
-          // Obstáculo
           ctx.fillStyle = "#2a3142"
           ctx.fillRect(cellX, cellY, cellSize, cellSize)
+          ctx.strokeStyle = "#3b4252"
+          ctx.lineWidth = 2
+          ctx.strokeRect(cellX, cellY, cellSize, cellSize)
         } else {
           // Celda normal
-          ctx.fillStyle = "#1e2330"
+          ctx.save()
+          ctx.shadowColor = "#818cf8aa"
+          ctx.shadowBlur = 8
+          ctx.fillStyle = "#23283a"
           ctx.fillRect(cellX, cellY, cellSize, cellSize)
-
-          // Borde de la celda
+          ctx.restore()
+          // Borde
           ctx.strokeStyle = "#2a3142"
-          ctx.lineWidth = 1
+          ctx.lineWidth = 1.5
           ctx.strokeRect(cellX, cellY, cellSize, cellSize)
         }
 
-        // Dibujar celda objetivo
+        // Celda objetivo con glow y SVG
         const isTarget = targetCells.some((cell) => cell.x === x && cell.y === y)
         if (isTarget) {
-          ctx.fillStyle = "rgba(168, 85, 247, 0.2)" // Morado con transparencia
+          ctx.save()
+          ctx.shadowColor = "#a855f7"
+          ctx.shadowBlur = 18
+          ctx.fillStyle = "rgba(168, 85, 247, 0.18)"
           ctx.fillRect(cellX, cellY, cellSize, cellSize)
-
-          // Dibujar un círculo en el centro
+          ctx.restore()
+          // Dibujar icono SVG (estrella) en el centro
+          const iconSize = cellSize * 0.45
+          const cx = cellX + cellSize / 2
+          const cy = cellY + cellSize / 2
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.scale(iconSize / 24, iconSize / 24)
           ctx.beginPath()
-          ctx.arc(cellX + cellSize / 2, cellY + cellSize / 2, cellSize / 6, 0, Math.PI * 2)
-          ctx.fillStyle = "rgba(168, 85, 247, 0.5)"
+          ctx.moveTo(12,2)
+          ctx.lineTo(15,9)
+          ctx.lineTo(22.5,9.5)
+          ctx.lineTo(16.5,14.5)
+          ctx.lineTo(18.5,22)
+          ctx.lineTo(12,18)
+          ctx.lineTo(5.5,22)
+          ctx.lineTo(7.5,14.5)
+          ctx.lineTo(1.5,9.5)
+          ctx.lineTo(9,9)
+          ctx.closePath()
+          ctx.fillStyle = "#a855f7"
+          ctx.globalAlpha = 0.85
+          ctx.shadowColor = "#c084fc"
+          ctx.shadowBlur = 10
           ctx.fill()
+          ctx.globalAlpha = 1
+          ctx.restore()
         }
 
-        // Dibujar celda encendida
+        // Celda encendida con efecto de luz
         const isLit = litCells.some((cell) => cell.x === x && cell.y === y)
         if (isLit) {
-          ctx.fillStyle = "rgba(52, 211, 153, 0.3)" // Verde con transparencia
+          ctx.save()
+          ctx.shadowColor = "#34d399"
+          ctx.shadowBlur = 16
+          ctx.fillStyle = "rgba(52, 211, 153, 0.25)"
           ctx.fillRect(cellX, cellY, cellSize, cellSize)
-
-          // Dibujar un círculo en el centro
+          ctx.restore()
+          // Luz central
           ctx.beginPath()
-          ctx.arc(cellX + cellSize / 2, cellY + cellSize / 2, cellSize / 4, 0, Math.PI * 2)
-          ctx.fillStyle = "rgba(52, 211, 153, 0.8)"
+          ctx.arc(cellX + cellSize / 2, cellY + cellSize / 2, cellSize / 3, 0, Math.PI * 2)
+          ctx.fillStyle = "rgba(52, 211, 153, 0.7)"
+          ctx.shadowColor = "#6ee7b7"
+          ctx.shadowBlur = 12
           ctx.fill()
         }
       }
     }
 
-    // Dibujar el robot
-    const robotX = offsetX + robotPosition.x * cellSize
-    const robotY = offsetY + robotPosition.y * cellSize
-
-    // Cuerpo del robot
-    ctx.fillStyle = "#3b82f6" // Azul
-    ctx.beginPath()
-    ctx.arc(robotX + cellSize / 2, robotY + cellSize / 2, cellSize / 2.5, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Dirección del robot (triángulo)
-    ctx.fillStyle = "#ffffff"
-    ctx.beginPath()
-
-    // Calcular los puntos del triángulo según la dirección
-    const centerX = robotX + cellSize / 2
-    const centerY = robotY + cellSize / 2
-    const radius = cellSize / 3
-
-    // Ángulos para las direcciones (en radianes)
-    const angles = [
-      -Math.PI / 2, // Norte (0)
-      0, // Este (1)
-      Math.PI / 2, // Sur (2)
-      Math.PI, // Oeste (3)
-    ]
-
-    const angle = angles[robotPosition.direction]
-
-    // Puntos del triángulo
-    const tipX = centerX + radius * Math.cos(angle)
-    const tipY = centerY + radius * Math.sin(angle)
-    const leftX = centerX + (radius / 2) * Math.cos(angle + 2.5)
-    const leftY = centerY + (radius / 2) * Math.sin(angle + 2.5)
-    const rightX = centerX + (radius / 2) * Math.cos(angle - 2.5)
-    const rightY = centerY + (radius / 2) * Math.sin(angle - 2.5)
-
-    ctx.moveTo(tipX, tipY)
-    ctx.lineTo(leftX, leftY)
-    ctx.lineTo(rightX, rightY)
-    ctx.closePath()
-    ctx.fill()
-  }, [board, robotPosition, targetCells, litCells])
+    // Robot (solo si no es 3D)
+    if (!robot3D) {
+      // El robot visual se muestra con el componente RobotSVG, no dibujar círculo aquí
+      // (Eliminado ctx.arc y ctx.fill para el cuerpo del robot)
+      // Flecha de dirección solo si no es compacto
+      if (!compact) {
+        ctx.fillStyle = "#fff"
+        ctx.beginPath()
+        const centerX = offsetX + robotPosition.x * cellSize + cellSize / 2
+        const centerY = offsetY + robotPosition.y * cellSize + cellSize / 2
+        const radius = cellSize / 3
+        const angles = [
+          -Math.PI / 2, 0, Math.PI / 2, Math.PI
+        ]
+        const angle = angles[robotPosition.direction]
+        const tipX = centerX + radius * Math.cos(angle)
+        const tipY = centerY + radius * Math.sin(angle)
+        const leftX = centerX + (radius / 2) * Math.cos(angle + 2.5)
+        const leftY = centerY + (radius / 2) * Math.sin(angle + 2.5)
+        const rightX = centerX + (radius / 2) * Math.cos(angle - 2.5)
+        const rightY = centerY + (radius / 2) * Math.sin(angle - 2.5)
+        ctx.moveTo(tipX, tipY)
+        ctx.lineTo(leftX, leftY)
+        ctx.lineTo(rightX, rightY)
+        ctx.closePath()
+        ctx.fill()
+      }
+    }
+  }, [board, robotPosition, targetCells, litCells, robot3D, compact])
 
   return (
-    <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
-      <h2 className="text-xl font-bold mb-4">Tablero</h2>
-      <div className="relative aspect-square w-full max-w-[600px] mx-auto">
-        <canvas ref={canvasRef} width={600} height={600} className="w-full h-full rounded-lg" />
+    <div className={compact ? "bg-[#1e2330] rounded-lg p-2 border border-gray-800" : "bg-[#1e2330] rounded-lg p-6 border border-gray-800"}>
+      {/* Header solo si no es compacto */}
+      {!compact && <h2 className="text-xl font-bold mb-4">Tablero</h2>}
+      <div className={compact ? "relative aspect-square w-full max-w-[480px] mx-auto" : "relative aspect-square w-full max-w-[700px] mx-auto"}>
+        <canvas ref={canvasRef} width={compact ? 480 : 700} height={compact ? 480 : 700} className="w-full h-full rounded-lg" />
       </div>
     </div>
   )

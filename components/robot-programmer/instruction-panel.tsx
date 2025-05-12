@@ -41,29 +41,30 @@ export default function InstructionPanel({ onAddCommand, availableCommands, disa
   }
 
   return (
-    <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
-      <h2 className="text-xl font-bold mb-4">Comandos Disponibles</h2>
-
-      <div className="grid grid-cols-1 gap-2">
+    <div className="bg-[#1e2330] rounded-lg p-3 border border-gray-800">
+      <h2 className="text-lg font-bold mb-2">Comandos Disponibles</h2>
+      <div className="grid grid-cols-1 gap-1">
         {availableCommands.map((command, index) => {
           const { name, color, icon, description } = getCommandInfo(command)
-
           return (
             <button
               key={index}
               className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border border-gray-700 bg-[#1a1d23] hover:bg-gray-800 transition-colors text-left",
-                disabled && "opacity-50 cursor-not-allowed",
+                "flex items-center gap-2 p-2 rounded-lg border border-gray-700 bg-[#1a1d23] hover:bg-gray-800 transition-colors text-left text-sm",
+                disabled ? "opacity-50 cursor-not-allowed" : ""
               )}
               onClick={() => !disabled && onAddCommand(command)}
               disabled={disabled}
+              draggable={!disabled}
+              onDragStart={e => {
+                if (disabled) return
+                e.dataTransfer.setData("text/plain", command)
+              }}
             >
-              <div className={`${color} w-8 h-8 rounded-full flex items-center justify-center text-white font-bold`}>
-                {icon}
-              </div>
+              <div className={cn(color, "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold")}>{icon}</div>
               <div>
-                <div className="font-medium">{name}</div>
-                <div className="text-xs text-gray-400">{description}</div>
+                <div className="font-medium leading-tight">{name}</div>
+                <div className="text-xs text-gray-400 leading-tight">{description}</div>
               </div>
             </button>
           )

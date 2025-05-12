@@ -11,109 +11,75 @@ import { useRouter } from "next/navigation"
 export default function MisionesPage() {
   const router = useRouter()
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#181c2a] via-[#23294a] to-[#1a1d23] text-white relative overflow-x-hidden">
       {/* Navbar */}
       <NavBar activePage="misiones" />
 
-      {/* Header */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Misiones</h1>
-            <p className="text-gray-400 mt-1">Completa desafíos y avanza en tu ruta de aprendizaje</p>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Progress
-                value={35}
-                className="w-48 h-2 bg-gray-700"
-                indicatorClassName="bg-gradient-to-r from-purple-600 to-blue-500"
-              />
-              <span className="text-sm text-gray-300">35% completado</span>
+      {/* Header principal con animación y gradiente */}
+      <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex-1">
+          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent animate-gradient-x">Misiones</h1>
+          <p className="text-lg text-gray-300 mt-2 max-w-xl">Explora tu camino de aprendizaje a través de desafíos gamificados, gana logros y desbloquea nuevas habilidades. ¡Cada misión te acerca a convertirte en un maestro del pensamiento computacional!</p>
+          <div className="flex items-center gap-4 mt-4">
+            <Progress value={35} className="w-56 h-3 bg-gray-700 rounded-full shadow-inner" indicatorClassName="bg-gradient-to-r from-purple-500 via-blue-500 to-green-400 animate-pulse" />
+            <span className="text-base text-gray-200 font-semibold">35% completado</span>
+            <div className="flex items-center gap-1 ml-4">
+              <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 animate-bounce" />
+              <span className="text-base text-yellow-300 font-bold">1250 pts</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-sm text-gray-300">1250 puntos</span>
+          </div>
+        </div>
+        {/* Logros destacados */}
+        <div className="flex flex-col items-center gap-2 bg-gradient-to-br from-[#23294a]/80 to-[#1a1d23]/80 rounded-2xl p-6 border-2 border-purple-700/30 shadow-xl animate-fade-in">
+          <span className="text-lg font-bold text-purple-300 mb-2">Logros recientes</span>
+          <div className="flex gap-3">
+            <div className="flex flex-col items-center p-2 bg-[#1a1d23] rounded-lg border border-green-500/30 shadow-md">
+              <Trophy className="h-7 w-7 text-yellow-400 mb-1 animate-pop" />
+              <span className="text-xs font-medium text-center text-green-300">Primer Patrón</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-[#1a1d23] rounded-lg border border-blue-500/30 shadow-md">
+              <Search className="h-7 w-7 text-blue-400 mb-1 animate-pop" />
+              <span className="text-xs font-medium text-center text-blue-300">Observador</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-[#1a1d23] rounded-lg border border-purple-500/30 shadow-md">
+              <Star className="h-7 w-7 text-purple-400 mb-1 animate-pop" />
+              <span className="text-xs font-medium text-center text-purple-300">500 puntos</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-4 md:p-6 relative overflow-hidden">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2">Mapa de Progresión</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Explora tu camino de aprendizaje a través de conceptos interconectados. Completa cada misión para
-              desbloquear nuevos desafíos.
-              <span className="block mt-1 text-sm">Pasa el cursor sobre cada nivel para ver más detalles.</span>
-            </p>
-          </div>
-
-          {/* Misiones Map Component */}
+      {/* Mapa de Progresión y Cards de Niveles */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-[#23294a]/80 rounded-2xl border-2 border-blue-700/20 p-8 shadow-2xl relative overflow-hidden animate-fade-in">
+          <h2 className="text-2xl font-bold mb-4 text-center text-blue-300">Mapa de Progresión</h2>
+          <p className="text-gray-300 max-w-2xl mx-auto text-center mb-8">Avanza por los niveles, desbloquea desafíos y observa tu progreso en tiempo real. ¡Cada nivel superado te otorga recompensas y nuevas insignias!</p>
           <MisionesMap />
-
-          {/* Legend */}
-          <div className="mt-8 flex flex-wrap gap-4 justify-center">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 transform rotate-45 bg-green-500"></div>
-              <span className="text-sm">Completado</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 transform rotate-45 bg-blue-500"></div>
-              <span className="text-sm">Actual</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 transform rotate-45 bg-gray-600"></div>
-              <span className="text-sm">Bloqueado</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Sección Actual: Explora tu lógica */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-full">
-            <Brain className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold">Explora tu lógica</h2>
-            <p className="text-gray-400">Fundamentos del pensamiento computacional</p>
-          </div>
-        </div>
-
-        <p className="text-gray-300 mb-6">
-          En esta sección aprenderás los conceptos básicos del pensamiento computacional a través de desafíos visuales e
-          interactivos. Desarrollarás habilidades fundamentales como el reconocimiento de patrones, la descomposición de
-          problemas y la clasificación lógica.
-        </p>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Nivel Actual */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/50 p-6 relative group hover:border-blue-400 transition-all">
+      {/* Sección de Niveles con Cards animadas */}
+      <div className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6 text-purple-300">Secciones y Niveles</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Card de nivel actual */}
+          <div className="bg-gradient-to-br from-blue-900/60 to-purple-900/60 rounded-2xl border-2 border-blue-500/50 p-8 relative group hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-pop">
             <div className="absolute top-3 right-3">
-              <div className="bg-blue-500 text-xs font-bold px-2 py-1 rounded">ACTUAL</div>
+              <div className="bg-blue-500 text-xs font-bold px-3 py-1 rounded shadow">ACTUAL</div>
             </div>
             <div className="mb-4">
-              <Puzzle className="h-10 w-10 text-yellow-400" />
+              <Puzzle className="h-12 w-12 text-yellow-400 animate-bounce" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Desafío: Secuencias lógicas</h3>
-            <p className="text-gray-300 text-sm mb-4">
-              Ordena instrucciones para completar tareas siguiendo una secuencia lógica correcta.
-            </p>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-sm">150 pts</span>
+            <h3 className="text-2xl font-bold mb-2 text-white">Desafío: Secuencias lógicas</h3>
+            <p className="text-gray-300 text-base mb-4">Ordena instrucciones para completar tareas siguiendo una secuencia lógica correcta.</p>
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                <span className="text-base font-semibold text-yellow-200">150 pts</span>
               </div>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/misiones/1/4")}>
-                Continuar
-              </Button>
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-lg animate-pop" onClick={() => router.push("/misiones/1/4")}>Continuar</Button>
             </div>
           </div>
-
           {/* Nivel Bloqueado 1 */}
           <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-6 relative group opacity-80 hover:opacity-100 transition-all">
             <div className="absolute top-3 right-3">

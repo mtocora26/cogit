@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd"
+import { DndContext, useDraggable } from "@dnd-kit/core"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, RefreshCw, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -122,16 +122,18 @@ export default function SequenceOrdering({ onComplete }: SequenceOrderingProps) 
   }
 
   // Manejar el arrastre y soltar
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event
 
     // Si no hay destino, el elemento fue soltado fuera de un área válida
-    if (!destination) return
+    if (!over) return
 
     // Reordenar los pasos
+    const oldIndex = steps.findIndex((step) => step.id === active.id)
+    const newIndex = steps.findIndex((step) => step.id === over.id)
     const reorderedSteps = Array.from(steps)
-    const [removed] = reorderedSteps.splice(source.index, 1)
-    reorderedSteps.splice(destination.index, 0, removed)
+    const [removed] = reorderedSteps.splice(oldIndex, 1)
+    reorderedSteps.splice(newIndex, 0, removed)
 
     setSteps(reorderedSteps)
   }
@@ -190,40 +192,38 @@ export default function SequenceOrdering({ onComplete }: SequenceOrderingProps) 
         </div>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="steps">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 mb-8">
-              {steps.map((step, index) => (
-                <Draggable key={step.id} draggableId={step.id} index={index} isDragDisabled={isComplete}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={cn(
-                        "p-4 rounded-lg border flex items-center",
-                        snapshot.isDragging ? "bg-blue-500/20 border-blue-500" : "bg-[#1a1d23] border-gray-700",
-                        isComplete && currentSequence?.steps.find((s) => s.id === step.id)?.order === index + 1
-                          ? "bg-green-500/20 border-green-500"
-                          : isComplete
-                            ? "bg-red-500/20 border-red-500"
-                            : "",
-                      )}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-[#2a2f3a] flex items-center justify-center mr-4">
-                        {index + 1}
-                      </div>
-                      <div>{step.content}</div>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <DndContext onDragEnd={handleDragEnd}>
+        <div className="space-y-2 mb-8">
+          {steps.map((step, index) => {
+            const { setNodeRef: setDraggableRef, listeners, attributes } = useDraggable({
+              id: step.id,
+            })
+            return (
+              <div
+                key={step.id}
+                ref={setDraggableRef}
+                {...listeners}
+                {...attributes}
+                className={cn(
+                  "p-4 rounded-lg border flex items-center",
+                  isComplete &&
+                    currentSequence?.steps.find((s) => s.id === step.id)?.order ===
+                      index + 1
+                    ? "bg-green-500/20 border-green-500"
+                    : isComplete
+                    ? "bg-red-500/20 border-red-500"
+                    : "bg-[#1a1d23] border-gray-700"
+                )}
+              >
+                <div className="w-8 h-8 rounded-full bg-[#2a2f3a] flex items-center justify-center mr-4">
+                  {index + 1}
+                </div>
+                <div>{step.content}</div>
+              </div>
+            )
+          })}
+        </div>
+      </DndContext>
 
       {!isComplete ? (
         <Button onClick={checkOrder} className="w-full bg-blue-600 hover:bg-blue-700" disabled={steps.length === 0}>
