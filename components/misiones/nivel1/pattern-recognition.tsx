@@ -349,11 +349,11 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
         />
       </div>
       <div className="flex flex-col items-center flex-1 justify-center">
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <div className="flex items-center justify-center gap-2 md:gap-4 mb-8 w-full overflow-x-auto scrollbar-thin scrollbar-thumb-purple-700/60 scrollbar-track-transparent">
           {pattern.map((item, index) => (
             <motion.div
               key={index}
-              className="w-16 h-16 flex items-center justify-center text-4xl bg-[#232946] rounded-xl border-2 border-purple-700 shadow-lg"
+              className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center text-2xl md:text-4xl bg-[#232946] rounded-xl border-2 border-purple-700 shadow-lg min-w-0"
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.08 }}
@@ -362,7 +362,7 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
             </motion.div>
           ))}
           <motion.div
-            className="w-16 h-16 flex items-center justify-center text-4xl bg-[#232946] rounded-xl border-2 border-dashed border-purple-400 animate-bounce"
+            className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center text-2xl md:text-4xl bg-[#232946] rounded-xl border-2 border-dashed border-purple-400 animate-bounce min-w-0"
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: pattern.length * 0.08 }}

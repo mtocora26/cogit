@@ -43,16 +43,17 @@ export default function InstructionPanel({ onAddCommand, availableCommands, disa
   return (
     <div className="bg-[#1e2330] rounded-lg p-3 border border-gray-800">
       <h2 className="text-lg font-bold mb-2">Comandos Disponibles</h2>
-      <div className="grid grid-cols-1 gap-1">
+      <div className="grid grid-cols-1 gap-2 sm:gap-1">
         {availableCommands.map((command, index) => {
           const { name, color, icon, description } = getCommandInfo(command)
           return (
             <button
               key={index}
               className={cn(
-                "flex items-center gap-2 p-2 rounded-lg border border-gray-700 bg-[#1a1d23] hover:bg-gray-800 transition-colors text-left text-sm",
+                "flex items-center gap-3 p-3 rounded-xl border border-gray-700 bg-[#1a1d23] hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors text-left text-base sm:text-sm",
                 disabled ? "opacity-50 cursor-not-allowed" : ""
               )}
+              style={{ minHeight: 56 }}
               onClick={() => !disabled && onAddCommand(command)}
               disabled={disabled}
               draggable={!disabled}
@@ -61,7 +62,7 @@ export default function InstructionPanel({ onAddCommand, availableCommands, disa
                 e.dataTransfer.setData("text/plain", command)
               }}
             >
-              <div className={cn(color, "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold")}>{icon}</div>
+              <div className={cn(color, "w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xl")}>{icon}</div>
               <div>
                 <div className="font-medium leading-tight">{name}</div>
                 <div className="text-xs text-gray-400 leading-tight">{description}</div>
