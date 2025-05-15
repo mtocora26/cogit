@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import * as React from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface CommandZoneProps {
   commands: string[]
@@ -62,49 +63,75 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
       {/* Header eliminado, el título lo pone el layout principal */}
       {commands.length === 0 ? (
         <div className={cn(
-          "bg-[#1a1d23] rounded-lg p-8 text-center border border-dashed border-gray-700",
+          "bg-[#1a1d23] rounded-lg p-8 sm:p-6 text-center border border-dashed border-gray-700 min-h-[64px] flex items-center justify-center text-base sm:text-sm",
           isDragOver && "border-blue-400 bg-blue-400/10"
         )}>
           <p className="text-gray-400">Haz clic o arrastra comandos aquí para programar al robot</p>
         </div>
       ) : (
-        <div className={cn(vertical ? "flex flex-col gap-2" : "grid grid-cols-1 gap-2")}> 
-          {commands.map((command, index) => {
-            const { name, color, icon } = getCommandInfo(command)
-
-            return (
-              <div
-                key={index}
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-lg border border-gray-700",
-                  isExecuting && index === currentStep - 1 ? "bg-gray-700" : "bg-[#1a1d23]",
-                  isExecuting && index < currentStep - 1 ? "opacity-50" : "",
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`${color} w-8 h-8 rounded-full flex items-center justify-center text-white font-bold`}
-                  >
-                    {icon}
+        <div className={cn(vertical ? "flex flex-col gap-3" : "grid grid-cols-1 gap-2")}> 
+          <AnimatePresence initial={false}>
+            {commands.map((command, index) => {
+              const { name, color, icon } = getCommandInfo(command)
+              // Animación: pop al agregar, glow/bounce al ejecutar
+              const isCurrent = isExecuting && index === currentStep - 1
+              const isPast = isExecuting && index < currentStep - 1
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-xl border border-gray-700 relative overflow-visible",
+                    isCurrent ? "bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-green-500/30 ring-2 ring-yellow-400 animate-glow-bounce z-10" :
+                    isPast ? "opacity-50" : "bg-[#1a1d23]",
+                  )}
+                  style={{ minHeight: 56 }}
+                >
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      className={cn(color, "w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg")}
+                      animate={isCurrent ? { scale: [1, 1.18, 0.95, 1], boxShadow: [
+                        "0 0 0px #fff0", "0 0 16px #facc15,0 0 32px #818cf8", "0 0 0px #fff0", "0 0 0px #fff0"
+                      ] } : {}}
+                      transition={isCurrent ? { duration: 0.7, repeat: 2 } : {}}
+                    >
+                      {icon}
+                    </motion.div>
+                    <span className="text-base sm:text-sm font-semibold drop-shadow-lg">{name}</span>
                   </div>
-                  <span>{name}</span>
-                </div>
-
-                {!isExecuting && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-transparent"
-                    onClick={() => onRemoveCommand(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )
-          })}
+                  {!isExecuting && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 text-gray-400 hover:text-red-400 hover:bg-transparent"
+                      onClick={() => onRemoveCommand(index)}
+                      aria-label="Eliminar comando"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  )}
+                  {/* Efecto shake si es el comando actual */}
+                  {isCurrent && (
+                    <motion.div
+                      className="absolute -top-2 -right-2"
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1.2, opacity: 1, rotate: [0, 8, -8, 0] }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <span className="inline-block text-yellow-300 text-2xl animate-bounce">⭐</span>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
     </div>
   )
 }
+
+// (No debe haber ningún <style jsx global> aquí. Si se requiere animación global, debe ir en styles/globals.css o en el layout principal)

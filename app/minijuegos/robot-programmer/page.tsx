@@ -120,59 +120,53 @@ export default function RobotProgrammerPage() {
 
   // Ejecutar los comandos
   const executeCommands = async () => {
-    if (isExecuting || commands.length === 0) return
+    if (isExecuting || commands.length === 0) return;
 
-    setIsExecuting(true)
-    setSteps(0)
+    setIsExecuting(true);
+    setSteps(0);
 
     // Reiniciar el estado del robot
-    const level = levels[currentLevel]
-    setRobotPosition({ ...level.startPosition })
-    setLitCells([])
+    const level = levels[currentLevel];
+    setRobotPosition({ ...level.startPosition });
+    setLitCells([]);
 
     // Ejecutar cada comando secuencialmente
-    let currentPosition = { ...level.startPosition }
-    let currentLitCells: { x: number; y: number }[] = []
+    let currentPosition = { ...level.startPosition };
+    let currentLitCells: { x: number; y: number }[] = [];
 
     for (let i = 0; i < commands.length; i++) {
-      const command = commands[i]
-
-      // Actualizar el estado para mostrar la animación
-      setSteps(i + 1)
-
-      // Ejecutar el comando
-      const result = executeCommand(command, currentPosition, currentLitCells, level.board)
-      currentPosition = result.position
-      currentLitCells = result.litCells
-
-      // Actualizar el estado del juego
-      setRobotPosition({ ...currentPosition })
-      setLitCells([...currentLitCells])
-
-      // Esperar para el siguiente paso
-      await new Promise((resolve) => setTimeout(resolve, executionSpeed))
+      const command = commands[i];
+      setSteps(i + 1);
+      const result = executeCommand(command, currentPosition, currentLitCells, level.board);
+      currentPosition = result.position;
+      currentLitCells = result.litCells;
+      setRobotPosition({ ...currentPosition });
+      setLitCells([...currentLitCells]);
+      await new Promise((resolve) => setTimeout(resolve, executionSpeed));
     }
 
     // Verificar si se completó el nivel
-    const success = validateSolution(currentLitCells, level.targetCells)
+    const success = validateSolution(currentLitCells, level.targetCells);
 
     if (success) {
-      setIsSuccess(true)
-      setIsComplete(true)
-      setIsActive(false)
+      setIsSuccess(true);
+      setIsComplete(true);
+      setIsActive(false);
     } else {
-      // Si no se completó correctamente, reducir vidas
-      setLives((prev) => Math.max(0, prev - 1))
-
-      if (lives <= 1) {
-        setIsComplete(true)
-        setIsSuccess(false)
-        setIsActive(false)
-      }
+      // Si no se completó correctamente, reducir vidas de forma segura
+      setLives((prev) => {
+        const newLives = Math.max(0, prev - 1);
+        if (newLives <= 0) {
+          setIsComplete(true);
+          setIsSuccess(false);
+          setIsActive(false);
+        }
+        return newLives;
+      });
     }
 
-    setIsExecuting(false)
-  }
+    setIsExecuting(false);
+  };
 
   // Ejecutar un comando individual
   const executeCommand = (
@@ -275,7 +269,7 @@ export default function RobotProgrammerPage() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center gap-4">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             className="text-gray-400 hover:text-white"
             onClick={() => router.push("/minijuegos")}
@@ -298,7 +292,7 @@ export default function RobotProgrammerPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-2 py-4">
+      <div className="container mx-auto px-1 sm:px-2 py-4">
         {showLevelSelector ? (
           <div className="relative">
             <div className="absolute inset-0 z-0">
@@ -319,14 +313,19 @@ export default function RobotProgrammerPage() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col md:flex-row gap-4 items-start justify-center">
+          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-start justify-center w-full max-w-5xl mx-auto">
             {/* Panel de comandos disponibles a la izquierda */}
-            <div className="w-full md:w-[300px] flex-shrink-0 flex flex-col gap-2 items-center md:items-stretch order-1 md:order-none">
+            <div className="w-full md:w-[300px] flex-shrink-0 flex flex-col gap-2 items-stretch order-1 md:order-none">
               <div className="flex w-full justify-between items-center mb-1">
                 <h3 className="text-lg font-bold text-center flex-1">Comandos</h3>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button size="icon" variant="ghost" className="ml-2" title="Ver instrucciones">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="ml-2"
+                      title="Ver instrucciones"
+                    >
                       <Info className="h-5 w-5 text-blue-400" />
                     </Button>
                   </PopoverTrigger>
@@ -351,8 +350,8 @@ export default function RobotProgrammerPage() {
               </div>
             </div>
             {/* Main game area: tablero y robot */}
-            <div className="flex-1 flex flex-col items-center order-2 md:order-none">
-              <div className="relative w-full max-w-[480px] aspect-square mx-auto">
+            <div className="flex-1 flex flex-col items-center order-2 md:order-none min-w-0">
+              <div className="relative w-full max-w-[480px] aspect-square mx-auto min-h-[320px] sm:min-h-[400px]">
                 <GameBoard
                   board={levels[currentLevel].board}
                   robotPosition={robotPosition}
@@ -377,7 +376,7 @@ export default function RobotProgrammerPage() {
                     }}
                   >
                     <div style={{ filter: 'drop-shadow(0 8px 24px #818cf8cc) drop-shadow(0 0px 8px #38d9a9cc)' }}>
-                      <RobotSVG direction={0} size={56} mood={robotMood} animate={!isComplete} />
+                      <RobotSVG direction={robotPosition.direction} size={56} mood={robotMood} animate={!isComplete} />
                     </div>
                   </div>
                 )}
@@ -398,7 +397,7 @@ export default function RobotProgrammerPage() {
               )}
             </div>
             {/* Panel de secuencia de comandos a la derecha */}
-            <div className="w-full md:w-[320px] flex-shrink-0 flex flex-col gap-2 items-center md:items-stretch order-3 md:order-none">
+            <div className="w-full md:w-[320px] flex-shrink-0 flex flex-col gap-2 items-stretch order-3 md:order-none">
               <div className="bg-[#1e2330] rounded-lg p-4 border border-gray-800 w-full">
                 <CommandZone
                   commands={commands}
@@ -411,7 +410,7 @@ export default function RobotProgrammerPage() {
               {/* Botones principales debajo de comandos */}
               <div className="flex flex-col gap-2 w-full mt-2">
                 <Button
-                  className="bg-green-600 hover:bg-green-700 w-full"
+                  className="bg-green-600 hover:bg-green-700 w-full text-base py-3"
                   onClick={executeCommands}
                   disabled={isExecuting || commands.length === 0 || isComplete}
                 >
@@ -420,7 +419,7 @@ export default function RobotProgrammerPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-gray-700 hover:bg-gray-800 w-full"
+                  className="border-gray-700 hover:bg-gray-800 w-full text-base py-3"
                   onClick={resetLevel}
                   disabled={isExecuting}
                 >
@@ -429,7 +428,7 @@ export default function RobotProgrammerPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-gray-700 hover:bg-gray-800 w-full"
+                  className="border-gray-700 hover:bg-gray-800 w-full text-base py-3"
                   onClick={handleBackToLevels}
                 >
                   Cambiar nivel

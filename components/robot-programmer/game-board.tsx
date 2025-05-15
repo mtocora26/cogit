@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface GameBoardProps {
   board: number[][]
@@ -13,6 +13,15 @@ interface GameBoardProps {
 
 export default function GameBoard({ board, robotPosition, targetCells, litCells, robot3D, compact = false }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Animación flash para celdas recién encendidas
+  const [lastLit, setLastLit] = useState<{ x: number; y: number } | null>(null)
+  useEffect(() => {
+    if (litCells.length > 0) {
+      setLastLit(litCells[litCells.length - 1])
+      const t = setTimeout(() => setLastLit(null), 400)
+      return () => clearTimeout(t)
+    }
+  }, [litCells])
 
   // Dibujar el tablero cuando cambian las props
   useEffect(() => {
@@ -114,6 +123,18 @@ export default function GameBoard({ board, robotPosition, targetCells, litCells,
           ctx.shadowColor = "#6ee7b7"
           ctx.shadowBlur = 12
           ctx.fill()
+          // Flash extra si es la última encendida
+          if (lastLit && lastLit.x === x && lastLit.y === y) {
+            ctx.save()
+            ctx.globalAlpha = 0.7
+            ctx.shadowColor = "#faffb0"
+            ctx.shadowBlur = 32
+            ctx.beginPath()
+            ctx.arc(cellX + cellSize / 2, cellY + cellSize / 2, cellSize / 2, 0, Math.PI * 2)
+            ctx.fillStyle = "#faffb0"
+            ctx.fill()
+            ctx.restore()
+          }
         }
       }
     }
@@ -146,7 +167,7 @@ export default function GameBoard({ board, robotPosition, targetCells, litCells,
         ctx.fill()
       }
     }
-  }, [board, robotPosition, targetCells, litCells, robot3D, compact])
+  }, [board, robotPosition, targetCells, litCells, robot3D, compact, lastLit])
 
   return (
     <div className={compact ? "bg-[#1e2330] rounded-lg p-2 border border-gray-800" : "bg-[#1e2330] rounded-lg p-6 border border-gray-800"}>
