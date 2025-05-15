@@ -629,7 +629,7 @@ const steps = [
 
 export default function DemoTourPage() {
   // Modo desarrollador para pruebas: fuerza la insignia desbloqueada
-  const DEV_MODE = true; // Poner en false para comportamiento normal
+  const DEV_MODE = false; // Poner en false para comportamiento normal
 
   const [step, setStep] = useState(0);
   const isFirst = step === 0;
