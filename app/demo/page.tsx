@@ -54,13 +54,13 @@ function NonogramaDemo({ onComplete }: { onComplete?: () => void }) {
     return (
       <div className="flex flex-col items-center gap-4 w-full max-w-xs mx-auto bg-gradient-to-br from-blue-900/80 via-blue-800/80 to-purple-900/80 border-2 border-blue-400/40 shadow-xl rounded-2xl p-6 mb-4 animate-fade-in">
         <div className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 animate-gradient-x mb-2 text-center drop-shadow-lg">¿Cómo resolver un nonograma?</div>
-        <ul className="list-disc list-inside text-base text-blue-100/90 space-y-2 text-left w-full pl-2">
-          <li><span className="font-bold text-yellow-300">Observa</span> las pistas a la izquierda (filas) y arriba (columnas).</li>
-          <li><span className="font-bold text-pink-300">Cada número</span> indica una secuencia de casillas rellenas.</li>
-          <li><span className="font-bold text-green-300">Haz clic izquierdo</span> para marcar una casilla como rellena.</li>
-          <li><span className="font-bold text-purple-300">Haz clic derecho</span> para marcar una casilla como vacía.</li>
-          <li><span className="font-bold text-blue-200">Completa el patrón</span> correctamente para ganar.</li>
-        </ul>
+      <ul className="list-disc list-inside text-base text-blue-100/90 space-y-2 text-left w-full pl-2">
+        <li><span className="font-bold text-yellow-300">Observa</span> las pistas a la izquierda (filas) y arriba (columnas).</li>
+        <li><span className="font-bold text-pink-300">Cada número</span> indica una secuencia de casillas rellenas.</li>
+        <li><span className="font-bold text-green-300">Toca una casilla</span> para marcarla como rellena.</li>
+        <li><span className="font-bold text-purple-300">Mantén presionado</span> para marcarla como vacía.</li>
+        <li><span className="font-bold text-blue-200">Completa el patrón</span> correctamente para ganar.</li>
+      </ul>
         <button
           className="mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 text-white font-bold shadow-lg hover:scale-105 transition-transform text-lg"
           onClick={() => setShowTutorial(false)}
