@@ -349,27 +349,34 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
         />
       </div>
       <div className="flex flex-col items-center flex-1 justify-center">
-        <div className="flex items-center justify-center gap-2 md:gap-4 mb-8 w-full overflow-x-auto scrollbar-thin scrollbar-thumb-purple-700/60 scrollbar-track-transparent">
-          {pattern.map((item, index) => (
+        {/* Secuencia de patrón visual mejorada, cuadros perfectamente cuadrados y alineados */}
+        <div className="relative w-full max-w-full mb-8 px-1 md:px-0">
+          <div
+            className="flex flex-nowrap justify-center items-center gap-2 md:gap-4 py-3 md:py-4 px-2 md:px-6 bg-[#232946] rounded-2xl shadow-lg border-2 border-purple-700/40 mx-auto min-h-[72px] md:min-h-[96px] overflow-x-auto scrollbar-thin scrollbar-thumb-purple-700/40 scrollbar-track-transparent"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {pattern.map((item, index) => (
+              <motion.div
+                key={index}
+                className="w-14 h-14 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center text-3xl md:text-5xl bg-[#2a2f3a] rounded-xl border-2 border-purple-400 shadow min-w-[3.5rem] min-h-[3.5rem] md:min-w-[5rem] md:min-h-[5rem]"
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: index * 0.08 }}
+              >
+                {item}
+              </motion.div>
+            ))}
             <motion.div
-              key={index}
-              className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center text-2xl md:text-4xl bg-[#232946] rounded-xl border-2 border-purple-700 shadow-lg min-w-0"
+              className="w-14 h-14 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center text-3xl md:text-5xl bg-[#2a2f3a] rounded-xl border-2 border-dashed border-yellow-400 animate-bounce min-w-[3.5rem] min-h-[3.5rem] md:min-w-[5rem] md:min-h-[5rem]"
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.08 }}
+              transition={{ delay: pattern.length * 0.08 }}
             >
-              {item}
+              ?
             </motion.div>
-          ))}
-          <motion.div
-            className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center text-2xl md:text-4xl bg-[#232946] rounded-xl border-2 border-dashed border-purple-400 animate-bounce min-w-0"
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: pattern.length * 0.08 }}
-          >
-            ?
-          </motion.div>
+          </div>
         </div>
+        {/* Opciones */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 w-full max-w-md">
           {options.map((option, index) => (
             <motion.div

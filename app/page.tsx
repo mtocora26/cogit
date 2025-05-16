@@ -53,7 +53,10 @@ export default function Home() {
           </h1>
           <p className="text-lg text-gray-300">Aprender a pensar como un programador nunca fue tan divertido.</p>
           <Link href="/registro">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg">
+            <Button
+              size="lg"
+              className="bg-purple-600 hover:bg-purple-700 text-white btn-lg-padding text-lg mt-6"
+            >
               Inicia Tu Aventura
             </Button>
           </Link>

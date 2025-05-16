@@ -28,24 +28,47 @@ function NonogramaDemo({ onComplete }: { onComplete?: () => void }) {
   const [showTutorial, setShowTutorial] = useState(true);
   // Estado para mostrar la animación de imagen completada
   const [showImageReveal, setShowImageReveal] = useState(false);
+  // Modo de entrada: "fill" (rellenar) o "x" (marcar X)
+  const [inputMode, setInputMode] = useState<'fill' | 'x'>('fill');
+
+  // Detectar si es móvil (simple, usando window.innerWidth)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  function isBoardSolved(board: number[][], solution: number[][]) {
+    // Devuelve true si todas las casillas que deben estar rellenas (1) en la solución están rellenas en el board,
+    // y no hay ninguna casilla rellena (1) en el board donde la solución no lo indica.
+    for (let i = 0; i < solution.length; i++) {
+      for (let j = 0; j < solution[0].length; j++) {
+        if (solution[i][j] === 1 && board[i][j] !== 1) return false;
+        if (solution[i][j] === 0 && board[i][j] === 1) return false;
+      }
+    }
+    return true;
+  }
 
   function handleCellClick(row: number, col: number, rightClick = false) {
     if (isComplete) return;
     const newBoard = board.map((r) => [...r]);
-    newBoard[row][col] = rightClick
-      ? newBoard[row][col] === 2
-        ? 0
-        : 2
-      : newBoard[row][col] === 1
-      ? 0
-      : 1;
+    // Unificación de lógica: inputMode en móvil, clic izquierdo/derecho en desktop
+    if (isMobile) {
+      // En móvil, usar inputMode
+      if (inputMode === 'x') {
+        newBoard[row][col] = newBoard[row][col] === 2 ? 0 : 2;
+      } else {
+        newBoard[row][col] = newBoard[row][col] === 1 ? 0 : 1;
+      }
+    } else {
+      // En desktop, clic derecho marca X, clic izquierdo rellena
+      if (rightClick) {
+        newBoard[row][col] = newBoard[row][col] === 2 ? 0 : 2;
+      } else {
+        newBoard[row][col] = newBoard[row][col] === 1 ? 0 : 1;
+      }
+    }
     setBoard(newBoard);
-    // Verificar si se completó
-    if (
-      JSON.stringify(newBoard) === JSON.stringify(level.solution)
-    ) {
+    if (isBoardSolved(newBoard, level.solution)) {
       setIsComplete(true);
-      setTimeout(() => setShowImageReveal(true), 500); // Pequeño delay para la animación
+      setTimeout(() => setShowImageReveal(true), 500);
       if (onComplete) onComplete();
     }
   }
@@ -58,7 +81,7 @@ function NonogramaDemo({ onComplete }: { onComplete?: () => void }) {
         <li><span className="font-bold text-yellow-300">Observa</span> las pistas a la izquierda (filas) y arriba (columnas).</li>
         <li><span className="font-bold text-pink-300">Cada número</span> indica una secuencia de casillas rellenas.</li>
         <li><span className="font-bold text-green-300">Toca una casilla</span> para marcarla como rellena.</li>
-        <li><span className="font-bold text-purple-300">Mantén presionado</span> para marcarla como vacía.</li>
+        <li><span className="font-bold text-purple-300">Mantén presionado</span> para marcarla como vacía (o usa el botón de modo en celular).</li>
         <li><span className="font-bold text-blue-200">Completa el patrón</span> correctamente para ganar.</li>
       </ul>
         <button
@@ -72,19 +95,39 @@ function NonogramaDemo({ onComplete }: { onComplete?: () => void }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-xs mx-auto bg-gradient-to-br from-blue-900/80 via-blue-800/80 to-purple-900/80 border-2 border-yellow-400/30 shadow-xl rounded-2xl p-6 animate-fade-in relative">
+    <div className="flex flex-col items-center gap-4 w-full mx-auto bg-gradient-to-br from-blue-900/80 via-blue-800/80 to-purple-900/80 border-2 border-yellow-400/30 shadow-xl rounded-2xl p-6 animate-fade-in relative">
       <div className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 animate-gradient-x mb-2 text-center drop-shadow-lg">Resuelve este mini nonograma</div>
-      <div className="w-full max-w-xs">
-        <NonogramBoard
-          board={board}
-          rowClues={level.rowClues}
-          colClues={level.colClues}
-          onCellClick={handleCellClick}
-          errors={errors}
-          showHint={false}
-          solution={level.solution}
-          isPreview={false}
-        />
+      {/* Selector de modo de entrada */}
+      {isMobile && (
+        <div className="flex gap-2 mb-2">
+          <button
+            className={`px-3 py-1 rounded-lg font-bold text-lg border-2 transition-all ${inputMode === 'fill' ? 'bg-purple-600 text-white border-purple-400' : 'bg-[#232946] text-purple-200 border-gray-600'}`}
+            onClick={() => setInputMode('fill')}
+          >
+            Cuadrado
+          </button>
+          <button
+            className={`px-3 py-1 rounded-lg font-bold text-lg border-2 transition-all ${inputMode === 'x' ? 'bg-yellow-400 text-yellow-900 border-yellow-300' : 'bg-[#232946] text-yellow-400 border-gray-600'}`}
+            onClick={() => setInputMode('x')}
+          >
+            X
+          </button>
+        </div>
+      )}
+      {/* Contenedor centrado para el tablero */}
+      <div className="w-full flex justify-center items-center">
+        <div className="w-full max-w-sm aspect-square flex justify-center items-center mx-auto">
+          <NonogramBoard
+            board={board}
+            rowClues={level.rowClues}
+            colClues={level.colClues}
+            onCellClick={handleCellClick}
+            errors={errors}
+            showHint={false}
+            solution={level.solution}
+            isPreview={false}
+          />
+        </div>
       </div>
       {isComplete && !showImageReveal && (
         <div className="text-green-400 font-bold mt-4 text-lg animate-bounce">¡Correcto! 🎉</div>
@@ -93,7 +136,7 @@ function NonogramaDemo({ onComplete }: { onComplete?: () => void }) {
       {showImageReveal && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-2xl animate-fade-in z-20">
           <div className="mb-4 text-2xl font-bold text-white animate-bounce">¡Descubriste la imagen!</div>
-          <div className="w-32 h-32 mx-auto mb-2 scale-0 animate-reveal-image">
+          <div className="w-full max-w-[128px] aspect-square mx-auto mb-2 flex items-center justify-center scale-0 animate-reveal-image">
             <NonogramBoard
               board={level.solution}
               rowClues={[]}
@@ -584,25 +627,52 @@ const steps = [
   {
     title: "¡Bienvenido!",
     content: (
-      <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-bold text-yellow-400 drop-shadow">¡Bienvenido a la demo interactiva de COGIT!</h1>
-        <p className="text-base text-white/90">COGIT es una plataforma educativa diseñada para que niños, niñas y jóvenes desarrollen <span className="font-bold text-pink-300">pensamiento computacional</span> y habilidades digitales de manera divertida y accesible.</p>
-        <p className="text-base text-white/80">A través de minijuegos y retos interactivos, aprenderás a <span className="font-bold text-green-300">resolver problemas</span>, <span className="font-bold text-blue-300">pensar lógicamente</span> y <span className="font-bold text-purple-300">crear soluciones paso a paso</span>, ¡como lo hacen los programadores!</p>
-        <p className="text-base text-white/70">Esta demo te permitirá explorar algunos de nuestros juegos sin necesidad de registrarte. ¡Descubre cómo el juego puede ayudarte a aprender y potenciar tu creatividad!</p>
+      <div className="relative w-full flex flex-col items-center justify-center min-h-[420px] py-10 px-4 sm:px-8 bg-gradient-to-br from-blue-950/80 via-purple-900/80 to-blue-900/80 rounded-xl shadow-xl overflow-hidden">
+        {/* Fondo decorativo */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-400/20 rounded-full blur-2xl animate-pulse" />
+          <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-yellow-400/20 rounded-full blur-2xl animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl" />
+        </div>
+        {/* Logo */}
+        <img src="/placeholder-logo.svg" alt="COGIT Logo" className="w-20 h-20 mb-4 z-10 drop-shadow-lg" />
+        <div className="space-y-4 text-center z-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow mb-2">¡Bienvenido a la demo interactiva de COGIT!</h1>
+          <p className="text-base sm:text-lg text-white/90">COGIT es una plataforma educativa diseñada para que niños, niñas y jóvenes desarrollen <span className="font-bold text-pink-300">pensamiento computacional</span> y habilidades digitales de manera divertida y accesible.</p>
+          <p className="text-base sm:text-lg text-white/80">A través de minijuegos y retos interactivos, aprenderás a <span className="font-bold text-green-300">resolver problemas</span>, <span className="font-bold text-blue-300">pensar lógicamente</span> y <span className="font-bold text-purple-300">crear soluciones paso a paso</span>, ¡como lo hacen los programadores!</p>
+          <p className="text-base sm:text-lg text-white/70">Esta demo te permitirá explorar algunos de nuestros juegos sin necesidad de registrarte. ¡Descubre cómo el juego puede ayudarte a aprender y potenciar tu creatividad!</p>
+        </div>
+        {/* Separación visual */}
+        <div className="h-6 sm:h-8" />
+        {/* Botón destacado */}
+        <div className="flex justify-center w-full z-10">
+          <button
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 text-white font-bold shadow-lg hover:scale-105 transition-transform text-lg sm:text-xl border-2 border-yellow-300/60 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            onClick={() => {
+              // Avanzar al siguiente paso (simulado, el botón real se renderiza en el flujo principal)
+              const nextBtn = document.querySelector('button:contains("Siguiente")');
+              if (nextBtn) (nextBtn as HTMLButtonElement).click();
+            }}
+          >
+            ¡Comenzar!
+          </button>
+        </div>
       </div>
     ),
   },
   {
     title: "Nonograma Demo",
-    content: <NonogramaDemo />,
+    content: ({ onComplete }: { onComplete: () => void }) => (
+      <div className="flex flex-col items-center w-full">
+        <NonogramaDemo onComplete={onComplete} />
+      </div>
+    ),
   },
   {
     title: "Reconoce el Patrón",
-    content: (
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-lg">
-          <PatternRecognition onComplete={() => {}} />
-        </div>
+    content: ({ onComplete }: { onComplete?: () => void }) => (
+      <div className="w-full flex flex-col items-center justify-center overflow-visible">
+        <PatternRecognition onComplete={onComplete || (() => {})} />
       </div>
     ),
   },
@@ -656,26 +726,40 @@ export default function DemoTourPage() {
     setProgress((prev) => ({ ...prev, [key]: true }));
   }
 
-  // Pasar handlers a los minijuegos
-  const stepsWithProgress = [
-    steps[0],
-    { ...steps[1], content: <NonogramaDemo onComplete={() => handleComplete("nonograma")} /> },
-    { ...steps[2], content: <div className="w-full flex justify-center"><div className="w-full max-w-lg"><PatternRecognition onComplete={() => handleComplete("patron")} /></div></div> },
-    { ...steps[3], content: <RobotDemo onComplete={() => handleComplete("robot")} /> },
-    { ...steps[4], content: <SandwichDemo onComplete={() => handleComplete("sandwich")} /> },
-    // Invocar la función content solo en el paso de '¡Gracias!'
-    { 
-      ...steps[5], 
-      content: 
-        typeof steps[5].content === "function"
-          ? steps[5].content({ progress: progressForView })
-          : steps[5].content
-    },
-  ];
+  // Avance automático al siguiente paso cuando se completa un minijuego
+  useEffect(() => {
+    // Mapeo de paso a clave de progreso (null para pasos sin minijuego)
+    const stepToKey: (keyof typeof progress | null)[] = [
+      null, // Bienvenida
+      "nonograma",
+      "patron",
+      "robot",
+      "sandwich",
+    ];
+    // Si el paso actual es un minijuego y se completó, avanzar tras un delay
+    if (step > 0 && step < 5) {
+      const key = stepToKey[step];
+      if (key && progress[key]) {
+        // Solo avanzar si no es el último paso
+        if (step < steps.length - 1) {
+          const timeout = setTimeout(() => setStep((s) => (s < steps.length - 1 ? s + 1 : s)), 1200);
+          return () => clearTimeout(timeout);
+        } else if (step === steps.length - 1) {
+          setShowCongrats(true);
+        }
+      }
+    }
+  }, [progress, step]);
 
   const [showCongrats, setShowCongrats] = useState(false);
 
   // Responsive y barra de progreso
+  // Determinar si mostrar los botones de navegación
+  const showNavButtons = step === 0 || step === steps.length - 1;
+
+  // Mapeo explícito de índice de paso a clave de progreso
+  const progressKeys = ["nonograma", "patron", "robot", "sandwich"];
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a1d23] text-white px-2">
       {/* PopUp de felicitación al finalizar */}
@@ -695,7 +779,7 @@ export default function DemoTourPage() {
           <div className="w-full max-w-md sm:max-w-xl flex flex-col items-center relative mb-4">
             <div className="w-full flex items-center justify-center mb-4">
               <div className="flex gap-1 w-full max-w-xs">
-                {stepsWithProgress.map((_, i) => (
+                {steps.map((_, i) => (
                   <div
                     key={i}
                     className={`flex-1 h-2 rounded-full transition-all duration-300 ${i <= step ? "bg-yellow-400" : "bg-gray-200"}`}
@@ -703,14 +787,44 @@ export default function DemoTourPage() {
                 ))}
               </div>
             </div>
-            <h2 className="mb-2 text-lg font-semibold text-center w-full">{stepsWithProgress[step].title}</h2>
+            <h2 className="mb-2 text-lg font-semibold text-center w-full">{steps[step].title}</h2>
           </div>
           {/* El minijuego ocupa el ancho necesario, sin card oscuro */}
           <div className="mb-6 w-full flex flex-col items-center justify-center min-h-[120px]">
-            {typeof stepsWithProgress[step].content === "function"
-              ? stepsWithProgress[step].content({ progress: progressForView })
-              : stepsWithProgress[step].content}
+            {typeof steps[step].content === "function"
+              ? steps[step].content({
+                  onComplete: () => {
+                    const key = progressKeys[step - 1];
+                    if (key) setProgress((prev) => ({ ...prev, [key]: true }));
+                  },
+                  progress: progressForView
+                })
+              : steps[step].content}
           </div>
+          {/* Mostrar botones de navegación en todos los pasos */}
+          <div className="flex gap-2 w-full max-w-md sm:max-w-xl justify-center mt-2">
+            <Button onClick={() => setStep(step - 1)} disabled={isFirst}>Anterior</Button>
+            <Button onClick={() => {
+              if (isLast) setShowCongrats(true);
+              else setStep(step + 1);
+            }} disabled={isLast && showCongrats}>{isLast ? "Finalizar" : "Siguiente"}</Button>
+          </div>
+        </div>
+      ) : step === 2 ? (
+        // Paso especial: Reconoce el Patrón sin card restrictivo
+        <div className="w-full flex flex-col items-center justify-center">
+          <div className="w-full flex flex-col items-center justify-center overflow-visible">
+            {typeof steps[step].content === "function"
+              ? steps[step].content({
+                  onComplete: () => {
+                    const key = progressKeys[step - 1];
+                    if (key) setProgress((prev) => ({ ...prev, [key]: true }));
+                  },
+                  progress: progressForView
+                })
+              : steps[step].content}
+          </div>
+          {/* Mostrar botones de navegación en todos los pasos */}
           <div className="flex gap-2 w-full max-w-md sm:max-w-xl justify-center mt-2">
             <Button onClick={() => setStep(step - 1)} disabled={isFirst}>Anterior</Button>
             <Button onClick={() => {
@@ -725,7 +839,7 @@ export default function DemoTourPage() {
           {/* Barra de progreso */}
           <div className="w-full flex items-center justify-center mb-4">
             <div className="flex gap-1 w-full max-w-xs">
-              {stepsWithProgress.map((_, i) => (
+              {steps.map((_, i) => (
                 <div
                   key={i}
                   className={`flex-1 h-2 rounded-full transition-all duration-300 ${i <= step ? "bg-yellow-400" : "bg-gray-200"}`}
@@ -733,12 +847,19 @@ export default function DemoTourPage() {
               ))}
             </div>
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-center w-full">{stepsWithProgress[step].title}</h2>
+          <h2 className="mb-2 text-lg font-semibold text-center w-full">{steps[step].title}</h2>
           <div className="mb-6 w-full flex flex-col items-center justify-center min-h-[120px]">
-            {typeof stepsWithProgress[step].content === "function"
-              ? stepsWithProgress[step].content({ progress: progressForView })
-              : stepsWithProgress[step].content}
+            {typeof steps[step].content === "function"
+              ? steps[step].content({
+                  onComplete: () => {
+                    const key = progressKeys[step - 1];
+                    if (key) setProgress((prev) => ({ ...prev, [key]: true }));
+                  },
+                  progress: progressForView
+                })
+              : steps[step].content}
           </div>
+          {/* Mostrar botones de navegación en todos los pasos */}
           <div className="flex gap-2 w-full justify-center mt-2">
             <Button onClick={() => setStep(step - 1)} disabled={isFirst}>Anterior</Button>
             <Button onClick={() => {

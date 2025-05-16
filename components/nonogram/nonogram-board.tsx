@@ -75,76 +75,90 @@ export default function NonogramBoard({
   // Si es una vista previa, mostrar solo el tablero completado sin pistas
   if (isPreview) {
     return (
-      <div className="grid grid-cols-1 place-items-center">
+      <div className="w-full max-w-xs aspect-square flex items-center justify-center">
         <div
-          className="grid"
+          className="grid w-full h-full aspect-square border-2 border-gray-700 bg-[#181b22]"
           style={{
             gridTemplateColumns: `repeat(${board[0].length}, 1fr)`,
             gridTemplateRows: `repeat(${board.length}, 1fr)`,
-            gap: "1px",
-            width: "100%",
-            height: "100%",
+            gap: 0,
+            boxSizing: 'border-box',
           }}
         >
           {board.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
-                className={cn("aspect-square", cell === 1 ? "bg-purple-600" : "bg-[#1a1d23]")}
+                className={cn(
+                  "aspect-square w-full h-full min-w-0 min-h-0 overflow-hidden flex items-center justify-center border border-gray-700",
+                  cell === 1 ? "bg-purple-600" : "bg-[#1a1d23]"
+                )}
+                style={{ boxSizing: 'border-box' }}
               />
-            )),
+            ))
           )}
         </div>
       </div>
     )
   }
 
+  // Tablero interactivo con pistas
   return (
-    <div ref={boardRef} className="flex flex-col items-center justify-center">
-      <div className="relative">
-        {/* Columnas de pistas */}
+    <div ref={boardRef} className="w-full max-w-2xl aspect-square flex flex-col items-center justify-center">
+      <div className="relative w-full h-full flex items-center justify-center">
         <div
-          className="grid"
+          className="grid w-full h-full aspect-square border-2 border-gray-700 bg-[#181b22]"
           style={{
-            gridTemplateColumns: `${maxRowClueLength * 2}rem repeat(${board[0].length}, 2.5rem)`,
-            gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, 2.5rem)`,
+            gridTemplateColumns: `${'repeat(' + maxRowClueLength + ', minmax(0, 1.5fr))'} repeat(${board[0].length}, 1fr)`,
+            gridTemplateRows: `${'repeat(' + maxColClueLength + ', minmax(0, 1.5fr))'} repeat(${board.length}, 1fr)`,
+            gap: 0,
+            boxSizing: 'border-box',
           }}
         >
           {/* Esquina superior izquierda vacía */}
-          <div className="col-span-1 row-span-1"></div>
+          {Array.from({ length: maxRowClueLength * maxColClueLength }).map((_, i) => (
+            <div key={`corner-${i}`} className="bg-[#181b22]" />
+          ))}
 
           {/* Pistas de columnas */}
-          {colClues.map((clues, colIndex) => (
-            <div
-              key={`col-${colIndex}`}
-              className="flex flex-col items-center justify-end"
-              style={{ gridColumn: maxRowClueLength + colIndex + 1, gridRow: `1 / span ${maxColClueLength}` }}
-            >
-              {clues.map((clue, i) => (
-                <div
-                  key={`col-${colIndex}-clue-${i}`}
-                  className="text-sm font-medium text-gray-300 h-6 flex items-center justify-center"
-                >
-                  {clue}
-                </div>
-              ))}
-            </div>
-          ))}
+          {colClues.map((clues, colIndex) =>
+            Array.from({ length: maxColClueLength }).map((_, clueRow) => (
+              <div
+                key={`col-clue-${colIndex}-${clueRow}`}
+                className="flex items-end justify-center text-xs md:text-sm font-medium text-gray-300 select-none"
+                style={{
+                  gridColumn: maxRowClueLength + colIndex + 1,
+                  gridRow: clueRow + 1,
+                  boxSizing: 'border-box',
+                  border: 0,
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                {clues[clues.length - maxColClueLength + clueRow] ?? ''}
+              </div>
+            ))
+          )}
 
           {/* Pistas de filas */}
-          {rowClues.map((clues, rowIndex) => (
-            <div
-              key={`row-${rowIndex}`}
-              className="flex items-center justify-end pr-2"
-              style={{ gridColumn: `1 / span ${maxRowClueLength}`, gridRow: maxColClueLength + rowIndex + 1 }}
-            >
-              {clues.map((clue, i) => (
-                <div key={`row-${rowIndex}-clue-${i}`} className="text-sm font-medium text-gray-300 px-1">
-                  {clue}
-                </div>
-              ))}
-            </div>
-          ))}
+          {rowClues.map((clues, rowIndex) =>
+            Array.from({ length: maxRowClueLength }).map((_, clueCol) => (
+              <div
+                key={`row-clue-${rowIndex}-${clueCol}`}
+                className="flex items-center justify-end text-xs md:text-sm font-medium text-gray-300 select-none"
+                style={{
+                  gridColumn: clueCol + 1,
+                  gridRow: maxColClueLength + rowIndex + 1,
+                  boxSizing: 'border-box',
+                  border: 0,
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                {clues[clues.length - maxRowClueLength + clueCol] ?? ''}
+              </div>
+            ))
+          )}
 
           {/* Celdas del tablero */}
           {board.map((row, rowIndex) =>
@@ -152,25 +166,31 @@ export default function NonogramBoard({
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
                 className={cn(
-                  "border border-gray-700 cursor-pointer transition-all",
-                  "w-10 h-10 flex items-center justify-center",
+                  "aspect-square w-full h-full min-w-0 min-h-0 overflow-hidden flex items-center justify-center border border-gray-700 cursor-pointer transition-all text-xl md:text-2xl select-none",
                   cell === 1 ? "bg-purple-600" : "bg-[#1a1d23]",
-                  hasError(rowIndex, colIndex) && "bg-red-500",
-                  shouldShowHint(rowIndex, colIndex) && "bg-green-500 animate-pulse",
+                  cell === 2 ? "bg-yellow-100 border-yellow-400" : "",
+                  hasError(rowIndex, colIndex) && "bg-red-500 border-red-400",
+                  shouldShowHint(rowIndex, colIndex) && "bg-green-500 animate-pulse"
                 )}
                 style={{
                   gridColumn: maxRowClueLength + colIndex + 1,
                   gridRow: maxColClueLength + rowIndex + 1,
+                  boxSizing: 'border-box',
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  borderColor: hasError(rowIndex, colIndex) ? '#f87171' : cell === 2 ? '#facc15' : '#374151',
+                  padding: 0,
+                  margin: 0,
                 }}
                 onClick={() => onCellClick(rowIndex, colIndex)}
-                onContextMenu={(e) => {
+                onContextMenu={e => {
                   e.preventDefault()
                   onCellClick(rowIndex, colIndex, true)
                 }}
               >
-                {cell === 2 && <span className="text-gray-400 font-bold">X</span>}
+                {cell === 2 && <span className="text-yellow-600 font-extrabold text-xl md:text-2xl select-none">X</span>}
               </div>
-            )),
+            ))
           )}
         </div>
       </div>
