@@ -52,10 +52,25 @@ export default function Home() {
             Desbloquea tu <span className="text-purple-400">potencial</span>
           </h1>
           <p className="text-lg text-gray-300">Aprender a pensar como un programador nunca fue tan divertido.</p>
+          <div className="flex flex-wrap gap-3 mt-4 mb-6">
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-400/20 text-yellow-300 font-semibold text-xs shadow-sm border border-yellow-400/30">+1000 estudiantes</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-pink-400/20 text-pink-200 font-semibold text-xs shadow-sm border border-pink-400/30">Aprende jugando</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-400/20 text-blue-200 font-semibold text-xs shadow-sm border border-blue-400/30">Gratis para siempre</span>
+          </div>
+          <div className="h-2 md:h-4" />
           <Link href="/registro">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg">
-              Inicia Tu Aventura
-            </Button>
+            <div className="flex flex-col items-start">
+              <Button
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg flex items-center gap-3 shadow-lg transition-transform hover:scale-105 focus:ring-4 focus:ring-purple-400/40"
+              >
+                <span>Inicia Tu Aventura</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 animate-pulse">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Button>
+              <span className="text-sm text-purple-200 mt-2 ml-1 animate-fade-in">¡Es gratis y para todos los niveles!</span>
+            </div>
           </Link>
         </div>
         <div className="relative h-[400px] rounded-lg overflow-hidden border border-blue-500/30 shadow-[0_0_15px_rgba(56,189,248,0.3)]">
@@ -72,12 +87,27 @@ export default function Home() {
       {/* Vision Section */}
       <section className="py-16 bg-[#1a1d23]/50">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="bg-[#1e2330] p-10 rounded-lg border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-            <h2 className="text-3xl font-bold text-center text-purple-400 mb-6">Nuestra Visión</h2>
-            <p className="text-xl text-center text-gray-300 leading-relaxed">
-              Empoderando a los estudiantes para dominar el pensamiento computacional a través de desafíos atractivos y
-              trabajo en equipo.
+          <div className="bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-[#1e2330] p-10 rounded-lg border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden">
+            {/* Ícono decorativo */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="drop-shadow-lg animate-bounce-slow">
+                <circle cx="32" cy="32" r="28" fill="#a78bfa" fillOpacity="0.15" />
+                <path d="M32 16v32M16 32h32" stroke="#a78bfa" strokeWidth="4" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-center text-purple-400 mb-6 relative z-20 flex flex-col items-center gap-2">
+              Nuestra Visión
+              <span className="block text-base text-purple-200 font-normal mt-1">Transformando la educación a través del juego y la creatividad</span>
+            </h2>
+            <blockquote className="text-xl text-center text-gray-300 leading-relaxed italic mb-6 relative z-20">
+              “El pensamiento computacional no es solo para programadores, es una habilidad para la vida.”
+            </blockquote>
+            <p className="text-lg text-center text-gray-200 leading-relaxed relative z-20">
+              Empoderamos a los estudiantes para dominar el pensamiento computacional a través de desafíos atractivos, trabajo en equipo y experiencias lúdicas. Creemos que aprender puede ser divertido, inclusivo y transformador para todos.
             </p>
+            {/* Fondo decorativo sutil */}
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-pink-400/20 rounded-full blur-2xl z-0" />
+            <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl z-0" />
           </div>
         </div>
       </section>
