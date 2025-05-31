@@ -5,6 +5,7 @@ import { Check, Lock, Zap, Star, Brain, Code, Database, Layers, Search, GitBranc
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import LivesIndicator from "@/components/misiones/lives-indicator"
 
 // Definición de tipos
 type NodeStatus = "completed" | "current" | "locked"
@@ -55,22 +56,6 @@ export default function MisionesMap() {
       subtitle: "Fundamentos",
       color: "from-blue-500 to-purple-500",
       completed: false,
-      progress: 40,
-    },
-    {
-      id: 2,
-      title: "Algoritmos en acción",
-      subtitle: "Estructuras de control",
-      color: "from-green-500 to-teal-500",
-      completed: false,
-      progress: 0,
-    },
-    {
-      id: 3,
-      title: "Construye soluciones",
-      subtitle: "Proyectos integrados",
-      color: "from-orange-500 to-red-500",
-      completed: false,
       progress: 0,
     },
   ]
@@ -96,8 +81,8 @@ export default function MisionesMap() {
       y: 20,
       status: "completed",
       type: "challenge",
-      title: "Desafío: Patrones visuales",
-      description: "Identifica y completa patrones visuales con diferentes formas y colores.",
+      title: "Secuencias y Series",
+      description: "Descubre cómo se forman las secuencias y series, y resuelve desafíos para encontrar el siguiente elemento.",
       icon: "Puzzle",
       section: 1,
       level: 2,
@@ -108,101 +93,18 @@ export default function MisionesMap() {
       y: 30,
       status: "completed",
       type: "basic",
-      title: "Descomposición de problemas",
-      description: "Aprende a dividir problemas complejos en partes más pequeñas y manejables.",
+      title: "Lógica de Secuencias",
+      description: "Pon a prueba tu lógica completando secuencias y deduciendo reglas ocultas detrás de los patrones.",
       icon: "GitBranch",
       section: 1,
       level: 3,
-    },
-    {
-      id: 4,
-      x: 55,
-      y: 20,
-      status: "current",
-      type: "challenge",
-      title: "Desafío: Secuencias lógicas",
-      description: "Ordena instrucciones para completar tareas siguiendo una secuencia lógica.",
-      icon: "Layers",
-      section: 1,
-      level: 4,
-    },
-    {
-      id: 5,
-      x: 70,
-      y: 30,
-      status: "locked",
-      type: "basic",
-      title: "Clasificación y agrupamiento",
-      description: "Aprende a organizar elementos según sus características comunes.",
-      icon: "Database",
-      section: 1,
-      level: 5,
-    },
-    {
-      id: 6,
-      x: 85,
-      y: 20,
-      status: "locked",
-      type: "project",
-      title: "Proyecto: Detector de errores",
-      description: "Encuentra y corrige errores en secuencias lógicas aplicando todo lo aprendido.",
-      icon: "Code",
-      section: 1,
-      level: 6,
-    },
-
-    // Sección 2: Algoritmos en acción (placeholder para mostrar estructura)
-    {
-      id: 7,
-      x: 10,
-      y: 30,
-      status: "locked",
-      type: "basic",
-      title: "Introducción a algoritmos",
-      description: "Aprende qué son los algoritmos y cómo se utilizan para resolver problemas.",
-      icon: "Code",
-      section: 2,
-      level: 1,
-    },
-    {
-      id: 8,
-      x: 25,
-      y: 20,
-      status: "locked",
-      type: "challenge",
-      title: "Desafío: Algoritmos simples",
-      description: "Crea algoritmos sencillos para resolver problemas cotidianos.",
-      icon: "Puzzle",
-      section: 2,
-      level: 2,
-    },
-
-    // Sección 3: Construye soluciones (placeholder para mostrar estructura)
-    {
-      id: 9,
-      x: 10,
-      y: 30,
-      status: "locked",
-      type: "basic",
-      title: "Diseño de soluciones",
-      description: "Aprende a diseñar soluciones completas para problemas complejos.",
-      icon: "Brain",
-      section: 3,
-      level: 1,
     },
   ]
 
   // Conexiones entre nodos
   const connections: Connection[] = [
-    // Sección 1: Explora tu lógica
     { from: 1, to: 2 },
     { from: 2, to: 3 },
-    { from: 3, to: 4 },
-    { from: 4, to: 5 },
-    { from: 5, to: 6 },
-
-    // Sección 2: Algoritmos en acción
-    { from: 7, to: 8 },
   ]
 
   // Actualizar dimensiones al cambiar el tamaño de la ventana
@@ -306,255 +208,256 @@ export default function MisionesMap() {
   )
 
   return (
-    <div className="space-y-4">
-      {/* Selector de secciones */}
-      <div className="flex flex-wrap gap-3 justify-center">
-        {sections.map((section) => (
-          <motion.button
-            key={section.id}
-            className={cn(
-              "px-4 py-2 rounded-full text-white font-medium text-sm transition-all relative",
-              activeSection === section.id ? "bg-gradient-to-r shadow-lg scale-105" : "bg-gray-700 hover:bg-gray-600",
-            )}
-            style={{
-              backgroundImage:
-                activeSection === section.id
-                  ? `linear-gradient(to right, ${section.color.split(" ")[1]}, ${section.color.split(" ")[3]})`
-                  : undefined,
-            }}
-            onClick={() => setActiveSection(section.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="flex flex-col items-center">
-              <span>{section.title}</span>
-              <span className="text-xs opacity-80">{section.subtitle}</span>
-            </div>
-            {section.completed && (
-              <span className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
-                <Check className="h-3 w-3 text-white" />
-              </span>
-            )}
-            {section.progress > 0 && !section.completed && (
-              <span className="absolute -bottom-1 left-0 w-full h-1 bg-gray-600 rounded-full overflow-hidden">
-                <span
-                  className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
-                  style={{ width: `${section.progress}%` }}
-                ></span>
-              </span>
-            )}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Mapa de misiones */}
-      <div
-        ref={containerRef}
-        className="w-full relative bg-[#1a1d23]/50 rounded-xl border border-gray-800 p-4 overflow-hidden"
-        style={{ height: `${dimensions.height}px` }}
-      >
-        {/* Líneas de conexión */}
-        <svg width="100%" height="100%" className="absolute inset-0">
-          <defs>
-            <linearGradient id="completedPath" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {visibleConnections.map((connection) => {
-            const fromNode = nodes.find((n) => n.id === connection.from)!
-            const toNode = nodes.find((n) => n.id === connection.to)!
-
-            const fromX = (fromNode.x / 100) * dimensions.width
-            const fromY = (fromNode.y / 100) * dimensions.height
-            const toX = (toNode.x / 100) * dimensions.width
-            const toY = (toNode.y / 100) * dimensions.height
-
-            // Calcular punto de control para curva
-            const midX = (fromX + toX) / 2
-            const midY = (fromY + toY) / 2
-            const controlX = midX
-            const controlY = midY - 20 // Ajustar para crear una curva suave
-
-            // Determinar estilo de la conexión
-            const isActive = fromNode.status !== "locked" && toNode.status !== "locked"
-            const isCompleted = fromNode.status === "completed" && toNode.status === "completed"
-
-            return (
-              <g key={`${connection.from}-${connection.to}`}>
-                <path
-                  d={`M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}`}
-                  className={cn(
-                    "transition-all duration-300",
-                    isActive
-                      ? isCompleted
-                        ? "stroke-[url(#completedPath)] stroke-[4]"
-                        : "stroke-blue-500 stroke-[3]"
-                      : "stroke-gray-700 stroke-[2]",
-                  )}
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeDasharray={!isActive ? "5,5" : "none"}
-                  filter={isCompleted ? "url(#glow)" : "none"}
-                />
-              </g>
-            )
-          })}
-        </svg>
-
-        {/* Nodos (misiones) */}
-        {filteredNodes.map((node) => {
-          const nodeX = (node.x / 100) * dimensions.width
-          const nodeY = (node.y / 100) * dimensions.height
-          const isHovered = hoveredNode === node.id
-          const nodeClass = getNodeColor(node.type, node.status, isHovered)
-
-          return (
-            <motion.div
-              key={node.id}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2"
+    <div className="relative w-full h-full">
+      <div className="space-y-4 relative">
+        {/* Fondo decorativo */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#232946] via-[#1a1d23] to-[#3b2f63] opacity-80 blur-sm" />
+        {/* Selector de secciones */}
+        <div className="flex flex-wrap gap-3 justify-center">
+          {sections.map((section) => (
+            <motion.button
+              key={section.id}
+              className={cn(
+                "px-4 py-2 rounded-full text-white font-medium text-sm transition-all relative",
+                activeSection === section.id ? "bg-gradient-to-r shadow-lg scale-105" : "bg-gray-700 hover:bg-gray-600",
+              )}
               style={{
-                left: `${nodeX}px`,
-                top: `${nodeY}px`,
-                zIndex: isHovered ? 10 : 1,
+                backgroundImage:
+                  activeSection === section.id
+                    ? `linear-gradient(to right, ${section.color.split(" ")[1]}, ${section.color.split(" ")[3]})`
+                    : undefined,
               }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3, delay: node.id * 0.1 }}
-              whileHover={{ scale: 1.1 }}
+              onClick={() => setActiveSection(section.id)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {/* Nodo principal (círculo) */}
-              <motion.div
-                className={cn(
-                  "w-14 h-14 rounded-full flex items-center justify-center cursor-pointer bg-gradient-to-br border-2",
-                  nodeClass,
-                  "transition-all duration-300",
-                )}
-                onMouseEnter={() => setHoveredNode(node.id)}
-                onMouseLeave={() => setHoveredNode(null)}
-                onClick={() => handleNodeClick(node)}
-                animate={
-                  node.status === "current"
-                    ? {
-                        boxShadow: [
-                          "0 0 10px rgba(59,130,246,0.5)",
-                          "0 0 20px rgba(59,130,246,0.7)",
-                          "0 0 10px rgba(59,130,246,0.5)",
-                        ],
-                        transition: { duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
-                      }
-                    : {}
-                }
-              >
-                {getNodeIcon(node.icon, node.status)}
-              </motion.div>
-
-              {/* Indicador de estado */}
-              <div
-                className={cn(
-                  "absolute -top-1 -right-1 rounded-full p-1",
-                  node.status === "completed"
-                    ? "bg-green-500"
-                    : node.status === "current"
-                      ? "bg-blue-500"
-                      : "bg-gray-600",
-                )}
-              >
-                {getStatusIcon(node.status)}
+              <div className="flex flex-col items-center">
+                <span>{section.title}</span>
+                <span className="text-xs opacity-80">{section.subtitle}</span>
               </div>
+              {section.completed && (
+                <span className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                  <Check className="h-3 w-3 text-white" />
+                </span>
+              )}
+              {section.progress > 0 && !section.completed && (
+                <span className="absolute -bottom-1 left-0 w-full h-1 bg-gray-600 rounded-full overflow-hidden">
+                  <span
+                    className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
+                    style={{ width: `${section.progress}%` }}
+                  ></span>
+                </span>
+              )}
+            </motion.button>
+          ))}
+        </div>
 
-              {/* Número de nivel */}
-              <div className="absolute -top-1 -left-1 bg-gray-800 rounded-full w-5 h-5 flex items-center justify-center">
-                <span className="text-xs font-bold">{node.level}</span>
-              </div>
+        {/* Mapa de misiones centrado */}
+        <div
+          ref={containerRef}
+          className="w-full flex items-center justify-center relative bg-[#1a1d23]/70 rounded-2xl border border-gray-800 p-8 shadow-2xl overflow-hidden min-h-[500px]"
+          style={{ height: `${dimensions.height}px` }}
+        >
+          <div className="relative mx-auto" style={{ width: Math.min(dimensions.width, 600), height: Math.max(400, Math.min(dimensions.height, 400)) }}>
+            {/* Líneas de conexión */}
+            <svg width="100%" height="100%" className="absolute inset-0 pointer-events-none">
+              <defs>
+                <linearGradient id="completedPath" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
 
-              {/* Título del nodo */}
-              <div
-                className={cn(
-                  "absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap",
-                  node.status === "locked" ? "text-gray-500" : "text-gray-300",
-                )}
-              >
-                <span className="text-xs font-medium">{node.title}</span>
-              </div>
+              {visibleConnections.map((connection) => {
+                const fromNode = nodes.find((n) => n.id === connection.from)!
+                const toNode = nodes.find((n) => n.id === connection.to)!
 
-              {/* Tooltip */}
-              {isHovered && (
+                // Centramos el mapa en el SVG
+                const svgW = Math.min(dimensions.width, 600)
+                const svgH = Math.max(400, Math.min(dimensions.height, 400))
+                const fromX = (fromNode.x / 60) * svgW // 60 en vez de 100 para centrar
+                const fromY = (fromNode.y / 60) * svgH // 60 en vez de 100 para centrar
+                const toX = (toNode.x / 60) * svgW
+                const toY = (toNode.y / 60) * svgH
+
+                // Calcular punto de control para curva
+                const midX = (fromX + toX) / 2
+                const midY = (fromY + toY) / 2
+                const controlX = midX
+                const controlY = midY - 30
+
+                // Determinar estilo de la conexión
+                const isActive = fromNode.status !== "locked" && toNode.status !== "locked"
+                const isCompleted = fromNode.status === "completed" && toNode.status === "completed"
+
+                return (
+                  <g key={`${connection.from}-${connection.to}`}> 
+                    <path
+                      d={`M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}`}
+                      className={cn(
+                        "transition-all duration-300",
+                        isActive
+                          ? isCompleted
+                            ? "stroke-[url(#completedPath)] stroke-[6]"
+                            : "stroke-blue-400 stroke-[4]"
+                          : "stroke-gray-700 stroke-[2]",
+                      )}
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeDasharray={!isActive ? "5,5" : "none"}
+                      filter={isCompleted ? "url(#glow)" : "none"}
+                    />
+                  </g>
+                )
+              })}
+            </svg>
+
+            {/* Nodos (misiones) */}
+            {filteredNodes.map((node) => {
+              // Centramos el mapa en el SVG
+              const svgW = Math.min(dimensions.width, 600)
+              const svgH = Math.max(400, Math.min(dimensions.height, 400))
+              const nodeX = (node.x / 60) * svgW
+              const nodeY = (node.y / 60) * svgH
+              const isHovered = hoveredNode === node.id
+              const nodeClass = getNodeColor(node.type, node.status, isHovered)
+
+              return (
                 <motion.div
-                  className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full -top-4 w-64 z-20 pointer-events-none"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
+                  key={node.id}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                  style={{
+                    left: `${nodeX}px`,
+                    top: `${nodeY}px`,
+                    zIndex: isHovered ? 10 : 1,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: node.id * 0.1 }}
+                  whileHover={{ scale: 1.13 }}
                 >
-                  <div className="bg-gray-900/90 backdrop-blur-sm text-white rounded-lg p-3 shadow-lg border border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center",
-                          node.type === "basic"
-                            ? "bg-blue-500"
-                            : node.type === "challenge"
-                              ? "bg-yellow-500"
-                              : node.type === "quiz"
-                                ? "bg-purple-500"
-                                : "bg-green-500",
-                        )}
-                      >
-                        {getNodeIcon(node.icon, "completed")}
-                      </div>
-                      <h3 className="font-bold text-sm">{node.title}</h3>
-                    </div>
-                    <p className="text-xs text-gray-300">{node.description}</p>
-                    {node.status === "current" && (
-                      <div className="mt-2 bg-blue-900/50 p-1 rounded text-xs text-center">
-                        ¡Nivel actual! Haz clic para continuar
-                      </div>
+                  {/* Nodo principal (círculo) */}
+                  <motion.div
+                    className={cn(
+                      "w-20 h-20 rounded-full flex items-center justify-center cursor-pointer bg-gradient-to-br border-4",
+                      nodeClass,
+                      "transition-all duration-300 relative",
+                      node.status === "current" ? "ring-4 ring-blue-400/60 animate-pulse" : ""
                     )}
-                  </div>
-                </motion.div>
-              )}
+                    onMouseEnter={() => setHoveredNode(node.id)}
+                    onMouseLeave={() => setHoveredNode(null)}
+                    onClick={() => handleNodeClick(node)}
+                    animate={
+                      node.status === "current"
+                        ? {
+                            boxShadow: [
+                              "0 0 30px 10px #6366f1cc",
+                              "0 0 40px 20px #818cf8cc",
+                              "0 0 30px 10px #6366f1cc",
+                            ],
+                            transition: { duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
+                          }
+                        : {}
+                    }
+                  >
+                    <div className="drop-shadow-[0_4px_16px_rgba(59,130,246,0.7)]">
+                      {getNodeIcon(node.icon, node.status)}
+                    </div>
+                  </motion.div>
 
-              {/* Mensaje de nivel bloqueado */}
-              {showBlockedMessage === node.id && node.status === "locked" && (
-                <motion.div
-                  className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full -top-4 w-64 z-30 pointer-events-none"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <div className="bg-red-900/80 text-white rounded-lg p-3 shadow-lg border border-red-700">
-                    <p className="text-xs text-center">Debes completar el nivel anterior para desbloquear este.</p>
+                  {/* Indicador de estado */}
+                  <div
+                    className={cn(
+                      "absolute -top-2 -right-2 rounded-full p-1 border-2 border-[#1a1d23]",
+                      node.status === "completed"
+                        ? "bg-green-500"
+                        : node.status === "current"
+                          ? "bg-blue-500"
+                          : "bg-gray-600",
+                    )}
+                  >
+                    {getStatusIcon(node.status)}
                   </div>
-                </motion.div>
-              )}
-            </motion.div>
-          )
-        })}
-      </div>
 
-      {/* Leyenda */}
-      <div className="flex flex-wrap gap-6 justify-center mt-4">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700"></div>
-          <span className="text-sm">Lección</span>
+                  {/* Título del nodo SIEMPRE visible */}
+                  <div
+                    className={cn(
+                      "absolute left-1/2 top-full mt-2 -translate-x-1/2 text-center whitespace-nowrap font-semibold",
+                      node.status === "locked" ? "text-gray-500" : "text-blue-100 drop-shadow",
+                    )}
+                  >
+                    <span className="text-base">{node.title}</span>
+                  </div>
+
+                  {/* Tooltip con flecha */}
+                  {isHovered && (
+                    <motion.div
+                      className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full -top-8 w-72 z-20 pointer-events-none"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="relative">
+                        <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-xl p-4 shadow-2xl border border-blue-700">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div
+                              className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center",
+                                node.type === "basic"
+                                  ? "bg-blue-500"
+                                  : node.type === "challenge"
+                                    ? "bg-yellow-500"
+                                    : node.type === "quiz"
+                                      ? "bg-purple-500"
+                                      : "bg-green-500",
+                              )}
+                            >
+                              {getNodeIcon(node.icon, "completed")}
+                            </div>
+                            <h3 className="font-bold text-lg">{node.title}</h3>
+                          </div>
+                          <p className="text-sm text-gray-300">{node.description}</p>
+                          {node.status === "current" && (
+                            <div className="mt-3 bg-blue-900/60 p-2 rounded text-sm text-center">
+                              ¡Nivel actual! Haz clic para continuar
+                            </div>
+                          )}
+                        </div>
+                        {/* Flecha del tooltip */}
+                        <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-6 h-6 overflow-visible">
+                          <svg width="24" height="12" viewBox="0 0 24 12">
+                            <polygon points="12,12 0,0 24,0" fill="#1e293b" />
+                          </svg>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Mensaje de nivel bloqueado */}
+                  {showBlockedMessage === node.id && node.status === "locked" && (
+                    <motion.div
+                      className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full -top-4 w-64 z-30 pointer-events-none"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="bg-red-900/80 text-white rounded-lg p-3 shadow-lg border border-red-700">
+                        <p className="text-xs text-center">Debes completar el nivel anterior para desbloquear este.</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-500 to-amber-700"></div>
-          <span className="text-sm">Desafío</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-violet-700"></div>
-          <span className="text-sm">Quiz</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-700"></div>
-          <span className="text-sm">Proyecto</span>
-        </div>
+
+        {/* Leyenda compacta con iconos */}
+        {/* Leyenda eliminada para limpiar la UI */}
       </div>
     </div>
   )

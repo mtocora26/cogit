@@ -25,7 +25,6 @@ export default function NonogramasPage() {
   const [isCorrect, setIsCorrect] = useState(false)
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
-  const [lives, setLives] = useState(3)
   const [showHint, setShowHint] = useState(false)
   const [levels] = useState(getNonogramLevels())
   const [errors, setErrors] = useState<{ row: number; col: number }[]>([])
@@ -53,7 +52,6 @@ export default function NonogramasPage() {
     setTime(0)
     setIsActive(true)
     setShowLevelSelector(false)
-    setLives(3)
     setErrors([])
     setShowHint(false)
     setShowCompletionAnimation(false)
@@ -153,11 +151,10 @@ export default function NonogramasPage() {
         }, 3000) // Mostrar la animación por 3 segundos
       } else if (result.errors.length > 0) {
         // Si hay errores, reducir vidas
-        setLives((prev) => Math.max(0, prev - 1))
         setErrors(result.errors)
 
         // Si se quedan sin vidas, mostrar la solución
-        if (lives <= 1) {
+        if (errors.length <= 1) {
           setIsComplete(true)
           setIsCorrect(false)
           setIsActive(false)
@@ -182,7 +179,6 @@ export default function NonogramasPage() {
     setIsCorrect(false)
     setTime(0)
     setIsActive(true)
-    setLives(3)
     setErrors([])
     setShowHint(false)
     setShowCompletionAnimation(false)
@@ -284,21 +280,6 @@ export default function NonogramasPage() {
                       <span>Tiempo:</span>
                     </div>
                     <span className="font-mono">{formatTime(time)}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-red-400" />
-                      <span>Vidas:</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {[...Array(3)].map((_, i) => (
-                        <Heart
-                          key={i}
-                          className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-gray-600"}`}
-                        />
-                      ))}
-                    </div>
                   </div>
 
                   {bestTimes[currentLevel] && (

@@ -4,6 +4,7 @@ import { Star, Brain, Zap, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatTime } from "@/lib/utils"
 import NonogramBoard from "@/components/nonogram/nonogram-board"
+import { useState, useEffect } from "react"
 
 interface Level {
   id: number
@@ -24,6 +25,22 @@ interface LevelSelectorProps {
 }
 
 export default function LevelSelector({ levels, onSelectLevel, completedLevels, bestTimes }: LevelSelectorProps) {
+  // Estado para verificar si el usuario es admin
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Efecto para leer el rol del usuario desde localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const usuario = localStorage.getItem("usuario")
+      if (usuario) {
+        try {
+          const user = JSON.parse(usuario)
+          setIsAdmin(user.rol === "admin")
+        } catch {}
+      }
+    }
+  }, [])
+
   // Función para obtener el icono según la dificultad
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
@@ -51,7 +68,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {levels.map((level, index) => {
           const isCompleted = completedLevels.includes(index)
-          const isLocked = index > 0 && !completedLevels.includes(index - 1) && !isCompleted
+          const isLocked = isAdmin ? false : index > 0 && !completedLevels.includes(index - 1) && !isCompleted
 
           return (
             <div

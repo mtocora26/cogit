@@ -82,6 +82,9 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [score, setScore] = useState(0)
   const [maxScore, setMaxScore] = useState(0)
+  // --- RONDAS PARA NIVEL 2 ---
+  const MAX_ROUNDS = 5
+  const [round, setRound] = useState(1)
 
   // Inicializar el juego
   useEffect(() => {
@@ -130,6 +133,7 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
     setTimeElapsed(0)
     setScore(0)
     setMaxScore(allItems.length)
+    setRound(1)
   }
 
   // Manejar el arrastre y soltar
@@ -163,9 +167,13 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
       // Verificar si se han clasificado todos los elementos
       if (newItems.length === 0) {
         setIsComplete(true)
-        // Esperar un momento y luego completar el nivel
         setTimeout(() => {
-          onComplete(score + (item.category === category ? 1 : 0) >= maxScore * 0.75, timeElapsed)
+          if (round < MAX_ROUNDS) {
+            setRound(round + 1)
+            startNewGame()
+          } else {
+            onComplete(score + (item.category === category ? 1 : 0) >= maxScore * 0.75, timeElapsed)
+          }
         }, 2000)
       }
     }
@@ -179,6 +187,13 @@ export default function ClassificationGame({ onComplete }: ClassificationGamePro
       </div>
 
       <div className="flex justify-center items-center mb-8">
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-gray-400">Ronda:</div>
+          <div className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
+            {round}/{MAX_ROUNDS}
+          </div>
+        </div>
+        <div className="mx-4 text-gray-500">|</div>
         <div className="flex items-center gap-2">
           <div className="text-sm text-gray-400">Puntuación:</div>
           <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-sm">

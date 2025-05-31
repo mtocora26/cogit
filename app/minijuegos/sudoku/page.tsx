@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Lightbulb, RotateCcw, CheckCircle, Clock, XCircle, Heart } from "lucide-react"
+import { ArrowLeft, Lightbulb, RotateCcw, CheckCircle, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import SudokuBoard from "@/components/sudoku/sudoku-board"
@@ -27,9 +27,24 @@ export default function SudokuPage() {
   const [showLevelSelector, setShowLevelSelector] = useState(true)
   const [hintsUsed, setHintsUsed] = useState(0)
   const [solution, setSolution] = useState<number[][]>([])
-  const [lives, setLives] = useState(3)
-  const [bestTimes, setBestTimes] = useState<{ [key: string]: number }>({})
   const [gameStarted, setGameStarted] = useState(false)
+  const [bestTimes, setBestTimes] = useState<{ [key in "facil" | "medio" | "dificil"]?: number }>({})
+
+  // Cargar datos de usuario al montar
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const usuario = localStorage.getItem("usuario")
+      if (usuario) {
+        try {
+          const user = JSON.parse(usuario)
+          // setUserId(user.id?.toString() || null)
+          // setUserRol(user.rol || "user")
+          // setUserNeuronas(user.neuronas ?? 3)
+          // setUserCreditos(user.creditos ?? 0)
+        } catch {}
+      }
+    }
+  }, [])
 
   // Iniciar el juego con un nivel seleccionado
   const startGame = (level: "facil" | "medio" | "dificil") => {
@@ -49,7 +64,6 @@ export default function SudokuPage() {
     setIsActive(true)
     setShowLevelSelector(false)
     setHintsUsed(0)
-    setLives(3)
     setGameStarted(true)
   }
 
@@ -158,7 +172,7 @@ export default function SudokuPage() {
       // Verificar si el número es correcto
       if (solution[row][col] !== num) {
         // Número incorrecto, reducir vidas
-        setLives((prev) => Math.max(0, prev - 1))
+        // setLives((prev) => Math.max(0, prev - 1))
 
         // Mostrar error brevemente
         setErrors([[row, col]])
@@ -167,12 +181,12 @@ export default function SudokuPage() {
         }, 1000)
 
         // Si se quedan sin vidas, mostrar la solución
-        if (lives <= 1) {
-          setIsComplete(true)
-          setIsCorrect(false)
-          setIsActive(false)
-          return
-        }
+        // if (lives <= 1) {
+        //   setIsComplete(true)
+        //   setIsCorrect(false)
+        //   setIsActive(false)
+        //   return
+        // }
 
         // No colocar el número incorrecto
         return
@@ -224,7 +238,6 @@ export default function SudokuPage() {
     setTime(0)
     setIsActive(true)
     setHintsUsed(0)
-    setLives(3)
   }
 
   // Volver al selector de niveles
@@ -290,10 +303,6 @@ export default function SudokuPage() {
 
             <div className="order-1 md:order-2 flex flex-col gap-4 min-w-[250px]">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Heart className="text-red-500" />
-                  <span>{lives}</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <Clock className="text-blue-500" />
                   <span>{formatTime(time)}</span>

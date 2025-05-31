@@ -260,11 +260,6 @@ export default function ComplexPatterns({ onComplete }: ComplexPatternsProps) {
           <div className="text-sm text-gray-400">Vidas:</div>
           <div>{renderLives()}</div>
         </div>
-        <div className="mx-2 text-gray-500 hidden md:block">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Tiempo:</div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">{timeElapsed}s</div>
-        </div>
       </div>
 
       <div className="flex flex-col items-center">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Play, RotateCcw, Info, Trophy, Clock, Brain, Heart } from "lucide-react"
+import { ArrowLeft, Play, RotateCcw, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import GameBoard from "@/components/robot-programmer/game-board"
@@ -259,6 +259,28 @@ export default function RobotProgrammerPage() {
   // Determinar el estado de ánimo del robot
   let robotMood: "happy" | "sad" | "neutral" = "neutral"
   if (isComplete) robotMood = isSuccess ? "happy" : "sad"
+
+  // Estados para datos de usuario
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userRol, setUserRol] = useState<string>("user");
+  const [userNeuronas, setUserNeuronas] = useState<number>(3);
+  const [userCreditos, setUserCreditos] = useState<number>(0);
+
+  // Cargar datos de usuario al montar
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const usuario = localStorage.getItem("usuario");
+      if (usuario) {
+        try {
+          const user = JSON.parse(usuario);
+          setUserId(user.id?.toString() || null);
+          setUserRol(user.rol || "user");
+          setUserNeuronas(user.neuronas ?? 3);
+          setUserCreditos(user.creditos ?? 0);
+        } catch {}
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#1a1d23] text-white">

@@ -8,7 +8,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 
 interface OutlierPatternProps {
-  onComplete: (success: boolean, time: number, score?: number) => void
+  onComplete: (
+    success: boolean,
+    time: number,
+    score?: number,
+    erroresDetalle?: { ronda: number; explicacion: string }[],
+    erroresRepetidos?: number[]
+  ) => void
+  onRondaError?: () => void // NUEVO: callback para error de ronda
 }
 
 type PatternType = "color" | "shape" | "number" | "direction"
@@ -41,7 +48,7 @@ function generateOutlierPattern(type: PatternType, length: number) {
   return { pattern, outlierIdx, outlier, base }
 }
 
-export default function OutlierPattern({ onComplete }: OutlierPatternProps) {
+export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatternProps) {
   const [patternType, setPatternType] = useState<PatternType>("color")
   const [pattern, setPattern] = useState<string[]>([])
   const [outlierIdx, setOutlierIdx] = useState<number>(-1)
@@ -64,6 +71,8 @@ export default function OutlierPattern({ onComplete }: OutlierPatternProps) {
   const [hintUsed, setHintUsed] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
   const [hintsLeft, setHintsLeft] = useState(3)
+  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
+  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
 
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
@@ -134,9 +143,19 @@ export default function OutlierPattern({ onComplete }: OutlierPatternProps) {
       setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 } }), 500)
       setTimeout(() => handleContinue(), 1200)
     } else {
-      if (!reviewMode) setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base }])
-      setLives(l => l - 1)
+      if (!reviewMode) {
+        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: round - 1, explicacion: `El elemento correcto era ${pattern[outlierIdx]}. El patrón base era ${base.join(", ")}.`}])
+        setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `El elemento correcto era ${pattern[outlierIdx]}. El patrón base era ${base.join(", ")}.`}])
+      } else {
+        setErroresRepetidos(prev => [...prev, reviewIndex])
+      }
+      handleErrorRonda()
     }
+  }
+
+  const handleErrorRonda = () => {
+    if (onRondaError) onRondaError()
+    setLives(l => l - 1)
   }
 
   const handleShowHint = () => {
@@ -153,7 +172,7 @@ export default function OutlierPattern({ onComplete }: OutlierPatternProps) {
     setShowExplanation(false)
     if (!reviewMode) {
       if (lives <= 0) {
-        onComplete(score >= 3, timeElapsed, score)
+        onComplete(score >= 3, timeElapsed, score, erroresDetalle, erroresRepetidos)
         return
       }
       if (round < maxRounds) {
@@ -164,14 +183,14 @@ export default function OutlierPattern({ onComplete }: OutlierPatternProps) {
         setReviewIndex(0)
         setTimeout(() => startNewRound(true), 300)
       } else {
-        onComplete(score >= 3, timeElapsed, score)
+        onComplete(score >= 3, timeElapsed, score, erroresDetalle, erroresRepetidos)
       }
     } else {
       if (reviewIndex < incorrectRounds.length - 1) {
         setReviewIndex(reviewIndex + 1)
         setTimeout(() => startNewRound(true), 300)
       } else {
-        onComplete(score >= 3, timeElapsed, score)
+        onComplete(score >= 3, timeElapsed, score, erroresDetalle, erroresRepetidos)
       }
     }
   }

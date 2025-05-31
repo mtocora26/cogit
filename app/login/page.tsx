@@ -11,6 +11,8 @@ import LoginForm from "@/components/login-form"
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [formData, setFormData] = useState({ email: "", password: "" })
 
   const handleDemoLogin = () => {
     setIsLoading(true)
@@ -18,6 +20,44 @@ export default function LoginPage() {
     setTimeout(() => {
       router.push("/")
     }, 1500)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
+    try {
+      // Lógica real de login
+      const res = await fetch(
+        "/api/usuario?email=" +
+          encodeURIComponent(formData.email) +
+          "&password=" +
+          encodeURIComponent(formData.password)
+      )
+      const data = await res.json()
+      if (!res.ok || !data.id) {
+        setError(data.error || "Email o contraseña incorrectos")
+        setIsLoading(false)
+        return
+      }
+      // Guardar userId y rol en localStorage/sessionStorage
+      localStorage.setItem("userId", data.id)
+      localStorage.setItem("userRol", data.rol)
+      localStorage.setItem("usuario", JSON.stringify(data))
+      // Set auth cookie for middleware (expires in 7 days)
+      document.cookie = `userId=${data.id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+      document.cookie = `userRol=${data.rol}; path=/; max-age=${60 * 60 * 24 * 7}`;
+      // Redirigir al home o dashboard
+      if (data.rol === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/misiones")
+      }
+    } catch (err) {
+      setError("Error al iniciar sesión. Inténtalo de nuevo.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -42,7 +82,42 @@ export default function LoginPage() {
               <p className="text-gray-400">Inicia sesión para continuar tu aventura</p>
             </div>
 
-            <LoginForm />
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2" htmlFor="email">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-3 bg-[#2a2d34] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" htmlFor="password">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full p-3 bg-[#2a2d34] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+              {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+              <Button
+                type="submit"
+                className="w-full bg-purple-600 hover:bg-purple-700 transition-colors"
+                disabled={isLoading}
+              >
+                {isLoading ? "Cargando..." : "Iniciar sesión"}
+              </Button>
+            </form>
 
             <div className="mt-8">
               <div className="relative">
