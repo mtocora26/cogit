@@ -16,7 +16,7 @@ interface LivesContextType {
 const LivesContext = createContext<LivesContextType | undefined>(undefined)
 
 const LIVES_KEY = "misiones_lives"
-const RECHARGE_KEY = "misiones_lives_recharge"
+const RECHARGE_UNTIL_KEY = "misiones_lives_recharge_until"
 const MAX_LIVES = 5
 const RECHARGE_SECONDS = 20 * 60 // 20 minutos por vida (ajustable)
 
@@ -25,12 +25,24 @@ export function LivesProvider({ children }: { children: ReactNode }) {
   const [isRecharging, setIsRecharging] = useState(false)
   const [rechargeTime, setRechargeTime] = useState(0)
 
-  // Cargar vidas desde localStorage
+  // Calcular tiempo restante dinámicamente
+  function getTimeLeft() {
+    const until = localStorage.getItem(RECHARGE_UNTIL_KEY)
+    if (!until) return 0
+    const diff = Math.max(0, Math.floor((parseInt(until) - Date.now()) / 1000))
+    return diff
+  }
+
+  // Cargar vidas y recarga desde localStorage correctamente
   useEffect(() => {
     const saved = localStorage.getItem(LIVES_KEY)
     if (saved) setLives(Number(saved))
-    const recharge = localStorage.getItem(RECHARGE_KEY)
-    if (recharge) setRechargeTime(Number(recharge))
+    const until = localStorage.getItem(RECHARGE_UNTIL_KEY)
+    if (until) {
+      const left = getTimeLeft()
+      setRechargeTime(left)
+      if (left > 0 && lives < MAX_LIVES) setIsRecharging(true)
+    }
   }, [])
 
   // Guardar vidas en localStorage
@@ -38,39 +50,35 @@ export function LivesProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LIVES_KEY, String(lives))
   }, [lives])
 
-  // Lógica de recarga automática
+  // Lógica de recarga automática robusta
   useEffect(() => {
-    if (lives < MAX_LIVES && !isRecharging) {
+    if (lives < MAX_LIVES) {
       setIsRecharging(true)
-      let interval = setInterval(() => {
-        setRechargeTime((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval)
-            setLives((l) => Math.min(l + 1, MAX_LIVES))
-            setIsRecharging(false)
-            localStorage.removeItem(RECHARGE_KEY)
-            return 0
-          } else {
-            localStorage.setItem(RECHARGE_KEY, String(prev - 1))
-            return prev - 1
-          }
-        })
+      const interval = setInterval(() => {
+        const left = getTimeLeft()
+        setRechargeTime(left)
+        if (left <= 0) {
+          setLives((l) => Math.min(l + 1, MAX_LIVES))
+          setIsRecharging(false)
+          setRechargeTime(0)
+          localStorage.removeItem(RECHARGE_UNTIL_KEY)
+        }
       }, 1000)
       return () => clearInterval(interval)
-    }
-    if (lives === MAX_LIVES) {
+    } else {
       setIsRecharging(false)
       setRechargeTime(0)
-      localStorage.removeItem(RECHARGE_KEY)
+      localStorage.removeItem(RECHARGE_UNTIL_KEY)
     }
-  }, [lives, isRecharging])
+  }, [lives])
 
   // Iniciar recarga manualmente
   const startRecharge = () => {
     if (lives < MAX_LIVES && rechargeTime === 0) {
+      const until = Date.now() + RECHARGE_SECONDS * 1000
+      localStorage.setItem(RECHARGE_UNTIL_KEY, String(until))
       setRechargeTime(RECHARGE_SECONDS)
       setIsRecharging(true)
-      localStorage.setItem(RECHARGE_KEY, String(RECHARGE_SECONDS))
     }
   }
 
@@ -79,9 +87,10 @@ export function LivesProvider({ children }: { children: ReactNode }) {
       setLives((l) => {
         const newLives = l - 1
         if (newLives < MAX_LIVES && rechargeTime === 0) {
+          const until = Date.now() + RECHARGE_SECONDS * 1000
+          localStorage.setItem(RECHARGE_UNTIL_KEY, String(until))
           setRechargeTime(RECHARGE_SECONDS)
           setIsRecharging(true)
-          localStorage.setItem(RECHARGE_KEY, String(RECHARGE_SECONDS))
         }
         return newLives
       })
@@ -92,7 +101,7 @@ export function LivesProvider({ children }: { children: ReactNode }) {
     setLives((l) => Math.min(l + 1, MAX_LIVES))
     setIsRecharging(false)
     setRechargeTime(0)
-    localStorage.removeItem(RECHARGE_KEY)
+    localStorage.removeItem(RECHARGE_UNTIL_KEY)
   }
 
   return (

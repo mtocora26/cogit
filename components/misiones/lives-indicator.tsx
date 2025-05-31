@@ -9,6 +9,23 @@ export default function LivesIndicator({ className = "" }: { className?: string 
   const { lives, maxLives, isRecharging, rechargeTime } = useLives()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  // Estado local para forzar refresco visual cada segundo
+  const [, setTick] = useState(0)
+
+  // Utilidad para formatear segundos a mm:ss
+  function formatTimeMMSS(seconds: number) {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+  }
+
+  // Refrescar cada segundo si está en recarga o el popover está abierto
+  useEffect(() => {
+    if (isRecharging || open) {
+      const interval = setInterval(() => setTick(t => t + 1), 1000)
+      return () => clearInterval(interval)
+    }
+  }, [isRecharging, open])
 
   // Cierra el popover al hacer click fuera
   useEffect(() => {
@@ -52,7 +69,13 @@ export default function LivesIndicator({ className = "" }: { className?: string 
             ))}
           </div>
           <div className="text-sm text-purple-200 mb-2 font-semibold">
-            {lives === maxLives ? "¡Vidas completas!" : isRecharging ? `Recuperando vida en ${Math.ceil(rechargeTime / 60)} min` : lives === 0 ? "Sin vidas disponibles" : "Puedes seguir jugando"}
+            {lives === maxLives
+              ? "¡Vidas completas!"
+              : isRecharging
+                ? `Recuperando vida en ${formatTimeMMSS(rechargeTime)}`
+                : lives === 0
+                  ? "Sin vidas disponibles"
+                  : "Puedes seguir jugando"}
           </div>
           {/* Si no hay vidas, mostrar opciones */}
           {lives === 0 && (

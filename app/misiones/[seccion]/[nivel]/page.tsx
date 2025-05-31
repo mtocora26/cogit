@@ -8,6 +8,7 @@ import NavBar from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { use } from "react"
+import { useLives } from "@/components/misiones/lives-context"
 
 // Tipos para las actividades
 type ActivityType = "teoria" | "ejercicio" | "desafio" | "quiz"
@@ -49,6 +50,8 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   const [activities, setActivities] = useState<Activity[]>([])
   const [progress, setProgress] = useState(0)
   const initialRenderRef = useRef(true)
+  const { lives, isRecharging, rechargeTime } = useLives();
+  const [showNoLives, setShowNoLives] = useState(false);
 
   // Detectar si el usuario es admin
   const [isAdmin, setIsAdmin] = useState(false)
@@ -126,8 +129,12 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
     router.push("/misiones")
   }
 
-  // Función para ir a una actividad específica
+  // En handleGoToActivity, bloquear si no hay vidas
   const handleGoToActivity = (activityId: string, status: ActivityStatus) => {
+    if (lives === 0) {
+      setShowNoLives(true);
+      return;
+    }
     if (status !== "locked") {
       // Normaliza los parámetros para que coincidan con los IDs de la ruta de actividad
       // Ejemplo: seccionId = "1", nivelId = "1", activityId = "1" => actividad = "1-1-1"
@@ -136,10 +143,42 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
     }
   }
 
+  // Mostrar panel si no hay vidas y actualizarlo si se recarga una vida y luego vuelve a 0
+  useEffect(() => {
+    if (lives === 0) setShowNoLives(true);
+    else setShowNoLives(false);
+  }, [lives, isRecharging, rechargeTime]);
+
+  // Utilidad para formatear segundos a mm:ss
+  function formatTimeMMSS(seconds: number) {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+  }
+
   return (
     <div className="min-h-screen bg-[#1a1d23] text-white">
-      {/* Navbar */}
       <NavBar activePage="misiones" />
+      {/* Panel de bloqueo si no hay vidas */}
+      {showNoLives && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#23263a] rounded-2xl p-8 shadow-2xl flex flex-col items-center max-w-xs w-full border-2 border-purple-600 animate-pop">
+            <h2 className="text-2xl font-bold text-purple-400 mb-2">¡Sin vidas!</h2>
+            <p className="text-gray-200 mb-4 text-center">No tienes vidas para seguir jugando misiones.<br />
+              {isRecharging
+                ? `Recuperarás una vida en ${formatTimeMMSS(rechargeTime)}.`
+                : "Debes esperar la recarga automática o recargar en la tienda."}
+            </p>
+            <div className="flex flex-col gap-2 w-full">
+              <Button className="bg-yellow-400 text-black font-bold hover:bg-yellow-300" onClick={() => { window.location.href = "/tienda" }}>Ir a la Tienda</Button>
+              <Button className="bg-blue-600 text-white font-bold hover:bg-blue-700" onClick={() => { window.location.href = "/minijuegos" }}>Ir a Minijuegos</Button>
+              <Button variant="outline" className="border-gray-500 text-gray-300 mt-2" disabled>
+                Esperar recarga automática
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="container mx-auto px-4 py-6">
@@ -203,7 +242,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {activeTab === "actividades" && (
-          <div className="space-y-6">
+          <div className={`space-y-6 ${lives === 0 ? "pointer-events-none opacity-50 select-none" : ""}`}>
             <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-6">
               <h2 className="text-xl font-bold mb-4">Actividades del nivel</h2>
               <p className="text-gray-300 mb-6">{nivelInfo.activityDescription}</p>
@@ -213,7 +252,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                   <div
                     key={activity.id}
                     className={cn(
-                      "bg-[#1a1d23] rounded-lg border p-4 transition-all relative overflow-hidden group",
+                      "bg-[#1d23] rounded-lg border p-4 transition-all relative overflow-hidden group",
                       activity.status === "completed"
                         ? "border-green-500/30"
                         : activity.status === "current"
