@@ -2,7 +2,7 @@ services:
   - type: web
     name: cogit
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm exec prisma generate && pnpm exec prisma migrate deploy && pnpm build
     startCommand: pnpm start
     autoDeploy: false # el despliegue lo dispara .github/workflows/deploy.yml
