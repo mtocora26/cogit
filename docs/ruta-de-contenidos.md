@@ -21,7 +21,7 @@ Según `PRODUCT.md` y `docs/requisitos-mvp-cogit.md`:
 | Nivel | Contenido definido | Actividades jugables | Estado |
 |---|---|---|---|
 | 1. Patrones y lógica | 3 actividades | Observa y reconoce, Encuentra el intruso, Completa el patrón | Jugable |
-| 2. Secuencias y algoritmos | 3 actividades (¿Qué es una secuencia?, Ordena los pasos, Desafío de instrucciones) | Ninguna | Solo texto; el botón "Empezar" lleva a "Actividad no encontrada" |
+| 2. Secuencias y algoritmos | 3 actividades (¿Qué es una secuencia?, Ordena los pasos, Desafío de instrucciones) | Ninguna | Solo texto: el botón "Empezar" abre el nivel, pero todas sus actividades salen bloqueadas (a un administrador se le desbloquean y lo llevan a "Actividad no encontrada") |
 | 3. Algoritmos | 3 actividades | Ninguna | Igual que el nivel 2 |
 
 Las tres actividades del nivel 1 trabajan **una sola habilidad: patrones**.
@@ -49,7 +49,7 @@ Las tres actividades del nivel 1 trabajan **una sola habilidad: patrones**.
 2. **Rondas simuladas.** La página de actividad (`.../actividad/[actividad]/page.tsx`) conserva un arreglo de
    "Pregunta N / Explicación de la ronda N" inventado, y muestra una cifra de puntos fija por actividad
    (50, 75, 100) que no coincide con la puntuación real.
-3. **Niveles vacíos que parecen activos.** Los niveles 2 y 3 muestran "Empezar" sin tener actividades.
+3. **Niveles vacíos que parecen activos.** Los niveles 2 y 3 muestran "Empezar" y una lista de actividades, pero ninguna se puede jugar: al estudiante le aparecen bloqueadas sin explicar por qué.
 4. **Sudoku sin solución única.** `generateSudoku` quita celdas al azar sin comprobar que quede una sola
    solución, y `sudoku/page.tsx` compara cada número con la solución guardada: con pocas pistas, una jugada
    válida pero distinta se marca como error.
