@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Logo } from "@/components/brand/logo"
 import { AuthPanel } from "@/components/brand/auth-panel"
+import { PasswordInput } from "@/components/brand/password-input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
@@ -90,8 +91,7 @@ export default function LoginPage() {
                 <label className="block text-sm font-medium mb-2" htmlFor="password">
                   Contraseña
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   id="password"
                   autoComplete="current-password"
                   required
