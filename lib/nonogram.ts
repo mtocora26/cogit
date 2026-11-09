@@ -7,7 +7,6 @@ export interface NonogramLevel {
   solution: number[][]
   rowClues: number[][]
   colClues: number[][]
-  imagePreview: string
 }
 
 // Función para generar las pistas de filas y columnas a partir de una solución
@@ -210,7 +209,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: heart,
       rowClues: heartClues.rowClues,
       colClues: heartClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=❤️",
     },
     {
       id: 2,
@@ -220,7 +218,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: star,
       rowClues: starClues.rowClues,
       colClues: starClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=⭐",
     },
     {
       id: 3,
@@ -230,7 +227,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: cat,
       rowClues: catClues.rowClues,
       colClues: catClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=🐱",
     },
     {
       id: 4,
@@ -240,7 +236,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: ship,
       rowClues: shipClues.rowClues,
       colClues: shipClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=⛵",
     },
     {
       id: 5,
@@ -250,7 +245,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: robot,
       rowClues: robotClues.rowClues,
       colClues: robotClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=🤖",
     },
     {
       id: 6,
@@ -260,7 +254,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: castle,
       rowClues: castleClues.rowClues,
       colClues: castleClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=🏰",
     },
     {
       id: 7,
@@ -270,7 +263,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: computer,
       rowClues: computerClues.rowClues,
       colClues: computerClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=💻",
     },
     {
       id: 8,
@@ -280,7 +272,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       solution: brain,
       rowClues: brainClues.rowClues,
       colClues: brainClues.colClues,
-      imagePreview: "/placeholder.svg?height=200&width=200&text=🧠",
     },
   ]
 }
