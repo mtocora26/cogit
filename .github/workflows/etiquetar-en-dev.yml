@@ -1,0 +1,25 @@
+name: Etiquetar issues integrados en dev
+
+# Cuando un PR se mergea a dev, los issues que enlaza ("Refs #n", "Closes #n", "Fixes #n")
+# reciben la etiqueta en-dev. Se cierran después, al llegar a main.
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+permissions:
+  issues: write
+
+jobs:
+  etiquetar:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const cuerpo = context.payload.pull_request.body || "";
+            const numeros = [...cuerpo.matchAll(/(?:refs|closes|fixes)\s+#(\d+)/gi)].map((m) => Number(m[1]));
+            for (const issue_number of [...new Set(numeros)]) {
+              await github.rest.issues.addLabels({ ...context.repo, issue_number, labels: ["en-dev"] });
+            }
