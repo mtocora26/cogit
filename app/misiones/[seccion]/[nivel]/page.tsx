@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { use } from "react"
 import { useLives } from "@/components/misiones/lives-context"
+import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
 
 // Tipos para las actividades
 type ActivityType = "teoria" | "ejercicio" | "desafio" | "quiz"
@@ -111,6 +112,19 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
     setActivities(updated)
     setProgress(updated.length > 0 ? Math.round((completedCount / updated.length) * 100) : 0)
   }, [seccionId, nivelId, isAdmin, completadas])
+
+  // Nivel del catálogo sin actividades jugables: se explica en vez de mostrar actividades que no se pueden abrir.
+  const enCatalogo = seccionId === SECCION.id ? NIVELES.find((n) => n.id === nivelId) : undefined
+  if (enCatalogo && enCatalogo.actividades === 0) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3 px-4 text-center">
+        <NavBar activePage="misiones" />
+        <h1 className="text-2xl font-bold">{enCatalogo.title}</h1>
+        <p className="text-muted-foreground max-w-md">Este nivel aún no está disponible. Estamos preparando sus actividades; mientras tanto, practica en el nivel 1.</p>
+        <Button onClick={() => router.push("/misiones")}>Volver a Misiones</Button>
+      </div>
+    )
+  }
 
   if (!nivelInfo) {
     return (
