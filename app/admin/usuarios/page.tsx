@@ -1,11 +1,16 @@
-import { redirect } from "next/navigation"
+import UsuariosTabla from "@/components/admin/usuarios-tabla"
 
 export default function AdminUsuarios() {
-  // Dummy: solo muestra mensaje, aquí iría la gestión avanzada de usuarios
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold mb-4">Gestión de Usuarios</h1>
-      <p className="text-gray-300">Aquí podrás buscar, filtrar y editar usuarios. (Próximamente)</p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="font-display text-3xl font-semibold">Usuarios</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">
+          Consulta las cuentas y define su rol. El correo solo se muestra aquí, para dar soporte de acceso; no aparece en el ranking ni
+          en la comunidad.
+        </p>
+      </header>
+      <UsuariosTabla />
     </div>
   )
 }

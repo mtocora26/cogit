@@ -1,95 +1,74 @@
-"use client"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { prisma } from "@/lib/prisma"
 
-// Dummy data for users
-const users = [
-  { id: 1, name: "Juan Pérez", email: "juan@email.com", rol: "user", progreso: "Nivel 2" },
-  { id: 2, name: "Ana Admin", email: "ana@email.com", rol: "admin", progreso: "Nivel 4" },
-  { id: 3, name: "Carlos López", email: "carlos@email.com", rol: "user", progreso: "Nivel 1" },
-]
+export const dynamic = "force-dynamic"
 
-export default function AdminDashboard() {
-  const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState(false)
+const fecha = (d: Date) => new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(d)
 
-  useEffect(() => {
-    // Check admin role from localStorage (or fetch from API in real app)
-    const rol = localStorage.getItem("userRol")
-    if (rol === "admin") {
-      setIsAdmin(true)
-    } else {
-      router.replace("/login")
-    }
-  }, [router])
+export default async function AdminResumen() {
+  const [total, admins, conActividad, completadas, recientes] = await Promise.all([
+    prisma.usuario.count(),
+    prisma.usuario.count({ where: { rol: "admin" } }),
+    prisma.usuario.count({ where: { progreso: { some: { completado: true } } } }),
+    prisma.progreso.count({ where: { completado: true } }),
+    prisma.usuario.findMany({ orderBy: { creadoEn: "desc" }, take: 5, select: { id: true, username: true, rol: true, creadoEn: true } }),
+  ])
 
-  if (!isAdmin) return null
+  const filas: [string, string][] = [
+    ["Usuarios registrados", `${total} de 100 previstos para el piloto`],
+    ["Estudiantes", String(total - admins)],
+    ["Administradores", String(admins)],
+    ["Cuentas con al menos una actividad completada", String(conActividad)],
+    ["Actividades completadas", String(completadas)],
+  ]
 
   return (
-    <div className="min-h-screen flex bg-[#181c23] text-white">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#1e2330] border-r border-gray-800 flex flex-col p-6 gap-6">
-        <h2 className="text-2xl font-bold mb-8">Admin</h2>
-        <nav className="flex flex-col gap-4">
-          <Link href="/admin" className="font-medium hover:text-purple-400">Dashboard</Link>
-          <Link href="/admin/usuarios" className="font-medium hover:text-purple-400">Usuarios</Link>
-          <Link href="/admin/estadisticas" className="font-medium hover:text-purple-400">Estadísticas</Link>
-          <Link href="/admin/contenido" className="font-medium hover:text-purple-400">Contenido</Link>
-        </nav>
-        <div className="mt-auto">
-          <Link href="/misiones">
-            <Button variant="outline" className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10">Volver a app</Button>
+    <div className="space-y-10">
+      <header>
+        <h1 className="font-display text-3xl font-semibold">Resumen</h1>
+        <p className="mt-2 text-muted-foreground">Estado actual de la plataforma, leído de la base de datos.</p>
+      </header>
+
+      <section aria-labelledby="estado">
+        <h2 id="estado" className="mb-3 font-display text-xl font-semibold">Estado del piloto</h2>
+        <dl className="divide-y divide-border rounded-xl border border-border bg-card">
+          {filas.map(([k, v]) => (
+            <div key={k} className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-4">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="font-medium tabular-nums">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section aria-labelledby="recientes">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 id="recientes" className="font-display text-xl font-semibold">Últimos registros</h2>
+          <Link href="/admin/usuarios" className="inline-flex min-h-11 items-center text-sm text-neuron underline-offset-4 hover:underline">
+            Ver todos los usuarios
           </Link>
         </div>
-      </aside>
-      {/* Main content */}
-      <main className="flex-1 p-10">
-        <h1 className="text-3xl font-bold mb-8">Panel de Administración</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          <div className="bg-[#23283a] rounded-lg p-6 border border-gray-800">
-            <div className="text-4xl font-bold text-purple-400 mb-2">3</div>
-            <div className="text-gray-300">Usuarios registrados</div>
-          </div>
-          <div className="bg-[#23283a] rounded-lg p-6 border border-gray-800">
-            <div className="text-4xl font-bold text-blue-400 mb-2">12</div>
-            <div className="text-gray-300">Actividades completadas</div>
-          </div>
-          <div className="bg-[#23283a] rounded-lg p-6 border border-gray-800">
-            <div className="text-4xl font-bold text-green-400 mb-2">5</div>
-            <div className="text-gray-300">Niveles activos</div>
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold mb-4">Usuarios</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-[#23283a] rounded-lg border border-gray-800">
-            <thead>
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-border text-muted-foreground">
               <tr>
-                <th className="py-2 px-4 text-left">Nombre</th>
-                <th className="py-2 px-4 text-left">Email</th>
-                <th className="py-2 px-4 text-left">Rol</th>
-                <th className="py-2 px-4 text-left">Progreso</th>
-                <th className="py-2 px-4 text-left">Acciones</th>
+                <th scope="col" className="px-5 py-3 font-medium">Usuario</th>
+                <th scope="col" className="px-5 py-3 font-medium">Rol</th>
+                <th scope="col" className="px-5 py-3 font-medium">Registro</th>
               </tr>
             </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id} className="border-t border-gray-700">
-                  <td className="py-2 px-4">{user.name}</td>
-                  <td className="py-2 px-4">{user.email}</td>
-                  <td className="py-2 px-4 capitalize">{user.rol}</td>
-                  <td className="py-2 px-4">{user.progreso}</td>
-                  <td className="py-2 px-4">
-                    <Button size="sm" variant="outline" className="border-blue-500 text-blue-400 hover:bg-blue-500/10 mr-2">Ver</Button>
-                    <Button size="sm" variant="outline" className="border-purple-500 text-purple-400 hover:bg-purple-500/10">Cambiar rol</Button>
-                  </td>
+            <tbody className="divide-y divide-border">
+              {recientes.map((u) => (
+                <tr key={u.id}>
+                  <td className="px-5 py-3 font-medium">{u.username}</td>
+                  <td className="px-5 py-3">{u.rol === "admin" ? "Administrador" : "Estudiante"}</td>
+                  <td className="px-5 py-3 tabular-nums text-muted-foreground">{fecha(u.creadoEn)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </main>
+      </section>
     </div>
   )
 }
