@@ -2,16 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle, Star } from "lucide-react"
+import { ArrowLeft, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
-import { cn } from "@/lib/utils"
 import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition"
 import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
 import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
-import LivesIndicator from "@/components/misiones/lives-indicator"
 import { useLives } from "@/components/misiones/lives-context"
-import { Progress } from "@/components/ui/progress"
 
 // --- Configuración de rondas y puntos por nivel ---
 const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion: number; bonus: number }> = {
@@ -31,22 +28,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const [routeParams, setRouteParams] = useState<{ seccion: string; nivel: string; actividad: string } | null>(null)
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
-  const [activitySuccess, setActivitySuccess] = useState(false)
   const [activityScore, setActivityScore] = useState(0)
-  const [showRecarga, setShowRecarga] = useState(false)
-  const [recargaError, setRecargaError] = useState("")
-  const { lives, loseLife, isRecharging, rechargeTime, startRecharge, maxLives } = useLives()
-  const [currentRound, setCurrentRound] = useState<number>(0)
-  const [userAnswers, setUserAnswers] = useState<boolean[]>([])
-  const [errores, setErrores] = useState<number[]>([])
-  const [repaso, setRepaso] = useState(false)
-  const [score, setScore] = useState(0)
-  const [bonus, setBonus] = useState(0)
-  const [showSummary, setShowSummary] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const { loseLife } = useLives()
   const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
-  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
-  const [bonusOtorgado, setBonusOtorgado] = useState(false)
   const [feedbackFinal, setFeedbackFinal] = useState("")
 
   useEffect(() => {
@@ -56,20 +40,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   if (!routeParams) return null
   const { seccion, nivel, actividad } = routeParams
   const actividadInfo = getActividadInfo(seccion, nivel, actividad)
-  const nivelActual = nivelConfig[nivel] || nivelConfig["1"]
-  const totalRondas = nivelActual.rondas
-  const puntosRonda = nivelActual.puntos
-  const penalizacion = nivelActual.penalizacion
-  const bonusPerfecto = nivelActual.bonus
-
-  // Simulación de preguntas/rondas (puedes reemplazar con datos reales)
-  const rondas = Array.from({ length: totalRondas }, (_, i) => ({
-    pregunta: `Pregunta ${i + 1}`,
-    correcta: i % 2 === 0 ? "A" : "B", // Alterna respuestas correctas
-    opciones: ["A", "B", "C"],
-    explicacion: `Explicación de la ronda ${i + 1}`,
-  }))
-
   // Función para volver al nivel
   const handleBack = () => {
     router.push(`/misiones/${seccion}/${nivel}`)
@@ -78,17 +48,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   // --- NUEVO: Lógica de control de errores por ronda ---
   function handleRondaError() {
     descontarVidaPorError(loseLife);
-  }
-
-  // Al completar la actividad, si falló, restar vida global (por compatibilidad)
-  const handleActivityComplete = async (success: boolean, score?: number) => {
-    setIsCompleted(true)
-    setActivitySuccess(success)
-    setActivityScore(score ?? 0)
-    // --- Lógica de vidas globales ---
-    if (!success) {
-      descontarVidaPorError(loseLife)
-    }
   }
 
   // --- Sistema de puntos y repaso para juegos reales ---
@@ -102,7 +61,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     const puntosRonda = nivelActual.puntos
     const penalizacion = nivelActual.penalizacion
     const bonusPerfecto = nivelActual.bonus
-    const totalRondas = nivelActual.rondas
 
     // Simulación: score = cantidad de aciertos en primera pasada
     // errores = [{ronda, explicacion}] de las fallidas
@@ -124,20 +82,15 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     if (errores.length === 0) {
       bonus = bonusPerfecto
       total += bonus
-      setBonusOtorgado(true)
-    } else {
-      setBonusOtorgado(false)
     }
-    setActivityScore(total)
-    setBonus(bonus)
+    // Lo que se muestra es exactamente lo que se guarda en /api/progreso.
+    const puntosGuardados = Math.max(0, total)
+    setActivityScore(puntosGuardados)
     setErroresDetalle(errores)
-    setErroresRepetidos(erroresRe)
     setIsCompleted(true)
-    setActivitySuccess(success)
-    setShowSummary(true)
 
     // Feedback final
-    let feedback = `¡Actividad completada! Obtuviste ${total} puntos.`
+    let feedback = `¡Actividad completada! Obtuviste ${puntosGuardados} puntos.`
     if (bonus > 0) feedback += `\n¡Bonus perfecto +${bonus}!`
     if (errores.length > 0) {
       const fallos = erroresRe && erroresRe.length > 0 ? erroresRe : []
@@ -158,7 +111,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
           nivel,
           actividad,
           completado: success,
-          score: Math.max(0, total),
+          score: puntosGuardados,
           tiempo: Math.max(0, Math.round(time || 0)),
         }),
       })
@@ -202,10 +155,12 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             <h1 className="text-3xl font-bold">{actividadInfo.title}</h1>
             <p className="text-gray-400 mt-1">{actividadInfo.description}</p>
           </div>
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-            <span className="text-sm text-gray-300">{activityScore} pts</span>
-          </div>
+          {isCompleted && (
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-sm text-gray-300">{activityScore} pts</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="container mx-auto px-4 py-8">
@@ -239,7 +194,6 @@ function getActividadInfo(seccionId: string, nivelId: string, actividadId: strin
       nivelTitle: "Reconocimiento de patrones",
       title: "Observa y Reconoce",
       description: "Identifica patrones visuales y selecciona el siguiente elemento en la secuencia.",
-      points: 50,
     }
   }
 
@@ -249,7 +203,6 @@ function getActividadInfo(seccionId: string, nivelId: string, actividadId: strin
       nivelTitle: "Reconocimiento de patrones",
       title: "Desafío: ¿Quién no encaja aquí?",
       description: "Pon a prueba tu lógica visual: observa la secuencia y detecta el elemento que no pertenece al patrón.",
-      points: 75,
     }
   }
 
@@ -259,7 +212,6 @@ function getActividadInfo(seccionId: string, nivelId: string, actividadId: strin
       nivelTitle: "Reconocimiento de patrones",
       title: "Completa el patrón",
       description: "Observa la secuencia de elementos. Algunos espacios están en blanco. Elige, entre las opciones disponibles, el elemento correcto para completar el patrón y haz clic para colocarlo en el lugar correspondiente.\n\nObjetivo: Identificar la lógica detrás del patrón mostrado y completarlo correctamente, reforzando la habilidad para reconocer regularidades y anticipar lo que sigue en una secuencia.",
-      points: 100,
     }
   }
 
@@ -268,6 +220,5 @@ function getActividadInfo(seccionId: string, nivelId: string, actividadId: strin
     nivelTitle: "Nivel",
     title: "Actividad",
     description: "Descripción de la actividad",
-    points: 0,
   }
 }
