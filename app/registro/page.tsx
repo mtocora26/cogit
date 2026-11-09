@@ -5,9 +5,10 @@ import type React from "react"
 import { useState } from "react"
 import { Logo } from "@/components/brand/logo"
 import { AuthPanel } from "@/components/brand/auth-panel"
+import { PasswordInput } from "@/components/brand/password-input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
-import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
+import { ArrowRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -166,42 +167,37 @@ export default function RegistroPage() {
                 <label htmlFor="password" className="text-sm font-medium block">
                   Contraseña
                 </label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="bg-card border-input focus:border-purple-500 pr-10"
-                    disabled={isLoading}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isLoading}
+                  required
+                  visible={showPassword}
+                  onVisibleChange={setShowPassword}
+                />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-medium block">
                   Confirmar contraseña
                 </label>
-                <Input
+                <PasswordInput
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="bg-card border-input focus:border-purple-500"
+                  className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={isLoading}
                   required
+                  visible={showPassword}
+                  showToggle={false}
                 />
               </div>
 
