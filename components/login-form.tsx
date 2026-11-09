@@ -61,7 +61,7 @@ export default function LoginForm() {
           placeholder="tu@ejemplo.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-[#1e2330] border-gray-700 focus:border-purple-500"
+          className="bg-card border-gray-700 focus:border-purple-500"
           disabled={isLoading}
           required
         />
@@ -83,7 +83,7 @@ export default function LoginForm() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-[#1e2330] border-gray-700 focus:border-purple-500 pr-10"
+            className="bg-card border-gray-700 focus:border-purple-500 pr-10"
             disabled={isLoading}
             required
           />

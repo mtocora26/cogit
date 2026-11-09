@@ -27,3 +27,13 @@ yarn-error.log*
 next-env.d.ts
 # binarios del motor de Prisma (se generan con `prisma generate`)
 lib/generated/prisma/*.so.node
+
+# artefactos de trabajo de Impeccable (borradores, capturas y cachés)
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/questions/
+.impeccable/build/
+.impeccable/hook.cache.json
+
+# el zip del kit de marca duplica la carpeta docs/brand-kit/kit
+docs/brand-kit/*.zip

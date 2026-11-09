@@ -206,7 +206,7 @@ export default function NonogramasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navbar */}
       <NavBar activePage="minijuegos" />
 
@@ -216,7 +216,7 @@ export default function NonogramasPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-foreground"
             onClick={() => router.push("/minijuegos")}
           >
             <ArrowLeft className="h-5 w-5 mr-1" />
@@ -230,14 +230,6 @@ export default function NonogramasPage() {
       <div className="container mx-auto px-4 py-4">
         {showLevelSelector ? (
           <div className="relative">
-            <div className="absolute inset-0 z-0">
-              <Image
-                src="https://images.unsplash.com/photo-1611996575749-79a3a250f948?q=80&w=1200&auto=format&fit=crop"
-                alt="Nonogramas Background"
-                fill
-                className="object-cover opacity-10"
-              />
-            </div>
             <div className="relative z-10">
               <LevelSelector
                 levels={levels}
@@ -251,7 +243,7 @@ export default function NonogramasPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Left Column - Game Info */}
             <div className="md:col-span-1 space-y-6">
-              <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
+              <div className="bg-card rounded-lg p-6 border border-gray-800">
                 <h2 className="text-xl font-bold mb-4">Información</h2>
 
                 <div className="space-y-4">
@@ -324,7 +316,7 @@ export default function NonogramasPage() {
                 </div>
               </div>
 
-              <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
+              <div className="bg-card rounded-lg p-6 border border-gray-800">
                 <h2 className="text-xl font-bold mb-4">Instrucciones</h2>
                 <ul className="space-y-2 text-sm text-gray-300">
                   <li className="flex items-start gap-2">
@@ -357,7 +349,7 @@ export default function NonogramasPage() {
             {/* Center Column - Game Board */}
             <div className="md:col-span-2">
               {isComplete ? (
-                <div className="bg-[#1e2330] rounded-lg p-8 text-center border border-gray-800 h-full flex flex-col items-center justify-center">
+                <div className="bg-card rounded-lg p-8 text-center border border-gray-800 h-full flex flex-col items-center justify-center">
                   <div
                     className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isCorrect ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}
                   >
@@ -374,7 +366,7 @@ export default function NonogramasPage() {
 
                   {/* Mostrar la imagen completada */}
                   {isCorrect && (
-                    <div className="mb-6 p-4 bg-[#1a1d23] rounded-lg border border-gray-700">
+                    <div className="mb-6 p-4 bg-background rounded-lg border border-gray-700">
                       <h3 className="text-lg font-medium mb-3">¡Has creado esta imagen!</h3>
                       <div className="relative w-48 h-48 mx-auto">
                         <NonogramBoard
@@ -416,7 +408,7 @@ export default function NonogramasPage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
+                <div className="bg-card rounded-lg p-6 border border-gray-800">
                   {/* Animación de completado */}
                   {showCompletionAnimation && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 rounded-lg animate-fade-in">
@@ -434,7 +426,7 @@ export default function NonogramasPage() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                         </div>
-                        <h3 className="text-2xl font-bold mb-2 text-white">¡Imagen completada!</h3>
+                        <h3 className="text-2xl font-bold mb-2 text-foreground">¡Imagen completada!</h3>
                         <p className="text-gray-300">Has descubierto la imagen oculta</p>
                       </div>
                     </div>
@@ -462,7 +454,7 @@ export default function NonogramasPage() {
       {/* Tutorial Modal */}
       {showTutorial && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1e2330] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-700">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-700">
             <h2 className="text-2xl font-bold mb-4">Cómo jugar a Nonogramas</h2>
 
             <div className="space-y-6">
@@ -492,7 +484,7 @@ export default function NonogramasPage() {
 
               <div>
                 <h3 className="text-lg font-medium mb-2 text-purple-400">Ejemplo</h3>
-                <div className="bg-[#1a1d23] p-4 rounded-lg">
+                <div className="bg-background p-4 rounded-lg">
                   <p className="text-gray-300 mb-2">
                     En una fila con la pista "3 1" y 5 celdas, la solución podría ser:
                   </p>

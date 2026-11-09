@@ -1,281 +1,205 @@
-"use client"
-import Image from "next/image"
 import Link from "next/link"
-import { Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
+import { Logo } from "@/components/brand/logo"
+import { ThemeToggle } from "@/components/theme-toggle"
+import AuthRedirect from "@/components/landing/auth-redirect"
+import Loom from "@/components/landing/loom"
+import NonogramDemo from "@/components/landing/nonogram-demo"
+import { MissionTrace, RobotPreview, SudokuPreview } from "@/components/landing/previews"
+
+const press = "transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.97]"
+
+const SKILLS = [
+  { name: "Descomposición", text: "Partir un problema grande en pasos pequeños." },
+  { name: "Patrones", text: "Ver lo que se repite para no resolverlo dos veces." },
+  { name: "Abstracción", text: "Quedarte con lo importante y dejar el ruido." },
+  { name: "Algoritmos", text: "Ordenar instrucciones para llegar a la meta." },
+]
 
 export default function Home() {
-  // Estado de autenticación
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = Boolean(localStorage.getItem("usuario"));
-      setIsAuthenticated(isAuth);
-      // Redirigir si ya está autenticado
-      if (isAuth) {
-        window.location.replace("/misiones");
-      }
-    }
-    // Listen for storage changes (login/logout in other tabs)
-    const handler = () => setIsAuthenticated(Boolean(localStorage.getItem("usuario")));
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, [])
-
-  // Si está autenticado, no renderizar nada de la landing ni navegación
-  if (isAuthenticated) {
-    return null;
-  }
-
-  // Logout handler (no se usa en landing, pero se deja por si acaso)
-  const handleLogout = () => {
-    localStorage.removeItem("usuario")
-    localStorage.removeItem("userId")
-    localStorage.removeItem("userRol")
-    // Remove auth cookie for middleware
-    document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    setIsAuthenticated(false)
-    window.location.href = "/"
-  }
-
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
-      {/* Navigation solo para usuarios NO autenticados */}
-      <header className="border-b border-gray-800 bg-[#1a1d23]/90 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Brain className="h-8 w-8 text-purple-400" />
-            <span className="text-xl font-bold tracking-tight">COGIT</span>
+    <div className="min-h-screen bg-background text-foreground">
+      <AuthRedirect />
+
+      <header className="absolute inset-x-0 top-0 z-50">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <Link href="/" aria-label="COGIT, inicio" className="flex min-h-11 items-center">
+            <Logo className="h-9 w-auto sm:h-10" />
           </Link>
-          {/* Solo muestra navegación si está autenticado */}
-          {isAuthenticated && (
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/misiones" className="hover:text-purple-400 transition-colors font-medium">Misiones</Link>
-              <Link href="/minijuegos" className="hover:text-blue-400 transition-colors font-medium">Minijuegos</Link>
-              <Link href="/comunidad" className="hover:text-green-400 transition-colors font-medium">Comunidad</Link>
-              <Link href="/ranking" className="hover:text-yellow-400 transition-colors font-medium">Ranking</Link>
-            </nav>
-          )}
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="default" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg transition-transform hover:scale-105">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 animate-fade-in">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 12l-6-6m0 0l6 6m-6-6v12" />
-                  </svg>
-                  Ingresar
-                </span>
-              </Button>
-            </Link>
-            <Link href="/registro">
-              <Button variant="outline" className="border-purple-500 text-purple-400 hover:bg-purple-500/10 shadow-md transition-transform hover:scale-105">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 animate-fade-in">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  Regístrate
-                </span>
-              </Button>
-            </Link>
-          </div>
+          <nav aria-label="Cuenta" className="flex items-center gap-1 sm:gap-2">
+            <ThemeToggle />
+            <Button asChild variant="ghost" className={`min-h-11 px-2 text-sm sm:px-4 sm:text-base ${press}`}>
+              <Link href="/login">Ingresar</Link>
+            </Button>
+            <Button asChild variant="outline" className={`min-h-11 px-3 text-sm sm:px-4 sm:text-base ${press}`}>
+              <Link href="/registro">Crear cuenta</Link>
+            </Button>
+          </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-8 items-center">
-        <div className="space-y-6">
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-            Desbloquea tu <span className="text-purple-400">potencial</span>
-          </h1>
-          <p className="text-lg text-gray-300">Aprender a pensar como un programador nunca fue tan divertido.</p>
-          <div className="flex flex-wrap gap-3 mt-4 mb-6">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-400/20 text-yellow-300 font-semibold text-xs shadow-sm border border-yellow-400/30">+1000 estudiantes</span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-pink-400/20 text-pink-200 font-semibold text-xs shadow-sm border border-pink-400/30">Aprende jugando</span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-400/20 text-blue-200 font-semibold text-xs shadow-sm border border-blue-400/30">Gratis para siempre</span>
-          </div>
-          <div className="h-2 md:h-4" />
-          <Link href="/registro">
-            <div className="flex flex-col items-start">
-              <Button
-                size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg flex items-center gap-3 shadow-lg transition-transform hover:scale-105 focus:ring-4 focus:ring-purple-400/40"
-              >
-                <span>Inicia Tu Aventura</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 animate-pulse">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Button>
-              <span className="text-sm text-purple-200 mt-2 ml-1 animate-fade-in">¡Es gratis y para todos los niveles!</span>
-            </div>
-          </Link>
-        </div>
-        <div className="relative h-[400px] rounded-lg overflow-hidden border border-blue-500/30 shadow-[0_0_15px_rgba(56,189,248,0.3)]">
-          <Image
-            src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop"
-            alt="Código de programación en pantalla"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20"></div>
-        </div>
-      </section>
-
-      {/* Vision Section */}
-      <section className="py-16 bg-[#1a1d23]/50">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-[#1e2330] p-10 rounded-lg border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden">
-            {/* Ícono decorativo */}
-            <div className="w-20 h-20 mx-auto flex items-center justify-center relative z-10 overflow-visible">
-              <Brain className="w-16 h-16 text-purple-400 drop-shadow-lg animate-bounce-slow" />
-            </div>
-            <h2 className="text-3xl font-bold text-center text-purple-400 mb-6 relative z-20 flex flex-col items-center gap-2">
-              Nuestra Visión
-              <span className="block text-base text-purple-200 font-normal mt-1">Transformando la educación a través del juego y la creatividad</span>
-            </h2>
-            <blockquote className="text-xl text-center text-gray-300 leading-relaxed italic mb-6 relative z-20">
-              “El pensamiento computacional no es solo para programadores, es una habilidad para la vida.”
-            </blockquote>
-            <p className="text-lg text-center text-gray-200 leading-relaxed relative z-20">
-              Empoderamos a los estudiantes para dominar el pensamiento computacional a través de desafíos atractivos, trabajo en equipo y experiencias lúdicas. Creemos que aprender puede ser divertido, inclusivo y transformador para todos.
-            </p>
-            {/* Fondo decorativo sutil */}
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-pink-400/20 rounded-full blur-2xl z-0" />
-            <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl z-0" />
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Conoce nuestra plataforma</h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Aprende mientras juegas a través de nuestras emocionantes secciones.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Misiones */}
-          {isAuthenticated && (
-            <>
-              <div className="bg-[#1e2330] rounded-lg overflow-hidden border border-yellow-500/20 hover:border-yellow-500/40 transition-all group">
-                <div className="h-48 relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1551033406-611cf9a28f67?q=80&w=800&auto=format&fit=crop"
-                    alt="Misiones"
-                    width={400}
-                    height={300}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1e2330] to-transparent"></div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-center mb-3">Misiones</h3>
-                  <p className="text-gray-300 text-center">Aprende superando niveles</p>
-                </div>
-              </div>
-
-              {/* Minijuegos */}
-              <div className="bg-[#1e2330] rounded-lg overflow-hidden border border-blue-500/20 hover:border-blue-500/40 transition-all group">
-                <div className="h-48 relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1580541832626-2a7131ee809f?q=80&w=800&auto=format&fit=crop"
-                    alt="Minijuegos"
-                    width={400}
-                    height={300}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1e2330] to-transparent"></div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-center mb-3">Minijuegos</h3>
-                  <p className="text-gray-300 text-center">Ejercita tu mente y sé más ágil</p>
-                </div>
-              </div>
-
-              {/* Comunidad */}
-              <div className="bg-[#1e2330] rounded-lg overflow-hidden border border-green-500/20 hover:border-green-500/40 transition-all group">
-                <div className="h-48 relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop"
-                    alt="Comunidad"
-                    width={400}
-                    height={300}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1e2330] to-transparent"></div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-center mb-3">Comunidad</h3>
-                  <p className="text-gray-300 text-center">Comparte tus logros y adquiere insignias de progreso</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 py-16 relative">
-        <div className="absolute inset-0 opacity-10">
-          <Image
-            src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop"
-            alt="Background Pattern"
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl font-bold mb-6">¿Listo para comenzar tu aventura?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Únete a nuestra comunidad de aprendizaje y desarrolla habilidades de pensamiento computacional de forma
-            divertida.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/registro">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8">
-                Regístrate Ahora
-              </Button>
-            </Link>
-            {isAuthenticated && (
-              <Link href="/misiones">
-                <Button size="lg" variant="outline" className="border-blue-500 text-blue-400 hover:bg-blue-500/10">
-                  Conoce Más
+      <main>
+        {/* Primera pantalla: el telar. Las perforaciones deciden la tela. */}
+        <section className="relative pt-20 sm:pt-28">
+          <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-16">
+            <div>
+              <h1 className="font-display text-4xl font-bold leading-[1.04] sm:text-6xl lg:text-7xl">
+                Programa el patrón.
+                <br />
+                <span className="text-neuron">Mira cómo se teje.</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-xl">
+                Misiones cortas y minijuegos de lógica para tus ratos entre clases. Cada instrucción que das cambia el
+                resultado, y no necesitas saber programar.
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Button asChild size="lg" className={`min-h-12 px-8 text-base ${press}`}>
+                  <Link href="/registro">Empezar misión</Link>
                 </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
+                <Link
+                  href="/login"
+                  className="inline-flex min-h-11 items-center px-2 text-sm text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
+                >
+                  Ya tengo cuenta
+                </Link>
+              </div>
+            </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Brain className="h-6 w-6 text-purple-400" />
-              <span className="text-lg font-bold">COGIT</span>
+            <Link
+              href="/registro"
+              className={`group hidden self-start rounded-md border border-border bg-[hsl(var(--punch))] p-5 text-[#0B0E1C] lg:block ${press} hover:-translate-y-0.5`}
+            >
+              <span className="block text-xl font-semibold">Siguiente tarjeta</span>
+              <span className="mt-1 block text-sm text-[#2d3358]">Descomposición · Misión 1</span>
+              <span aria-hidden className="mt-4 flex gap-1.5">
+                {[1, 0, 1, 1, 0, 1, 0, 0, 1, 1].map((on, i) => (
+                  <span key={i} className={`h-2.5 flex-1 rounded-[2px] ${on ? "bg-[#0B0E1C]" : "bg-[hsl(245_55%_84%)]"}`} />
+                ))}
+              </span>
+            </Link>
+          </div>
+
+          <div className="mt-6 sm:mt-10">
+            <Loom />
+          </div>
+        </section>
+
+        {/* Prueba real: el primer nivel se juega aquí mismo */}
+        <section className="border-t border-border bg-loom">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:gap-16 lg:py-24">
+            <div>
+              <h2 className="font-display text-3xl font-semibold sm:text-4xl">Pruébalo ahora, sin cuenta.</h2>
+              <p className="mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
+                Este es un nonograma, uno de los minijuegos de COGIT. Los números dicen cuántas casillas seguidas van
+                rellenas en cada fila y columna: razona, no adivines.
+              </p>
             </div>
-            <div className="flex gap-6">
-              <Link href="/about" className="text-sm text-gray-400 hover:text-purple-400 transition-colors">
-                Sobre Nosotros
-              </Link>
-              <Link href="/contact" className="text-sm text-gray-400 hover:text-purple-400 transition-colors">
-                Contacto
-              </Link>
-              <Link href="/privacy" className="text-sm text-gray-400 hover:text-purple-400 transition-colors">
-                Privacidad
-              </Link>
-              <Link href="/terms" className="text-sm text-gray-400 hover:text-purple-400 transition-colors">
-                Términos
-              </Link>
+            <NonogramDemo />
+          </div>
+        </section>
+
+        {/* Qué se entrena: una sola banda perforada con cuatro habilidades */}
+        <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+          <h2 className="max-w-2xl font-display text-3xl font-semibold sm:text-4xl">
+            Cuatro formas de pensar, una misión a la vez.
+          </h2>
+          <ol className="mt-10 overflow-hidden rounded-xl bg-[hsl(var(--punch))] text-[#0B0E1C]">
+            {SKILLS.map((s, i) => (
+              <li
+                key={s.name}
+                className="grid items-center gap-x-8 gap-y-3 px-5 py-5 sm:px-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] [&:not(:first-child)]:border-t [&:not(:first-child)]:border-[hsl(245_55%_84%)]"
+              >
+                <div>
+                  <h3 className="font-display text-xl font-semibold">{s.name}</h3>
+                  <p className="mt-1 text-[#2d3358]">{s.text}</p>
+                </div>
+                <span aria-hidden className="flex gap-1.5">
+                  {Array.from({ length: 16 }, (_, k) => (
+                    <span
+                      key={k}
+                      className={`h-3 flex-1 rounded-[2px] ${(Math.min(k, 15 - k) * (i + 2) + i) % 4 < 2 ? "bg-[#0B0E1C]" : "bg-[hsl(245_55%_84%)]"}`}
+                    />
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-14">
+            <MissionTrace />
+          </div>
+        </section>
+
+        {/* Minijuegos */}
+        <section className="border-t border-border bg-card/40">
+          <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:py-24">
+            <div className="lg:col-span-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="font-display text-2xl font-semibold">Sudoku</h3>
+                <span className="text-xs text-muted-foreground">Vista ilustrativa</span>
+              </div>
+              <p className="mt-2 text-muted-foreground">Razona qué número va en cada casilla sin adivinar.</p>
+              <div className="mt-6">
+                <SudokuPreview />
+              </div>
+            </div>
+            <div className="lg:col-span-7">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="font-display text-2xl font-semibold">Robot Programmer</h3>
+                <span className="text-xs text-muted-foreground">Vista ilustrativa</span>
+              </div>
+              <div className="mt-2 flex flex-col gap-6 md:flex-row md:items-center md:gap-10">
+                <p className="max-w-xs text-muted-foreground">
+                  Ordena instrucciones para guiar al robot hasta la meta. Es tu primer algoritmo.
+                </p>
+                <RobotPreview />
+              </div>
             </div>
           </div>
-          <div className="mt-6 text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} COGIT. Todos los derechos reservados.
+        </section>
+
+        {/* Reglas del juego */}
+        <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+          <h2 className="max-w-2xl font-display text-3xl font-semibold sm:text-4xl">Fallar no te saca del juego.</h2>
+          <div className="mt-10">
+            <div className="flex items-center gap-3">
+              <span aria-hidden className="flex gap-1">{[1, 1, 1, 1, 0].map((on, i) => <span key={i} className={`h-5 w-3 rounded-[3px] ${on ? "bg-neuron" : "bg-border"}`} />)}</span>
+              <h3 className="font-display text-2xl font-semibold">Neuronas</h3>
+            </div>
+            <p className="mt-3 max-w-md text-muted-foreground">
+              Son tus intentos. Si te equivocas pierdes una, y se recuperan con el tiempo.
+            </p>
           </div>
+        </section>
+
+        {/* Cierre */}
+        <section className="border-t border-border bg-loom">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-8 px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="max-w-xl font-display text-3xl font-semibold sm:text-4xl">
+              Guarda tu avance y sigue con el siguiente nivel.
+            </h2>
+            <p className="max-w-lg text-muted-foreground">
+              Tu progreso queda guardado en tu cuenta.
+            </p>
+            <Button asChild size="lg" className={`min-h-12 px-8 text-base ${press}`}>
+              <Link href="/registro">Crear cuenta</Link>
+            </Button>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <Logo className="h-8 w-auto" />
+          <nav aria-label="Pie de página" className="flex gap-2">
+            <Link href="/login" className="inline-flex min-h-11 items-center px-2 transition-colors hover:text-foreground">
+              Ingresar
+            </Link>
+            <Link href="/registro" className="inline-flex min-h-11 items-center px-2 transition-colors hover:text-foreground">
+              Crear cuenta
+            </Link>
+          </nav>
+          <span>© {new Date().getFullYear()} COGIT</span>
         </div>
       </footer>
     </div>

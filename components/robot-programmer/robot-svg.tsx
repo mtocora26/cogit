@@ -13,7 +13,6 @@ export default function RobotSVG({ direction = 0, size = 48, mood = "neutral", a
   // Animación de rebote
   const bounce = animate ? {
     animation: "robot-bounce 1.2s infinite cubic-bezier(.4,1.6,.6,1)",
-    filter: "drop-shadow(0 4px 16px #818cf8aa) drop-shadow(0 0px 2px #0008)"
   } : {}
   // Ojos animados (parpadeo)
   const [blink, setBlink] = React.useState(false)

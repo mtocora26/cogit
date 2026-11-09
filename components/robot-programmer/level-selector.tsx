@@ -45,13 +45,13 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case "fácil":
-        return <Star className="h-6 w-6 text-green-400" />
+        return <Star className="h-6 w-6 text-neuron" />
       case "medio":
-        return <Zap className="h-6 w-6 text-yellow-400" />
+        return <Zap className="h-6 w-6 text-neuron" />
       case "difícil":
-        return <Brain className="h-6 w-6 text-red-400" />
+        return <Brain className="h-6 w-6 text-neuron" />
       default:
-        return <Star className="h-6 w-6 text-green-400" />
+        return <Star className="h-6 w-6 text-neuron" />
     }
   }
 
@@ -74,7 +74,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
           return (
             <div
               key={level.id}
-              className={`bg-[#1e2330] rounded-lg overflow-hidden border ${
+              className={`bg-card rounded-lg overflow-hidden border ${
                 isLocked
                   ? "border-gray-700 opacity-70"
                   : isCompleted
@@ -83,7 +83,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
               } transition-all group`}
             >
               <div className="h-32 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1e2330] to-transparent z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent z-10"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Robot
                     className={`h-20 w-20 ${
@@ -96,7 +96,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-bold">{level.name}</h3>
-                  <div className="bg-[#1a1d23] p-2 rounded-full">
+                  <div className="bg-background p-2 rounded-full">
                     {isLocked ? <Lock className="h-6 w-6 text-gray-500" /> : getDifficultyIcon(level.difficulty)}
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
                 </div>
 
                 {isCompleted && bestTimes[index] && (
-                  <div className="bg-green-500/10 text-green-400 px-3 py-1 rounded-md text-sm mb-4 flex items-center justify-between">
+                  <div className="bg-neuron/15 text-neuron px-3 py-1 rounded-md text-sm mb-4 flex items-center justify-between">
                     <span>Mejor tiempo:</span>
                     <span>{formatTime(bestTimes[index])}</span>
                   </div>

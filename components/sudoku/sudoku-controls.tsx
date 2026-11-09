@@ -44,7 +44,7 @@ export default function SudokuControls({
           <Button
             key={num}
             variant="outline"
-            className="h-12 md:h-14 p-0 border-gray-700 hover:bg-gray-800 hover:text-white text-lg"
+            className="h-12 md:h-14 p-0 border-gray-700 hover:bg-gray-800 hover:text-foreground text-lg"
             onClick={() => onNumberInput(num)}
           >
             {num}

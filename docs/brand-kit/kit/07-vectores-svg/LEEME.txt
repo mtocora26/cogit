@@ -1,0 +1,2 @@
+Estos SVG contienen el PNG incrustado (no son vectores reales).
+Sirven para pegar en HTML/Figma/Canva, pero para imprenta a gran formato conviene vectorizar el logo.

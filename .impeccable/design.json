@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T00:00:00Z",
+  "title": "Design System: COGIT",
+  "extensions": {
+    "colorMeta": {
+      "night": { "role": "neutral", "displayName": "Azul Noche", "canonical": "#0B0E1C", "tonalRamp": ["#05060e", "#0B0E1C", "#131728", "#1c2138", "#2b3150", "#4a5273", "#8a91b0", "#dfe2f0"] },
+      "white": { "role": "neutral", "displayName": "Blanco", "canonical": "#FFFFFF", "tonalRamp": ["#6b6f85", "#9296aa", "#b4b7c7", "#cfd1dc", "#e2e4ec", "#eef0f6", "#f7f8fc", "#FFFFFF"] },
+      "cyan-signal": { "role": "secondary", "displayName": "Cian Señal", "canonical": "#6DF1FF", "tonalRamp": ["#00535c", "#007985", "#00a3b3", "#2cc9d9", "#6DF1FF", "#9af5ff", "#c4f9ff", "#e8fcff"] },
+      "violet-neuron": { "role": "secondary", "displayName": "Violeta Neurona", "canonical": "#8B80FF", "tonalRamp": ["#1f1a66", "#332b99", "#4b40cc", "#6a5ff0", "#8B80FF", "#aaa2ff", "#c9c4ff", "#e8e6ff"] },
+      "violet-electric": { "role": "primary", "displayName": "Violeta Eléctrico", "canonical": "#A815FF", "tonalRamp": ["#35005c", "#520092", "#7a00c9", "#9600e6", "#A815FF", "#c05bff", "#d696ff", "#ecd0ff"] },
+      "punch-card": { "role": "neutral", "displayName": "Lavanda Perforada", "canonical": "hsl(245 100% 92%)", "tonalRamp": ["#5b52b8", "#7f77d6", "#a59fe8", "#c3beF3", "#d9d6fa", "#e4e2fc", "#eeedfd", "#f7f6ff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Titular del hero solamente; Poppins 700, tracking -0.02em." },
+      "headline": { "displayName": "Headline", "purpose": "Títulos de sección de la landing; Poppins 600." },
+      "title": { "displayName": "Title", "purpose": "Nombres de habilidad, de juego y subtítulos; Poppins 600." },
+      "body": { "displayName": "Body", "purpose": "Párrafos y descripciones; Inter 400, líneas de ~65ch." },
+      "label": { "displayName": "Label", "purpose": "Botones, navegación y metadatos; Inter 500." }
+    },
+    "shadows": [
+      { "name": "none-at-rest", "value": "none", "purpose": "Las superficies son planas; la separación se logra con borde de 1px y capas tonales." },
+      { "name": "menu-popover", "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)", "purpose": "Único uso de sombra: el menú de usuario del nav (shadow-2xl); deriva registrada, no regla." }
+    ],
+    "motion": [
+      { "name": "ease-out-strong", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Easing de la secuencia de tejido y de las pulsaciones de botones." },
+      { "name": "loom-weave", "value": "520ms ease-out-strong, 70ms de retardo por fila, desde translateX(-18px) y opacity 0", "purpose": "Única secuencia de entrada: la tela se teje fila a fila." },
+      { "name": "press", "value": "150ms ease-out-strong, active:scale(0.97)", "purpose": "Retroalimentación de pulsación en botones y tarjetas." },
+      { "name": "reduced-motion", "value": "animation-duration 0.01ms; las transiciones de color se conservan", "purpose": "Respeto de prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "2xl", "value": "1400px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal (Empezar misión, Crear cuenta).",
+      "html": "<button class=\"ds-btn-primary\">Empezar misión</button>",
+      "css": ".ds-btn-primary { background: #A815FF; color: #fff; height: 48px; padding: 0 32px; border: 0; border-radius: 6px; font: 500 16px Inter, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-primary:hover { background: rgb(168 21 255 / 0.9); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Acción secundaria (Crear cuenta en la cabecera).",
+      "html": "<button class=\"ds-btn-outline\">Crear cuenta</button>",
+      "css": ".ds-btn-outline { background: #0B0E1C; color: #f6f6fd; height: 44px; padding: 0 16px; border: 1px solid #2a3150; border-radius: 6px; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-outline:hover { background: #262e4a; } .ds-btn-outline:active { transform: scale(0.97); } .ds-btn-outline:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Acción terciaria (Ingresar).",
+      "html": "<button class=\"ds-btn-ghost\">Ingresar</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #f6f6fd; height: 44px; padding: 0 16px; border: 0; border-radius: 6px; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-ghost:hover { background: #262e4a; } .ds-btn-ghost:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Siguiente tarjeta (Punched Card)",
+      "kind": "card",
+      "refersTo": "punched-card",
+      "description": "Segundo punto de entrada del hero: tarjeta perforada lavanda con tira de perforaciones.",
+      "html": "<a class=\"ds-punch\"><span class=\"ds-punch-t\">Siguiente tarjeta</span><span class=\"ds-punch-s\">Descomposición · Misión 1</span><span class=\"ds-punch-row\"><i class=\"on\"></i><i></i><i class=\"on\"></i><i class=\"on\"></i><i></i><i class=\"on\"></i><i></i><i></i><i class=\"on\"></i><i class=\"on\"></i></span></a>",
+      "css": ".ds-punch { display: block; width: 272px; box-sizing: border-box; padding: 20px; background: hsl(245 100% 92%); color: #0B0E1C; border: 1px solid #2a3150; border-radius: 6px; font-family: Inter, system-ui, sans-serif; transition: transform 150ms cubic-bezier(0.23,1,0.32,1); } .ds-punch:hover { transform: translateY(-2px); } .ds-punch:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; } .ds-punch-t { display: block; font: 600 20px Poppins, system-ui, sans-serif; } .ds-punch-s { display: block; margin-top: 4px; font-size: 14px; color: #2d3358; } .ds-punch-row { display: flex; gap: 6px; margin-top: 16px; } .ds-punch-row i { flex: 1; height: 10px; border-radius: 2px; background: hsl(245 55% 84%); } .ds-punch-row i.on { background: #0B0E1C; }"
+    },
+    {
+      "name": "Loom Weave",
+      "kind": "custom",
+      "refersTo": "punched-card",
+      "description": "Componente firma: fila de perforaciones sobre lavanda y fila de celdas de hilo con degradado cian a violeta.",
+      "html": "<div class=\"ds-loom\"><div class=\"ds-holes\"><i class=\"on\"></i><i></i><i class=\"on\"></i><i class=\"on\"></i><i></i><i class=\"on\"></i><i></i><i class=\"on\"></i></div><div class=\"ds-weave\"><i style=\"background:hsl(186 100% 71%)\"></i><i></i><i style=\"background:hsl(220 100% 66%)\"></i><i style=\"background:hsl(240 100% 62%)\"></i><i></i><i style=\"background:hsl(260 100% 58%)\"></i><i></i><i style=\"background:hsl(277 100% 54%)\"></i></div></div>",
+  "css": ".ds-loom { width: 320px; } .ds-holes { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px 6px; padding: 10px 6px; background: hsl(245 60% 92%); } .ds-holes i { height: 12px; border-radius: 2px; background: hsl(245 55% 84%); transition: background-color 150ms; cursor: pointer; } .ds-holes i.on { background: #0B0E1C; } .ds-weave { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; padding: 4px 0; } .ds-weave i { height: 24px; border-radius: 4px; background: hsl(229 34% 14%); }"
+    },
+    {
+      "name": "Game Card",
+      "kind": "card",
+      "refersTo": "game-card",
+      "description": "Tarjeta de minijuego: cabecera con cuadrícula, chip de neurona y botón primario.",
+      "html": "<div class=\"ds-game\"><div class=\"ds-game-head\"></div><div class=\"ds-game-body\"><h3>Nonogramas</h3><p>Rellena casillas siguiendo las pistas.</p><span class=\"ds-chip\">Lógica</span><button class=\"ds-game-btn\">Jugar Ahora</button></div></div>",
+      "css": ".ds-game { width: 300px; overflow: hidden; background: hsl(229 38% 12%); color: hsl(230 40% 97%); border: 1px solid hsl(229 28% 22%); border-radius: 12px; font-family: Inter, system-ui, sans-serif; transition: transform 200ms cubic-bezier(0.23,1,0.32,1), border-color 200ms; } .ds-game:hover { transform: translateY(-2px); border-color: rgb(139 128 255 / 0.6); } .ds-game-head { height: 120px; background-color: hsl(229 34% 14% / 0.4); background-image: linear-gradient(rgb(139 128 255 / 0.07) 1px, transparent 1px), linear-gradient(90deg, rgb(139 128 255 / 0.07) 1px, transparent 1px); background-size: 30px 30px; } .ds-game-body { padding: 24px; } .ds-game-body h3 { margin: 0 0 8px; font: 600 20px Poppins, system-ui, sans-serif; letter-spacing: -0.02em; } .ds-game-body p { margin: 0 0 16px; font-size: 14px; color: hsl(229 22% 72%); } .ds-chip { display: inline-block; padding: 4px 8px; border-radius: 9999px; background: rgb(139 128 255 / 0.15); color: #8B80FF; font-size: 12px; } .ds-game-btn { display: block; width: 100%; height: 44px; margin-top: 24px; border: 0; border-radius: 6px; background: #A815FF; color: #fff; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; } .ds-game-btn:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto de login y registro.",
+      "html": "<input class=\"ds-input\" placeholder=\"correo@universidad.edu.co\" />",
+      "css": ".ds-input { box-sizing: border-box; width: 280px; height: 40px; padding: 8px 12px; background: hsl(229 43% 8%); color: hsl(230 40% 97%); border: 1px solid hsl(229 28% 22%); border-radius: 6px; font: 400 14px Inter, system-ui, sans-serif; } .ds-input::placeholder { color: hsl(229 22% 72%); } .ds-input:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Enlaces de la barra de la app; el activo va en violeta neurona con subrayado de 2px.",
+      "html": "<nav class=\"ds-nav\"><a class=\"active\">Misiones</a><a>Minijuegos</a><a>Ranking</a><a>Comunidad</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 24px; padding: 16px; background: rgb(11 14 28 / 0.9); border-bottom: 1px solid hsl(229 28% 22%); font-family: Inter, system-ui, sans-serif; } .ds-nav a { padding-bottom: 4px; color: hsl(230 40% 97%); font-size: 14px; font-weight: 500; cursor: pointer; transition: color 150ms; } .ds-nav a:hover { color: #8B80FF; } .ds-nav a.active { color: #8B80FF; border-bottom: 2px solid #8B80FF; } .ds-nav a:focus-visible { outline: 2px solid #6DF1FF; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Telar Jacquard",
+    "overview": "Las instrucciones tejen el resultado. Una banda de tarjetas perforadas arriba decide, celda por celda, un patrón de hilo abajo; la plataforma entera hereda esa metáfora: cuadrículas estrictas de celdas pequeñas, perforaciones rectangulares, un hilo que va del cian al violeta. Es el modelo mental de un algoritmo (instrucciones, ejecución, resultado) dibujado como artesanía legible, pensado para estudiantes sin experiencia en programación que juegan en ratos cortos, en celular o laptop.\n\nEl tema oscuro (azul noche) es el predeterminado y existe un tema claro de papel blanco violáceo. La superficie es casi plana: bordes de 1 px, casi ninguna sombra, profundidad por capas tonales. El color de marca se concentra en el hilo, en el logo y en señales de estado; el texto corriente es siempre neutro.\n\nEl kit de marca (v1.0, nov 2026) es fijo. Sparkz (la moneda) usa el cian de marca; las neuronas (las vidas) usan el violeta de marca. Verde y rojo siguen siendo colores funcionales de estado (acierto, error), fuera de la paleta de marca. Esta versión reemplaza al mundo anterior \"El Circuito Neuronal / Pixelify Sans\".",
+    "keyCharacteristics": [
+      "Celdas de 30 px con esquinas de 4 px; perforaciones de 2 px de esquina.",
+      "Hilo con degradado cian a violeta, solo en el hilo y el logo, nunca en texto.",
+      "Poppins para display, Inter para cuerpo; nada pixelado.",
+      "Bordes de 1 px y capas tonales en lugar de sombras.",
+      "Una sola secuencia de entrada (la tela se teje fila a fila), respeta movimiento reducido."
+    ],
+    "rules": [
+      { "name": "The Thread Rule", "body": "El degradado cian a violeta (de --thread-from a --thread-to) vive solo en el hilo de la tela y en el logo. Jamás en texto, botones ni fondos de sección.", "section": "colors" },
+      { "name": "The Brand Roles Rule", "body": "Sparkz = cian de marca; neuronas = violeta de marca; verde y rojo quedan como colores de estado funcionales fuera de la paleta.", "section": "colors" },
+      { "name": "The Dual Contrast Rule", "body": "En claro, cian y violeta de texto se oscurecen (signal-light, neuron-light) para llegar a 4.5:1; no se reutilizan los valores del tema oscuro.", "section": "colors" },
+      { "name": "The No Pixel Rule", "body": "Ninguna tipografía pixelada ni monoespaciada decorativa; Poppins e Inter son las dos únicas familias.", "section": "typography" },
+      { "name": "The Flat Weave Rule", "body": "Bordes de 1 px y diferencias tonales, nunca sombras ni halos para separar superficies.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do construir superficies con cuadrículas de celdas de 30 px y esquinas de 4 px (hilo) o 2 px (perforación).",
+      "Do usar los tokens (primary, neuron, signal, muted, border) y la escala --g-* que se invierte en claro; evitar hex sueltos.",
+      "Do mantener el fondo en azul noche (oscuro) o papel violáceo (claro) y la tarjeta perforada en lavanda en ambos temas.",
+      "Do usar el logo negro sobre fondo claro y el logo a color solo sobre oscuro.",
+      "Do dar a cada animación una sola secuencia con ease-out exponencial cubic-bezier(0.23, 1, 0.32, 1) y detenerla con movimiento reducido.",
+      "Do codificar el estado también con texto o forma, no solo con color."
+    ],
+    "donts": [
+      "Don't aplicar el degradado cian a violeta a texto, botones o fondos.",
+      "Don't usar tipografías pixeladas, mono decorativas ni familias distintas a Poppins e Inter.",
+      "Don't usar verde o rojo como color de marca; son estados funcionales.",
+      "Don't separar superficies con sombras, brillos o halos de neón.",
+      "Don't mostrar datos de ejemplo como reales; las vistas dibujadas se rotulan \"Vista ilustrativa\"."
+    ]
+  }
+}

@@ -90,7 +90,7 @@ export default function NonogramBoard({
             row.map((cell, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
-                className={cn("aspect-square", cell === 1 ? "bg-purple-600" : "bg-[#1a1d23]")}
+                className={cn("aspect-square", cell === 1 ? "bg-purple-600" : "bg-background")}
               />
             )),
           )}
@@ -154,9 +154,9 @@ export default function NonogramBoard({
                 className={cn(
                   "border border-gray-700 cursor-pointer transition-all",
                   "w-10 h-10 flex items-center justify-center",
-                  cell === 1 ? "bg-purple-600" : "bg-[#1a1d23]",
+                  cell === 1 ? "bg-purple-600" : "bg-background",
                   hasError(rowIndex, colIndex) && "bg-red-500",
-                  shouldShowHint(rowIndex, colIndex) && "bg-green-500 animate-pulse",
+                  shouldShowHint(rowIndex, colIndex) && "bg-green-500",
                 )}
                 style={{
                   gridColumn: maxRowClueLength + colIndex + 1,

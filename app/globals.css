@@ -3,37 +3,119 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Tokens de COGIT, tomados del kit de marca (v1.0, nov 2026).
+   *   cian neón        #6DF1FF  -> --signal           (lo que está activo)
+   *   violeta medio    #8B80FF  -> --neuron            (texto y acentos; neuronas)
+   *   violeta eléctrico #A815FF -> --primary           (botones, hilo)
+   *   azul noche       #0B0E1C  -> --background (oscuro)
+   *   blanco           #FFFFFF  -> --card (claro)
+   * En claro, cian y violeta de texto se oscurecen para llegar a 4.5:1.
+   * El rojo de --destructive es funcional (errores), no es parte de la marca.
+   */
   :root {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 240 33% 98%;
+    --foreground: 229 43% 8%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 229 43% 8%;
 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 229 43% 8%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --primary: 277 100% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --secondary: 232 40% 94%;
+    --secondary-foreground: 229 43% 8%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
+    --muted: 232 40% 95%;
+    --muted-foreground: 229 18% 36%;
 
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 40% 98%;
+    --accent: 232 50% 92%;
+    --accent-foreground: 229 43% 8%;
 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --border: 232 28% 85%;
+    --input: 232 16% 55%;
+    --ring: 277 100% 54%;
 
-    --ring: 216 34% 17%;
+    --neuron: 262 80% 48%;
+    --signal: 190 100% 26%;
+
+    --thread-from: 186 100% 71%;
+    --thread-to: 277 100% 54%;
+    --punch: 245 60% 92%;
+    --tl0: 46%;
+    --tld: 4%;
+
+    /* Escala de neutros que se invierte en claro: text-gray-400 sigue siendo texto secundario en ambos temas */
+    --g-50: 229 43% 8%;
+    --g-100: 229 40% 12%;
+    --g-200: 229 30% 20%;
+    --g-300: 229 22% 28%;
+    --g-400: 229 18% 36%;
+    --g-500: 229 14% 46%;
+    --g-600: 229 20% 62%;
+    --g-700: 232 28% 82%;
+    --g-800: 232 30% 90%;
+    --g-900: 232 40% 95%;
+    --g-950: 240 33% 98%;
 
     --radius: 0.5rem;
+
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .dark {
+    --background: 229 43% 8%;
+    --foreground: 230 40% 97%;
+
+    --card: 229 38% 12%;
+    --card-foreground: 230 40% 97%;
+
+    --popover: 229 36% 15%;
+    --popover-foreground: 230 40% 97%;
+
+    --primary: 277 100% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 229 32% 17%;
+    --secondary-foreground: 230 40% 97%;
+
+    --muted: 229 34% 14%;
+    --muted-foreground: 229 22% 72%;
+
+    --accent: 229 32% 20%;
+    --accent-foreground: 230 40% 97%;
+
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 229 28% 22%;
+    --input: 229 20% 48%;
+    --ring: 186 100% 71%;
+
+    --neuron: 245 100% 75%;
+    --signal: 186 100% 71%;
+
+    --punch: 245 100% 92%;
+    --tl0: 71%;
+    --tld: 17%;
+
+    --g-50: 230 40% 98%;
+    --g-100: 230 40% 96%;
+    --g-200: 229 30% 88%;
+    --g-300: 229 24% 78%;
+    --g-400: 229 20% 68%;
+    --g-500: 229 16% 56%;
+    --g-600: 229 20% 38%;
+    --g-700: 229 28% 26%;
+    --g-800: 229 32% 18%;
+    --g-900: 229 38% 12%;
+    --g-950: 229 43% 8%;
   }
 }
 
@@ -44,5 +126,48 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.45);
+    color: hsl(var(--foreground));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Tela: celdas de hilo en cuadrícula, solo como textura de fondo */
+  .bg-loom,
+  .bg-circuit {
+    background-image:
+      linear-gradient(hsl(var(--neuron) / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--neuron) / 0.07) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .thread {
+    background-image: linear-gradient(180deg, hsl(var(--thread-from)), hsl(var(--thread-to)));
+  }
+  .font-display { letter-spacing: -0.02em; }
+}
+
+/* Una sola secuencia de entrada: la tela se teje fila a fila */
+@keyframes loom-weave {
+  from { opacity: 0; transform: translateX(-18px); }
+}
+.loom-row { animation: loom-weave 520ms var(--ease-out-strong) backwards; }
+
+/*
+ * Movimiento reducido: se detienen las animaciones (bucles incluidos) pero las
+ * transiciones de color/opacidad se mantienen, porque comunican cambios de estado.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

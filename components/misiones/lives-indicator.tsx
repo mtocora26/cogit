@@ -40,13 +40,13 @@ export default function LivesIndicator({ className = "" }: { className?: string 
     <div className={`relative ${className}`} ref={ref}>
       {/* Botón compacto */}
       <button
-        className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#23283a] border border-purple-700 hover:bg-[#2d3142] transition-all shadow-md"
+        className="flex items-center gap-1 px-2 py-1 rounded-full bg-secondary border border-neuron/50 hover:bg-accent transition-colors"
         onClick={() => setOpen((v) => !v)}
         aria-label="Mostrar detalles de vidas"
         type="button"
       >
-        <Brain className="h-5 w-5 text-purple-400 animate-pulse" />
-        <span className="font-bold text-purple-200 text-base">{lives}</span>
+        <Brain aria-hidden className="h-5 w-5 text-neuron" />
+        <span className="font-bold text-foreground text-base">{lives}</span>
       </button>
       {/* Popover */}
       {open && (
@@ -54,7 +54,7 @@ export default function LivesIndicator({ className = "" }: { className?: string 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
-          className="absolute right-0 mt-2 w-64 bg-[#181c2a] border border-purple-700 rounded-xl shadow-2xl p-5 z-50 flex flex-col items-center animate-fade-in"
+          className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-xl p-5 shadow-lg z-50 flex flex-col items-center animate-fade-in"
         >
           <div className="flex gap-2 mb-3">
             {[...Array(maxLives)].map((_, i) => (
@@ -62,13 +62,13 @@ export default function LivesIndicator({ className = "" }: { className?: string 
                 key={i}
                 animate={{ scale: lives > i ? 1.15 : 0.85, opacity: lives > i ? 1 : 0.3, rotate: lives > i ? [0, 10] : 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 18, repeat: lives > i ? Infinity : 0, duration: 2 }}
-                className={`w-7 h-7 flex items-center justify-center ${lives > i ? "text-purple-400 drop-shadow-lg" : "text-gray-600"}`}
+                className={`w-7 h-7 flex items-center justify-center ${lives > i ? "text-neuron" : "text-muted-foreground"}`}
               >
-                <Brain className={lives > i ? "animate-pulse" : ""} />
+                <Brain aria-hidden />
               </motion.div>
             ))}
           </div>
-          <div className="text-sm text-purple-200 mb-2 font-semibold">
+          <div className="text-sm text-foreground mb-2 font-semibold">
             {lives === maxLives
               ? "¡Vidas completas!"
               : isRecharging
@@ -77,30 +77,10 @@ export default function LivesIndicator({ className = "" }: { className?: string 
                   ? "Sin vidas disponibles"
                   : "Puedes seguir jugando"}
           </div>
-          {/* Si no hay vidas, mostrar opciones */}
           {lives === 0 && (
-            <div className="flex flex-col gap-2 w-full mt-2">
-              <button
-                className="w-full py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-pink-500 text-black font-bold shadow hover:scale-105 transition-all"
-                onClick={() => { window.location.href = "/tienda"; }}
-              >
-                Ir a la Tienda para recargar
-              </button>
-              <div className="text-xs text-gray-300 text-center mt-1">
-                O espera la recarga automática para obtener una vida
-              </div>
-            </div>
-          )}
-          {/* Si hay vidas, mostrar botones normales */}
-          {lives > 0 && (
-            <div className="flex flex-col gap-2 w-full mt-2">
-              <button className="w-full py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-400 text-white font-bold shadow hover:scale-105 transition-all">
-                Vidas Ilimitadas
-              </button>
-              <button className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-400 text-white font-bold shadow hover:scale-105 transition-all">
-                Recuperar Vidas
-              </button>
-            </div>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Espera la recarga automática: recuperas una vida cada 30 minutos.
+            </p>
           )}
         </motion.div>
       )}
