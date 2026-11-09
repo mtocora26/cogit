@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@/lib/generated/prisma'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // GET /api/ranking?type=weekly|alltime
 export async function GET(req: NextRequest) {
@@ -17,6 +15,8 @@ export async function GET(req: NextRequest) {
       startOfWeek.setHours(0, 0, 0, 0)
       users = await prisma.usuario.findMany({
         where: {
+          rol: 'estudiante',
+          visibleEnRanking: true,
           progreso: {
             some: {
               fecha: { gte: startOfWeek },
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         },
         select: {
           id: true,
-          nombre: true,
+          username: true,
           rol: true,
           progreso: {
             where: { fecha: { gte: startOfWeek } },
@@ -35,16 +35,17 @@ export async function GET(req: NextRequest) {
       })
       users = users.map(u => ({
         id: u.id,
-        name: u.nombre,
+        name: u.username,
         points: u.progreso.reduce((acc, p) => acc + (p.score || 0), 0),
         role: u.rol,
       }))
     } else {
       // Ranking global: sumar score total
       users = await prisma.usuario.findMany({
+        where: { rol: 'estudiante', visibleEnRanking: true },
         select: {
           id: true,
-          nombre: true,
+          username: true,
           rol: true,
           progreso: {
             select: { score: true },
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
       })
       users = users.map(u => ({
         id: u.id,
-        name: u.nombre,
+        name: u.username,
         points: u.progreso.reduce((acc, p) => acc + (p.score || 0), 0),
         role: u.rol,
       }))
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
     users = users
       .filter(u => u.role !== 'admin')
       .sort((a, b) => b.points - a.points)
-      .map((u, i) => ({ ...u, rank: i + 1 }))
+      .map(({ role: _role, ...u }, i) => ({ ...u, rank: i + 1 }))
     return NextResponse.json(users)
   } catch (error) {
     return NextResponse.json({ error: 'Error al obtener ranking', details: error }, { status: 500 })

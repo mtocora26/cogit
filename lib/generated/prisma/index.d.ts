@@ -25,6 +25,23 @@ export type Usuario = $Result.DefaultSelection<Prisma.$UsuarioPayload>
 export type Progreso = $Result.DefaultSelection<Prisma.$ProgresoPayload>
 
 /**
+ * Enums
+ */
+export namespace $Enums {
+  export const Rol: {
+  estudiante: 'estudiante',
+  admin: 'admin'
+};
+
+export type Rol = (typeof Rol)[keyof typeof Rol]
+
+}
+
+export type Rol = $Enums.Rol
+
+export const Rol: typeof $Enums.Rol
+
+/**
  * ##  Prisma Client ʲˢ
  *
  * Type-safe database client for TypeScript & Node.js
@@ -1006,53 +1023,51 @@ export namespace Prisma {
     id: number | null
     neuronas: number | null
     maxNeuronas: number | null
-    creditos: number | null
   }
 
   export type UsuarioSumAggregateOutputType = {
     id: number | null
     neuronas: number | null
     maxNeuronas: number | null
-    creditos: number | null
   }
 
   export type UsuarioMinAggregateOutputType = {
     id: number | null
-    nombre: string | null
+    username: string | null
     email: string | null
     password: string | null
-    rol: string | null
+    rol: $Enums.Rol | null
+    visibleEnRanking: boolean | null
     creadoEn: Date | null
     neuronas: number | null
     maxNeuronas: number | null
     ultimaRecarga: Date | null
-    creditos: number | null
   }
 
   export type UsuarioMaxAggregateOutputType = {
     id: number | null
-    nombre: string | null
+    username: string | null
     email: string | null
     password: string | null
-    rol: string | null
+    rol: $Enums.Rol | null
+    visibleEnRanking: boolean | null
     creadoEn: Date | null
     neuronas: number | null
     maxNeuronas: number | null
     ultimaRecarga: Date | null
-    creditos: number | null
   }
 
   export type UsuarioCountAggregateOutputType = {
     id: number
-    nombre: number
+    username: number
     email: number
     password: number
     rol: number
+    visibleEnRanking: number
     creadoEn: number
     neuronas: number
     maxNeuronas: number
     ultimaRecarga: number
-    creditos: number
     _all: number
   }
 
@@ -1061,53 +1076,51 @@ export namespace Prisma {
     id?: true
     neuronas?: true
     maxNeuronas?: true
-    creditos?: true
   }
 
   export type UsuarioSumAggregateInputType = {
     id?: true
     neuronas?: true
     maxNeuronas?: true
-    creditos?: true
   }
 
   export type UsuarioMinAggregateInputType = {
     id?: true
-    nombre?: true
+    username?: true
     email?: true
     password?: true
     rol?: true
+    visibleEnRanking?: true
     creadoEn?: true
     neuronas?: true
     maxNeuronas?: true
     ultimaRecarga?: true
-    creditos?: true
   }
 
   export type UsuarioMaxAggregateInputType = {
     id?: true
-    nombre?: true
+    username?: true
     email?: true
     password?: true
     rol?: true
+    visibleEnRanking?: true
     creadoEn?: true
     neuronas?: true
     maxNeuronas?: true
     ultimaRecarga?: true
-    creditos?: true
   }
 
   export type UsuarioCountAggregateInputType = {
     id?: true
-    nombre?: true
+    username?: true
     email?: true
     password?: true
     rol?: true
+    visibleEnRanking?: true
     creadoEn?: true
     neuronas?: true
     maxNeuronas?: true
     ultimaRecarga?: true
-    creditos?: true
     _all?: true
   }
 
@@ -1199,15 +1212,15 @@ export namespace Prisma {
 
   export type UsuarioGroupByOutputType = {
     id: number
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol: $Enums.Rol
+    visibleEnRanking: boolean
     creadoEn: Date
     neuronas: number
     maxNeuronas: number
     ultimaRecarga: Date | null
-    creditos: number
     _count: UsuarioCountAggregateOutputType | null
     _avg: UsuarioAvgAggregateOutputType | null
     _sum: UsuarioSumAggregateOutputType | null
@@ -1231,59 +1244,59 @@ export namespace Prisma {
 
   export type UsuarioSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    nombre?: boolean
+    username?: boolean
     email?: boolean
     password?: boolean
     rol?: boolean
+    visibleEnRanking?: boolean
     creadoEn?: boolean
     neuronas?: boolean
     maxNeuronas?: boolean
     ultimaRecarga?: boolean
-    creditos?: boolean
     progreso?: boolean | Usuario$progresoArgs<ExtArgs>
     _count?: boolean | UsuarioCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["usuario"]>
 
   export type UsuarioSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    nombre?: boolean
+    username?: boolean
     email?: boolean
     password?: boolean
     rol?: boolean
+    visibleEnRanking?: boolean
     creadoEn?: boolean
     neuronas?: boolean
     maxNeuronas?: boolean
     ultimaRecarga?: boolean
-    creditos?: boolean
   }, ExtArgs["result"]["usuario"]>
 
   export type UsuarioSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    nombre?: boolean
+    username?: boolean
     email?: boolean
     password?: boolean
     rol?: boolean
+    visibleEnRanking?: boolean
     creadoEn?: boolean
     neuronas?: boolean
     maxNeuronas?: boolean
     ultimaRecarga?: boolean
-    creditos?: boolean
   }, ExtArgs["result"]["usuario"]>
 
   export type UsuarioSelectScalar = {
     id?: boolean
-    nombre?: boolean
+    username?: boolean
     email?: boolean
     password?: boolean
     rol?: boolean
+    visibleEnRanking?: boolean
     creadoEn?: boolean
     neuronas?: boolean
     maxNeuronas?: boolean
     ultimaRecarga?: boolean
-    creditos?: boolean
   }
 
-  export type UsuarioOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nombre" | "email" | "password" | "rol" | "creadoEn" | "neuronas" | "maxNeuronas" | "ultimaRecarga" | "creditos", ExtArgs["result"]["usuario"]>
+  export type UsuarioOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "email" | "password" | "rol" | "visibleEnRanking" | "creadoEn" | "neuronas" | "maxNeuronas" | "ultimaRecarga", ExtArgs["result"]["usuario"]>
   export type UsuarioInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     progreso?: boolean | Usuario$progresoArgs<ExtArgs>
     _count?: boolean | UsuarioCountOutputTypeDefaultArgs<ExtArgs>
@@ -1298,15 +1311,27 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      nombre: string
+      /**
+       * Nombre de usuario: con él se inicia sesión y es el alias público en ranking y comunidad. En minúsculas, único.
+       */
+      username: string
+      /**
+       * Correo: solo para recuperar el acceso (REQ-010). No se muestra a otros usuarios.
+       */
       email: string
+      /**
+       * Hash scrypt ("scrypt$..."); nunca la contraseña en texto.
+       */
       password: string
-      rol: string
+      rol: $Enums.Rol
+      /**
+       * REQ-008: el estudiante puede excluirse del ranking. Por defecto aparece, con su alias.
+       */
+      visibleEnRanking: boolean
       creadoEn: Date
       neuronas: number
       maxNeuronas: number
       ultimaRecarga: Date | null
-      creditos: number
     }, ExtArgs["result"]["usuario"]>
     composites: {}
   }
@@ -1732,15 +1757,15 @@ export namespace Prisma {
    */
   interface UsuarioFieldRefs {
     readonly id: FieldRef<"Usuario", 'Int'>
-    readonly nombre: FieldRef<"Usuario", 'String'>
+    readonly username: FieldRef<"Usuario", 'String'>
     readonly email: FieldRef<"Usuario", 'String'>
     readonly password: FieldRef<"Usuario", 'String'>
-    readonly rol: FieldRef<"Usuario", 'String'>
+    readonly rol: FieldRef<"Usuario", 'Rol'>
+    readonly visibleEnRanking: FieldRef<"Usuario", 'Boolean'>
     readonly creadoEn: FieldRef<"Usuario", 'DateTime'>
     readonly neuronas: FieldRef<"Usuario", 'Int'>
     readonly maxNeuronas: FieldRef<"Usuario", 'Int'>
     readonly ultimaRecarga: FieldRef<"Usuario", 'DateTime'>
-    readonly creditos: FieldRef<"Usuario", 'Int'>
   }
     
 
@@ -3343,15 +3368,15 @@ export namespace Prisma {
 
   export const UsuarioScalarFieldEnum: {
     id: 'id',
-    nombre: 'nombre',
+    username: 'username',
     email: 'email',
     password: 'password',
     rol: 'rol',
+    visibleEnRanking: 'visibleEnRanking',
     creadoEn: 'creadoEn',
     neuronas: 'neuronas',
     maxNeuronas: 'maxNeuronas',
-    ultimaRecarga: 'ultimaRecarga',
-    creditos: 'creditos'
+    ultimaRecarga: 'ultimaRecarga'
   };
 
   export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum]
@@ -3430,6 +3455,27 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Rol'
+   */
+  export type EnumRolFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Rol'>
+    
+
+
+  /**
+   * Reference to a field of type 'Rol[]'
+   */
+  export type ListEnumRolFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Rol[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -3440,13 +3486,6 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -3472,60 +3511,60 @@ export namespace Prisma {
     OR?: UsuarioWhereInput[]
     NOT?: UsuarioWhereInput | UsuarioWhereInput[]
     id?: IntFilter<"Usuario"> | number
-    nombre?: StringFilter<"Usuario"> | string
+    username?: StringFilter<"Usuario"> | string
     email?: StringFilter<"Usuario"> | string
     password?: StringFilter<"Usuario"> | string
-    rol?: StringFilter<"Usuario"> | string
+    rol?: EnumRolFilter<"Usuario"> | $Enums.Rol
+    visibleEnRanking?: BoolFilter<"Usuario"> | boolean
     creadoEn?: DateTimeFilter<"Usuario"> | Date | string
     neuronas?: IntFilter<"Usuario"> | number
     maxNeuronas?: IntFilter<"Usuario"> | number
     ultimaRecarga?: DateTimeNullableFilter<"Usuario"> | Date | string | null
-    creditos?: IntFilter<"Usuario"> | number
     progreso?: ProgresoListRelationFilter
   }
 
   export type UsuarioOrderByWithRelationInput = {
     id?: SortOrder
-    nombre?: SortOrder
+    username?: SortOrder
     email?: SortOrder
     password?: SortOrder
     rol?: SortOrder
+    visibleEnRanking?: SortOrder
     creadoEn?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
     ultimaRecarga?: SortOrderInput | SortOrder
-    creditos?: SortOrder
     progreso?: ProgresoOrderByRelationAggregateInput
   }
 
   export type UsuarioWhereUniqueInput = Prisma.AtLeast<{
     id?: number
+    username?: string
     email?: string
     AND?: UsuarioWhereInput | UsuarioWhereInput[]
     OR?: UsuarioWhereInput[]
     NOT?: UsuarioWhereInput | UsuarioWhereInput[]
-    nombre?: StringFilter<"Usuario"> | string
     password?: StringFilter<"Usuario"> | string
-    rol?: StringFilter<"Usuario"> | string
+    rol?: EnumRolFilter<"Usuario"> | $Enums.Rol
+    visibleEnRanking?: BoolFilter<"Usuario"> | boolean
     creadoEn?: DateTimeFilter<"Usuario"> | Date | string
     neuronas?: IntFilter<"Usuario"> | number
     maxNeuronas?: IntFilter<"Usuario"> | number
     ultimaRecarga?: DateTimeNullableFilter<"Usuario"> | Date | string | null
-    creditos?: IntFilter<"Usuario"> | number
     progreso?: ProgresoListRelationFilter
-  }, "id" | "email">
+  }, "id" | "username" | "email">
 
   export type UsuarioOrderByWithAggregationInput = {
     id?: SortOrder
-    nombre?: SortOrder
+    username?: SortOrder
     email?: SortOrder
     password?: SortOrder
     rol?: SortOrder
+    visibleEnRanking?: SortOrder
     creadoEn?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
     ultimaRecarga?: SortOrderInput | SortOrder
-    creditos?: SortOrder
     _count?: UsuarioCountOrderByAggregateInput
     _avg?: UsuarioAvgOrderByAggregateInput
     _max?: UsuarioMaxOrderByAggregateInput
@@ -3538,15 +3577,15 @@ export namespace Prisma {
     OR?: UsuarioScalarWhereWithAggregatesInput[]
     NOT?: UsuarioScalarWhereWithAggregatesInput | UsuarioScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Usuario"> | number
-    nombre?: StringWithAggregatesFilter<"Usuario"> | string
+    username?: StringWithAggregatesFilter<"Usuario"> | string
     email?: StringWithAggregatesFilter<"Usuario"> | string
     password?: StringWithAggregatesFilter<"Usuario"> | string
-    rol?: StringWithAggregatesFilter<"Usuario"> | string
+    rol?: EnumRolWithAggregatesFilter<"Usuario"> | $Enums.Rol
+    visibleEnRanking?: BoolWithAggregatesFilter<"Usuario"> | boolean
     creadoEn?: DateTimeWithAggregatesFilter<"Usuario"> | Date | string
     neuronas?: IntWithAggregatesFilter<"Usuario"> | number
     maxNeuronas?: IntWithAggregatesFilter<"Usuario"> | number
     ultimaRecarga?: DateTimeNullableWithAggregatesFilter<"Usuario"> | Date | string | null
-    creditos?: IntWithAggregatesFilter<"Usuario"> | number
   }
 
   export type ProgresoWhereInput = {
@@ -3628,95 +3667,95 @@ export namespace Prisma {
   }
 
   export type UsuarioCreateInput = {
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol?: $Enums.Rol
+    visibleEnRanking?: boolean
     creadoEn?: Date | string
     neuronas?: number
     maxNeuronas?: number
     ultimaRecarga?: Date | string | null
-    creditos?: number
     progreso?: ProgresoCreateNestedManyWithoutUserInput
   }
 
   export type UsuarioUncheckedCreateInput = {
     id?: number
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol?: $Enums.Rol
+    visibleEnRanking?: boolean
     creadoEn?: Date | string
     neuronas?: number
     maxNeuronas?: number
     ultimaRecarga?: Date | string | null
-    creditos?: number
     progreso?: ProgresoUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UsuarioUpdateInput = {
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
     progreso?: ProgresoUpdateManyWithoutUserNestedInput
   }
 
   export type UsuarioUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
     progreso?: ProgresoUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UsuarioCreateManyInput = {
     id?: number
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol?: $Enums.Rol
+    visibleEnRanking?: boolean
     creadoEn?: Date | string
     neuronas?: number
     maxNeuronas?: number
     ultimaRecarga?: Date | string | null
-    creditos?: number
   }
 
   export type UsuarioUpdateManyMutationInput = {
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
   }
 
   export type UsuarioUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProgresoCreateInput = {
@@ -3825,6 +3864,18 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type EnumRolFilter<$PrismaModel = never> = {
+    equals?: $Enums.Rol | EnumRolFieldRefInput<$PrismaModel>
+    in?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    not?: NestedEnumRolFilter<$PrismaModel> | $Enums.Rol
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -3864,55 +3915,53 @@ export namespace Prisma {
 
   export type UsuarioCountOrderByAggregateInput = {
     id?: SortOrder
-    nombre?: SortOrder
+    username?: SortOrder
     email?: SortOrder
     password?: SortOrder
     rol?: SortOrder
+    visibleEnRanking?: SortOrder
     creadoEn?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
     ultimaRecarga?: SortOrder
-    creditos?: SortOrder
   }
 
   export type UsuarioAvgOrderByAggregateInput = {
     id?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
-    creditos?: SortOrder
   }
 
   export type UsuarioMaxOrderByAggregateInput = {
     id?: SortOrder
-    nombre?: SortOrder
+    username?: SortOrder
     email?: SortOrder
     password?: SortOrder
     rol?: SortOrder
+    visibleEnRanking?: SortOrder
     creadoEn?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
     ultimaRecarga?: SortOrder
-    creditos?: SortOrder
   }
 
   export type UsuarioMinOrderByAggregateInput = {
     id?: SortOrder
-    nombre?: SortOrder
+    username?: SortOrder
     email?: SortOrder
     password?: SortOrder
     rol?: SortOrder
+    visibleEnRanking?: SortOrder
     creadoEn?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
     ultimaRecarga?: SortOrder
-    creditos?: SortOrder
   }
 
   export type UsuarioSumOrderByAggregateInput = {
     id?: SortOrder
     neuronas?: SortOrder
     maxNeuronas?: SortOrder
-    creditos?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -3949,6 +3998,24 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type EnumRolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Rol | EnumRolFieldRefInput<$PrismaModel>
+    in?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    not?: NestedEnumRolWithAggregatesFilter<$PrismaModel> | $Enums.Rol
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRolFilter<$PrismaModel>
+    _max?: NestedEnumRolFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -3975,11 +4042,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type UsuarioScalarRelationFilter = {
@@ -4044,14 +4106,6 @@ export namespace Prisma {
     tiempo?: SortOrder
   }
 
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type ProgresoCreateNestedManyWithoutUserInput = {
     create?: XOR<ProgresoCreateWithoutUserInput, ProgresoUncheckedCreateWithoutUserInput> | ProgresoCreateWithoutUserInput[] | ProgresoUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ProgresoCreateOrConnectWithoutUserInput | ProgresoCreateOrConnectWithoutUserInput[]
@@ -4068,6 +4122,14 @@ export namespace Prisma {
 
   export type StringFieldUpdateOperationsInput = {
     set?: string
+  }
+
+  export type EnumRolFieldUpdateOperationsInput = {
+    set?: $Enums.Rol
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -4120,10 +4182,6 @@ export namespace Prisma {
     connect?: UsuarioWhereUniqueInput
   }
 
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
-  }
-
   export type UsuarioUpdateOneRequiredWithoutProgresoNestedInput = {
     create?: XOR<UsuarioCreateWithoutProgresoInput, UsuarioUncheckedCreateWithoutProgresoInput>
     connectOrCreate?: UsuarioCreateOrConnectWithoutProgresoInput
@@ -4155,6 +4213,18 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedEnumRolFilter<$PrismaModel = never> = {
+    equals?: $Enums.Rol | EnumRolFieldRefInput<$PrismaModel>
+    in?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    not?: NestedEnumRolFilter<$PrismaModel> | $Enums.Rol
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -4223,6 +4293,24 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type NestedEnumRolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Rol | EnumRolFieldRefInput<$PrismaModel>
+    in?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.Rol[] | ListEnumRolFieldRefInput<$PrismaModel>
+    not?: NestedEnumRolWithAggregatesFilter<$PrismaModel> | $Enums.Rol
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRolFilter<$PrismaModel>
+    _max?: NestedEnumRolFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -4260,19 +4348,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProgresoCreateWithoutUserInput = {
@@ -4338,28 +4413,28 @@ export namespace Prisma {
   }
 
   export type UsuarioCreateWithoutProgresoInput = {
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol?: $Enums.Rol
+    visibleEnRanking?: boolean
     creadoEn?: Date | string
     neuronas?: number
     maxNeuronas?: number
     ultimaRecarga?: Date | string | null
-    creditos?: number
   }
 
   export type UsuarioUncheckedCreateWithoutProgresoInput = {
     id?: number
-    nombre: string
+    username: string
     email: string
     password: string
-    rol: string
+    rol?: $Enums.Rol
+    visibleEnRanking?: boolean
     creadoEn?: Date | string
     neuronas?: number
     maxNeuronas?: number
     ultimaRecarga?: Date | string | null
-    creditos?: number
   }
 
   export type UsuarioCreateOrConnectWithoutProgresoInput = {
@@ -4379,28 +4454,28 @@ export namespace Prisma {
   }
 
   export type UsuarioUpdateWithoutProgresoInput = {
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
   }
 
   export type UsuarioUncheckedUpdateWithoutProgresoInput = {
     id?: IntFieldUpdateOperationsInput | number
-    nombre?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    rol?: StringFieldUpdateOperationsInput | string
+    rol?: EnumRolFieldUpdateOperationsInput | $Enums.Rol
+    visibleEnRanking?: BoolFieldUpdateOperationsInput | boolean
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
     neuronas?: IntFieldUpdateOperationsInput | number
     maxNeuronas?: IntFieldUpdateOperationsInput | number
     ultimaRecarga?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    creditos?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProgresoCreateManyUserInput = {

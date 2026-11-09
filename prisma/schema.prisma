@@ -14,18 +14,28 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+/// Roles de la plataforma. Un estudiante practica; un administrador consulta usuarios y administra contenido (REQ-011).
+enum Rol {
+  estudiante
+  admin
+}
+
 model Usuario {
   id        Int       @id @default(autoincrement())
-  nombre    String
+  /// Nombre de usuario: con él se inicia sesión y es el alias público en ranking y comunidad. En minúsculas, único.
+  username  String    @unique
+  /// Correo: solo para recuperar el acceso (REQ-010). No se muestra a otros usuarios.
   email     String    @unique
+  /// Hash scrypt ("scrypt$..."); nunca la contraseña en texto.
   password  String
-  rol       String
+  rol       Rol       @default(estudiante)
+  /// REQ-008: el estudiante puede excluirse del ranking. Por defecto aparece, con su alias.
+  visibleEnRanking Boolean @default(true)
   progreso  Progreso[]
   creadoEn  DateTime  @default(now())
   neuronas     Int      @default(5)
   maxNeuronas  Int      @default(5)
   ultimaRecarga DateTime?
-  creditos     Int      @default(0)
 }
 model Progreso {
   id         Int      @id @default(autoincrement())

@@ -25,3 +25,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# binarios del motor de Prisma (se generan con `prisma generate`)
+lib/generated/prisma/*.so.node

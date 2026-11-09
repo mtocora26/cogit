@@ -10,4 +10,6 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: DATABASE_URL
-        sync: false # cadena de conexión de Neon
+        sync: false # cadena de conexión de la base (Prisma Postgres / Neon)
+      - key: SESSION_SECRET
+        generateValue: true # firma las cookies de sesión; mínimo 32 caracteres

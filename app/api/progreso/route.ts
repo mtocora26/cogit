@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@/lib/generated/prisma'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { forbidden, getSession, unauthorized } from '@/lib/auth'
 
 // POST: Guardar progreso
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession(req)
+    if (!session) return unauthorized()
     const body = await req.json()
-    const { userId, seccion, nivel, actividad, completado, score, tiempo } = body
+    const { seccion, nivel, actividad, completado, score, tiempo } = body
+    const userId = session.uid // el progreso se guarda siempre en la cuenta de la sesión
     if (!userId || !seccion || !nivel || !actividad) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
     }
@@ -47,12 +49,13 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('userId')
-    if (!userId) {
-      return NextResponse.json({ error: 'Falta userId' }, { status: 400 })
-    }
+    const session = await getSession(req)
+    if (!session) return unauthorized()
+    const pedido = searchParams.get('userId') ? Number(searchParams.get('userId')) : session.uid
+    // Un estudiante solo ve su propio progreso; un administrador puede consultar el de cualquiera.
+    if (pedido !== session.uid && session.rol !== 'admin') return forbidden()
     const progreso = await prisma.progreso.findMany({
-      where: { userId: Number(userId) },
+      where: { userId: pedido },
       orderBy: { fecha: 'desc' },
     })
     return NextResponse.json(progreso)

@@ -1,119 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@/lib/generated/prisma'
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { EMAIL_RE, USERNAME_RE, hashPassword, normalizeUsername } from "@/lib/auth"
 
-const prisma = new PrismaClient()
-
-// POST: Registrar usuario
+// POST: crear una cuenta. El rol NO viene del cliente: toda cuenta nueva es de estudiante.
+// Las cuentas de administrador las asigna otro administrador desde el panel.
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { nombre, email, password, rol } = body
-    if (!nombre || !email || !password || !rol) {
-      return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
+    const username = typeof body.username === "string" ? normalizeUsername(body.username) : ""
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
+    const password = typeof body.password === "string" ? body.password : ""
+
+    if (!USERNAME_RE.test(username)) {
+      return NextResponse.json(
+        { error: "El usuario debe tener entre 3 y 20 caracteres: letras minúsculas, números o guion bajo" },
+        { status: 400 },
+      )
     }
-    // Verificar si el email ya existe
-    const existing = await prisma.usuario.findUnique({ where: { email } })
-    if (existing) {
-      return NextResponse.json({ error: 'El email ya está registrado' }, { status: 409 })
+    if (!EMAIL_RE.test(email)) {
+      return NextResponse.json({ error: "Escribe un correo válido (solo lo usamos para recuperar tu acceso)" }, { status: 400 })
     }
-    // Crear usuario
-    const usuario = await prisma.usuario.create({
+    if (password.length < 8) {
+      return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres" }, { status: 400 })
+    }
+
+    const [porUsuario, porCorreo] = await Promise.all([
+      prisma.usuario.findUnique({ where: { username } }),
+      prisma.usuario.findUnique({ where: { email } }),
+    ])
+    if (porUsuario) return NextResponse.json({ error: "Ese nombre de usuario ya está en uso" }, { status: 409 })
+    if (porCorreo) return NextResponse.json({ error: "Ese correo ya está registrado" }, { status: 409 })
+
+    const u = await prisma.usuario.create({
       data: {
-        nombre,
+        username,
         email,
-        password, // En producción, hashea la contraseña
-        rol,
+        password: await hashPassword(password),
+        rol: "estudiante",
         neuronas: 5,
         maxNeuronas: 5,
-        creditos: 0,
         ultimaRecarga: new Date(),
       },
     })
     return NextResponse.json({
-      id: usuario.id,
-      nombre: usuario.nombre,
-      email: usuario.email,
-      rol: usuario.rol,
-      neuronas: usuario.neuronas,
-      maxNeuronas: usuario.maxNeuronas,
-      creditos: usuario.creditos,
-      ultimaRecarga: usuario.ultimaRecarga,
+      id: u.id,
+      username: u.username,
+      nombre: u.username,
+      email: u.email,
+      rol: u.rol,
+      neuronas: u.neuronas,
+      maxNeuronas: u.maxNeuronas,
+      ultimaRecarga: u.ultimaRecarga,
     })
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al registrar usuario', details: error }, { status: 500 })
-  }
-}
-
-// GET: Login de usuario (por email y password)
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url)
-    const email = searchParams.get('email')
-    const password = searchParams.get('password')
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Faltan datos' }, { status: 400 })
-    }
-    const usuario = await prisma.usuario.findUnique({ where: { email } })
-    if (!usuario || usuario.password !== password) {
-      return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
-    }
-    // Lógica de recarga automática de neuronas
-    let neuronas = usuario.neuronas
-    let ultimaRecarga = usuario.ultimaRecarga || new Date()
-    const maxNeuronas = usuario.maxNeuronas || 5
-    const creditos = usuario.creditos || 0
-    const ahora = new Date()
-    if (neuronas < maxNeuronas && ultimaRecarga) {
-      const msPasados = ahora.getTime() - new Date(ultimaRecarga).getTime()
-      const recargas = Math.floor(msPasados / (30 * 60 * 1000)) // cada 30 min
-      if (recargas > 0) {
-        neuronas = Math.min(maxNeuronas, neuronas + recargas)
-        ultimaRecarga = new Date(new Date(ultimaRecarga).getTime() + recargas * 30 * 60 * 1000)
-        await prisma.usuario.update({
-          where: { id: usuario.id },
-          data: { neuronas, ultimaRecarga },
-        })
-      }
-    }
-    return NextResponse.json({
-      id: usuario.id,
-      nombre: usuario.nombre,
-      email: usuario.email,
-      rol: usuario.rol,
-      neuronas,
-      maxNeuronas,
-      creditos,
-      ultimaRecarga,
-    })
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al buscar usuario', details: error }, { status: 500 })
-  }
-}
-
-// PATCH: Sumar o restar puntos al usuario (por email)
-export async function PATCH(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { email, puntos } = body
-    if (!email || typeof puntos !== 'number') {
-      return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
-    }
-    const usuario = await prisma.usuario.findUnique({ where: { email } })
-    if (!usuario) {
-      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
-    }
-    // Asegura que los créditos nunca sean negativos
-    const nuevosCreditos = Math.max(0, (usuario.creditos || 0) + puntos)
-    const actualizado = await prisma.usuario.update({
-      where: { email },
-      data: { creditos: nuevosCreditos },
-    })
-    return NextResponse.json({
-      id: actualizado.id,
-      email: actualizado.email,
-      creditos: actualizado.creditos,
-    })
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al actualizar puntos', details: error }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: "No pudimos crear la cuenta. Inténtalo de nuevo." }, { status: 500 })
   }
 }
