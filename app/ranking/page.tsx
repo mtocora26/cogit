@@ -1,244 +1,53 @@
+"use client"
+
 import Image from "next/image"
 import { Trophy, Medal, Star, Crown, Zap, Brain } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import NavBar from "@/components/nav-bar"
 import RankingTable from "@/components/ranking-table"
+import { useEffect, useState } from "react"
 
 export default function RankingPage() {
-  // Datos de ejemplo para las tablas de clasificación
-  const weeklyUsers = [
-    {
-      rank: 1,
-      name: "AlexMaster",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2450,
-      level: 15,
-      streak: 7,
-      change: 2,
-    },
-    {
-      rank: 2,
-      name: "CodeNinja",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2320,
-      level: 14,
-      streak: 12,
-      change: -1,
-    },
-    {
-      rank: 3,
-      name: "LogicQueen",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2180,
-      level: 13,
-      streak: 5,
-      change: 1,
-    },
-    {
-      rank: 4,
-      name: "PuzzlePro",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2050,
-      level: 12,
-      streak: 3,
-      change: -1,
-    },
-    {
-      rank: 5,
-      name: "AlgoWhiz",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1920,
-      level: 12,
-      streak: 4,
-      change: 0,
-    },
-    {
-      rank: 6,
-      name: "BrainHacker",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1840,
-      level: 11,
-      streak: 6,
-      change: 3,
-    },
-    {
-      rank: 7,
-      name: "CyberMind",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1780,
-      level: 11,
-      streak: 2,
-      change: -2,
-    },
-    {
-      rank: 8,
-      name: "DataDragon",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1650,
-      level: 10,
-      streak: 8,
-      change: 0,
-    },
-    {
-      rank: 9,
-      name: "SyntaxSage",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1520,
-      level: 10,
-      streak: 3,
-      change: 1,
-    },
-    {
-      rank: 10,
-      name: "QuantumCoder",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1490,
-      level: 9,
-      streak: 4,
-      change: -1,
-    },
-  ]
+  const [weeklyUsers, setWeeklyUsers] = useState<any[]>([])
+  const [allTimeUsers, setAllTimeUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const allTimeUsers = [
-    {
-      rank: 1,
-      name: "CodeNinja",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 15320,
-      level: 25,
-      streak: 12,
-      change: 0,
-    },
-    {
-      rank: 2,
-      name: "AlexMaster",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 14450,
-      level: 24,
-      streak: 7,
-      change: 0,
-    },
-    {
-      rank: 3,
-      name: "BrainHacker",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 13840,
-      level: 23,
-      streak: 6,
-      change: 0,
-    },
-    {
-      rank: 4,
-      name: "LogicQueen",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 12180,
-      level: 22,
-      streak: 5,
-      change: 0,
-    },
-    {
-      rank: 5,
-      name: "DataDragon",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 11650,
-      level: 21,
-      streak: 8,
-      change: 0,
-    },
-    {
-      rank: 6,
-      name: "PuzzlePro",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 10050,
-      level: 20,
-      streak: 3,
-      change: 0,
-    },
-    {
-      rank: 7,
-      name: "AlgoWhiz",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 9920,
-      level: 19,
-      streak: 4,
-      change: 0,
-    },
-    {
-      rank: 8,
-      name: "CyberMind",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 9780,
-      level: 18,
-      streak: 2,
-      change: 0,
-    },
-    {
-      rank: 9,
-      name: "SyntaxSage",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 8520,
-      level: 17,
-      streak: 3,
-      change: 0,
-    },
-    {
-      rank: 10,
-      name: "QuantumCoder",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 7490,
-      level: 16,
-      streak: 4,
-      change: 0,
-    },
-  ]
-
-  const friendsUsers = [
-    {
-      rank: 1,
-      name: "AlexMaster",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2450,
-      level: 15,
-      streak: 7,
-      change: 0,
-    },
-    {
-      rank: 2,
-      name: "LogicQueen",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 2180,
-      level: 13,
-      streak: 5,
-      change: 0,
-    },
-    {
-      rank: 3,
-      name: "BrainHacker",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1840,
-      level: 11,
-      streak: 6,
-      change: 0,
-    },
-    {
-      rank: 4,
-      name: "DataDragon",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1650,
-      level: 10,
-      streak: 8,
-      change: 0,
-    },
-    {
-      rank: 5,
-      name: "QuantumCoder",
-      avatar: "/placeholder.svg?height=100&width=100",
-      points: 1490,
-      level: 9,
-      streak: 4,
-      change: 0,
-    },
-  ]
+  useEffect(() => {
+    async function fetchRanking() {
+      setLoading(true)
+      setError(null)
+      try {
+        const [weeklyRes, allTimeRes] = await Promise.all([
+          fetch("/api/ranking?type=weekly").then(r => r.json()),
+          fetch("/api/ranking?type=alltime").then(r => r.json()),
+        ])
+        setWeeklyUsers(
+          weeklyRes.map((u: any) => ({
+            ...u,
+            avatar: "/placeholder.svg",
+            level: 1, // TODO: calcular nivel real si hay campo
+            streak: 0, // TODO: calcular racha real si hay campo
+            change: 0, // TODO: calcular cambio real si se implementa
+          }))
+        )
+        setAllTimeUsers(
+          allTimeRes.map((u: any) => ({
+            ...u,
+            avatar: "/placeholder.svg",
+            level: 1,
+            streak: 0,
+            change: 0,
+          }))
+        )
+      } catch (e) {
+        setError("Error al cargar el ranking")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRanking()
+  }, [])
 
   // Datos de ejemplo para los líderes por categoría
   const categoryLeaders = [
@@ -360,25 +169,31 @@ export default function RankingPage() {
 
       {/* Ranking Tabs */}
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="weekly" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-8">
-            <TabsTrigger value="weekly">Semanal</TabsTrigger>
-            <TabsTrigger value="alltime">De Todos los Tiempos</TabsTrigger>
-            <TabsTrigger value="friends">Amigos</TabsTrigger>
-          </TabsList>
+        {loading ? (
+          <div className="text-center py-8">Cargando ranking...</div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : (
+          <Tabs defaultValue="weekly" className="w-full">
+            <TabsList className="grid grid-cols-3 mb-8">
+              <TabsTrigger value="weekly">Semanal</TabsTrigger>
+              <TabsTrigger value="alltime">De Todos los Tiempos</TabsTrigger>
+              <TabsTrigger value="friends">Amigos</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="weekly">
-            <RankingTable users={weeklyUsers} showChange={true} />
-          </TabsContent>
+            <TabsContent value="weekly">
+              <RankingTable users={weeklyUsers} showChange={true} />
+            </TabsContent>
 
-          <TabsContent value="alltime">
-            <RankingTable users={allTimeUsers} showChange={false} />
-          </TabsContent>
+            <TabsContent value="alltime">
+              <RankingTable users={allTimeUsers} showChange={false} />
+            </TabsContent>
 
-          <TabsContent value="friends">
-            <RankingTable users={friendsUsers} showChange={false} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="friends">
+              <RankingTable users={[]} showChange={false} />
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
 
       {/* Category Leaders */}

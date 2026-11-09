@@ -98,8 +98,6 @@ export default function PatternEvaluation({ onComplete }: PatternEvaluationProps
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [score, setScore] = useState(0)
   const [round, setRound] = useState(1)
-  const [startTime, setStartTime] = useState(Date.now())
-  const [timeElapsed, setTimeElapsed] = useState(0)
   const [lives, setLives] = useState(3)
   const maxRounds = 5
 
@@ -107,15 +105,6 @@ export default function PatternEvaluation({ onComplete }: PatternEvaluationProps
   useEffect(() => {
     startNewRound()
   }, [])
-
-  // Actualizar el tiempo transcurrido
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeElapsed(Math.floor((Date.now() - startTime) / 1000))
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [startTime])
 
   // Iniciar una nueva ronda
   const startNewRound = () => {
@@ -176,7 +165,7 @@ export default function PatternEvaluation({ onComplete }: PatternEvaluationProps
     setTimeout(() => {
       // Si se quedó sin vidas, terminar el juego
       if (!correct && lives <= 1) {
-        onComplete(score >= 3, timeElapsed, score)
+        onComplete(score >= 3, 0, score)
         return
       }
 
@@ -185,7 +174,7 @@ export default function PatternEvaluation({ onComplete }: PatternEvaluationProps
         startNewRound()
       } else {
         // Juego completado
-        onComplete(score >= 3, timeElapsed, score)
+        onComplete(score >= 3, 0, score)
       }
     }, 2000)
   }
@@ -246,11 +235,6 @@ export default function PatternEvaluation({ onComplete }: PatternEvaluationProps
         <div className="flex items-center gap-2">
           <div className="text-sm text-gray-400">Vidas:</div>
           <div>{renderLives()}</div>
-        </div>
-        <div className="mx-2 text-gray-500 hidden md:block">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Tiempo:</div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">{timeElapsed}s</div>
         </div>
       </div>
 

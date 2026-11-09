@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DndContext, useDraggable } from "@dnd-kit/core"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, RefreshCw, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -22,7 +21,7 @@ interface Sequence {
   }[]
 }
 
-// Secuencias predefinidas
+// Secuencias predefinidas (3 rondas, dificultad progresiva)
 const sequences: Sequence[] = [
   {
     id: "lemonade",
@@ -60,113 +59,48 @@ const sequences: Sequence[] = [
       { id: "email-3", content: "Escribir la dirección del destinatario", order: 3 },
       { id: "email-4", content: "Escribir el asunto del correo", order: 4 },
       { id: "email-5", content: "Redactar el mensaje", order: 5 },
-      { id: "email-6", content: "Hacer clic en 'Enviar'", order: 6 },
-    ],
-  },
-  {
-    id: "plant",
-    title: "Plantar una semilla",
-    description: "Ordena los pasos para plantar una semilla correctamente",
-    steps: [
-      { id: "plant-1", content: "Preparar la maceta con tierra", order: 1 },
-      { id: "plant-2", content: "Hacer un pequeño agujero en la tierra", order: 2 },
-      { id: "plant-3", content: "Colocar la semilla en el agujero", order: 3 },
-      { id: "plant-4", content: "Cubrir la semilla con tierra", order: 4 },
-      { id: "plant-5", content: "Regar con agua", order: 5 },
-      { id: "plant-6", content: "Colocar en un lugar con luz solar", order: 6 },
+      { id: "email-6", content: "Enviar el correo", order: 6 },
     ],
   },
 ]
+const MAX_ROUNDS = sequences.length
 
 export default function SequenceOrdering({ onComplete }: SequenceOrderingProps) {
-  const [currentSequence, setCurrentSequence] = useState<Sequence | null>(null)
-  const [steps, setSteps] = useState<{ id: string; content: string; order: number }[]>([])
-  const [isComplete, setIsComplete] = useState(false)
-  const [isCorrect, setIsCorrect] = useState(false)
-  const [startTime, setStartTime] = useState(Date.now())
-  const [timeElapsed, setTimeElapsed] = useState(0)
-  const [attempts, setAttempts] = useState(0)
-  const maxAttempts = 3
+  const [round, setRound] = useState(1)
+  const [steps, setSteps] = useState(() => shuffle([...sequences[0].steps]))
+  const [completed, setCompleted] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [startTime] = useState(Date.now())
 
-  // Inicializar el juego
-  useEffect(() => {
-    startNewGame()
-  }, [])
+  const currentSequence = sequences[round - 1]
 
-  // Actualizar el tiempo transcurrido
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isComplete) {
-        setTimeElapsed(Math.floor((Date.now() - startTime) / 1000))
+  // Al finalizar ronda, pasar a la siguiente
+  const handleCheck = () => {
+    const ok = steps.every((step, idx) => step.order === idx + 1)
+    setCompleted(true)
+    setSuccess(ok)
+    setFeedback(ok ? "¡Secuencia correcta!" : "Hay pasos fuera de orden.")
+    setTimeout(() => {
+      if (ok && round < MAX_ROUNDS) {
+        setRound(round + 1)
+        setSteps(shuffle([...sequences[round].steps]))
+        setCompleted(false)
+        setSuccess(false)
+        setFeedback(null)
+      } else if (ok && round === MAX_ROUNDS) {
+        onComplete(true, Math.floor((Date.now() - startTime) / 1000))
       }
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [startTime, isComplete])
-
-  // Iniciar un nuevo juego
-  const startNewGame = () => {
-    // Seleccionar una secuencia aleatoria
-    const randomSequence = sequences[Math.floor(Math.random() * sequences.length)]
-    setCurrentSequence(randomSequence)
-
-    // Mezclar los pasos
-    const shuffledSteps = [...randomSequence.steps].sort(() => Math.random() - 0.5)
-    setSteps(shuffledSteps)
-
-    setIsComplete(false)
-    setIsCorrect(false)
-    setStartTime(Date.now())
-    setTimeElapsed(0)
-    setAttempts(0)
+    }, 2000)
   }
 
-  // Manejar el arrastre y soltar
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event
-
-    // Si no hay destino, el elemento fue soltado fuera de un área válida
-    if (!over) return
-
-    // Reordenar los pasos
-    const oldIndex = steps.findIndex((step) => step.id === active.id)
-    const newIndex = steps.findIndex((step) => step.id === over.id)
-    const reorderedSteps = Array.from(steps)
-    const [removed] = reorderedSteps.splice(oldIndex, 1)
-    reorderedSteps.splice(newIndex, 0, removed)
-
-    setSteps(reorderedSteps)
-  }
-
-  // Verificar el orden de los pasos
-  const checkOrder = () => {
-    if (!currentSequence) return
-
-    // Comparar el orden actual con el orden correcto
-    const isOrderCorrect = steps.every((step, index) => {
-      const correctStep = currentSequence.steps.find((s) => s.id === step.id)
-      return correctStep && correctStep.order === index + 1
-    })
-
-    setIsComplete(true)
-    setIsCorrect(isOrderCorrect)
-
-    // Incrementar el número de intentos
-    const newAttempts = attempts + 1
-    setAttempts(newAttempts)
-
-    // Si es correcto o se han agotado los intentos, completar el nivel
-    if (isOrderCorrect || newAttempts >= maxAttempts) {
-      setTimeout(() => {
-        onComplete(isOrderCorrect, timeElapsed)
-      }, 2000)
+  // Mezclar el arreglo
+  function shuffle(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[array[i], array[j]] = [array[j], array[i]]
     }
-  }
-
-  // Reintentar con el mismo orden
-  const retry = () => {
-    setIsComplete(false)
-    setIsCorrect(false)
+    return array
   }
 
   return (
@@ -180,53 +114,37 @@ export default function SequenceOrdering({ onComplete }: SequenceOrderingProps) 
 
       <div className="flex justify-center items-center mb-8">
         <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Intentos:</div>
+          <div className="text-sm text-gray-400">Ronda:</div>
           <div className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
-            {attempts}/{maxAttempts}
+            {round}/{MAX_ROUNDS}
           </div>
-        </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Tiempo:</div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">{timeElapsed}s</div>
         </div>
       </div>
 
-      <DndContext onDragEnd={handleDragEnd}>
-        <div className="space-y-2 mb-8">
-          {steps.map((step, index) => {
-            const { setNodeRef: setDraggableRef, listeners, attributes } = useDraggable({
-              id: step.id,
-            })
-            return (
-              <div
-                key={step.id}
-                ref={setDraggableRef}
-                {...listeners}
-                {...attributes}
-                className={cn(
-                  "p-4 rounded-lg border flex items-center",
-                  isComplete &&
-                    currentSequence?.steps.find((s) => s.id === step.id)?.order ===
-                      index + 1
-                    ? "bg-green-500/20 border-green-500"
-                    : isComplete
-                    ? "bg-red-500/20 border-red-500"
-                    : "bg-[#1a1d23] border-gray-700"
-                )}
-              >
-                <div className="w-8 h-8 rounded-full bg-[#2a2f3a] flex items-center justify-center mr-4">
-                  {index + 1}
-                </div>
-                <div>{step.content}</div>
-              </div>
-            )
-          })}
-        </div>
-      </DndContext>
-
-      {!isComplete ? (
-        <Button onClick={checkOrder} className="w-full bg-blue-600 hover:bg-blue-700" disabled={steps.length === 0}>
+      <div className="space-y-2 mb-8">
+        {steps.map((step, index) => (
+          <div
+            key={step.id}
+            className={cn(
+              "p-4 rounded-lg border flex items-center",
+              completed &&
+                currentSequence?.steps.find((s) => s.id === step.id)?.order ===
+                  index + 1
+                ? "bg-green-500/20 border-green-500"
+                : completed
+                ? "bg-red-500/20 border-red-500"
+                : "bg-[#1a1d23] border-gray-700"
+            )}
+          >
+            <div className="w-8 h-8 rounded-full bg-[#2a2f3a] flex items-center justify-center mr-4">
+              {index + 1}
+            </div>
+            <div>{step.content}</div>
+          </div>
+        ))}
+      </div>
+      {!completed ? (
+        <Button onClick={handleCheck} className="w-full bg-blue-600 hover:bg-blue-700" disabled={steps.length === 0}>
           Verificar orden
         </Button>
       ) : (
@@ -234,28 +152,26 @@ export default function SequenceOrdering({ onComplete }: SequenceOrderingProps) 
           <div
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center mb-4",
-              isCorrect ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500",
+              success ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500",
             )}
           >
-            {isCorrect ? <CheckCircle className="h-8 w-8" /> : <AlertCircle className="h-8 w-8" />}
+            {success ? <CheckCircle className="h-8 w-8" /> : <AlertCircle className="h-8 w-8" />}
           </div>
-          <h3 className="text-xl font-bold mb-2">{isCorrect ? "¡Secuencia correcta!" : "Secuencia incorrecta"}</h3>
+          <h3 className="text-xl font-bold mb-2">{success ? "¡Secuencia correcta!" : "Secuencia incorrecta"}</h3>
           <p className="text-gray-400 mb-4">
-            {isCorrect
-              ? `¡Excelente trabajo! Has ordenado la secuencia correctamente en ${timeElapsed} segundos.`
-              : attempts >= maxAttempts
-                ? "Has agotado todos tus intentos."
-                : "Intenta reorganizar los pasos y vuelve a verificar."}
+            {success
+              ? `¡Excelente trabajo! Has ordenado la secuencia correctamente.`
+              : "Intenta reorganizar los pasos y vuelve a verificar."}
           </p>
-          {isCorrect || attempts >= maxAttempts ? (
-            <Button onClick={startNewGame} className="flex items-center gap-2">
+          {!success && (
+            <Button onClick={() => {
+              setSteps(shuffle([...currentSequence.steps]))
+              setCompleted(false)
+              setSuccess(false)
+              setFeedback(null)
+            }} className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Nueva secuencia
-            </Button>
-          ) : (
-            <Button onClick={retry} className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Intentar de nuevo
+              Reintentar ronda
             </Button>
           )}
         </div>

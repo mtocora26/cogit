@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Heart } from "lucide-react"
+import { CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PatternRecognitionProps {
@@ -66,26 +66,11 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
   const [options, setOptions] = useState<string[]>([])
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
-  const [score, setScore] = useState(0)
-  const [round, setRound] = useState(1)
-  const [startTime, setStartTime] = useState(Date.now())
-  const [timeElapsed, setTimeElapsed] = useState(0)
-  const [lives, setLives] = useState(3) // Nuevo: sistema de vidas
-  const maxRounds = 5
 
   // Inicializar el juego
   useEffect(() => {
     startNewRound()
   }, [])
-
-  // Actualizar el tiempo transcurrido
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeElapsed(Math.floor((Date.now() - startTime) / 1000))
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [startTime])
 
   // Iniciar una nueva ronda
   const startNewRound = () => {
@@ -95,7 +80,7 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
     setPatternType(newType)
 
     // Generar un nuevo patrón
-    const patternLength = 4 + Math.min(round, 3) // Aumenta la dificultad con cada ronda
+    const patternLength = 5 // Fijo, sin dificultad progresiva
     const newPattern = generatePattern(newType, patternLength)
     setPattern(newPattern)
 
@@ -112,52 +97,25 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
 
   // Determinar el siguiente elemento en el patrón
   const getNextInPattern = (pat: string[]): string => {
-    // Detectar el tipo de patrón
     if (pat[0] === pat[2] && pat[1] === pat[3]) {
-      // Alternancia (A,B,A,B)
       return pat[pat.length % 2]
     } else if (pat[0] === pat[1] && pat[2] === pat[3]) {
-      // Repetición (A,A,B,B)
       return pat[pat.length % 4 < 2 ? 0 : 2]
     } else {
-      // Incremento o patrón más complejo
-      // Asumimos que es cíclico
       return pat[pat.length % pat.length]
     }
   }
 
   // Manejar la selección de una opción
   const handleOptionSelect = (option: string) => {
-    if (isCorrect !== null) return // Ya se ha respondido
-
+    if (isCorrect !== null) return
     setSelectedOption(option)
     const correctAnswer = getNextInPattern(pattern)
     const correct = option === correctAnswer
     setIsCorrect(correct)
-
-    if (correct) {
-      setScore(score + 1)
-    } else {
-      // Reducir vidas si la respuesta es incorrecta
-      setLives(lives - 1)
-    }
-
-    // Esperar un momento para mostrar el feedback y luego pasar a la siguiente ronda
     setTimeout(() => {
-      // Si se quedó sin vidas, terminar el juego
-      if (!correct && lives <= 1) {
-        onComplete(score >= 3, timeElapsed, score)
-        return
-      }
-
-      if (round < maxRounds) {
-        setRound(round + 1)
-        startNewRound()
-      } else {
-        // Juego completado
-        onComplete(score >= 3, timeElapsed, score)
-      }
-    }, 1500)
+      startNewRound()
+    }, 1200)
   }
 
   // Obtener el título según el tipo de patrón
@@ -174,50 +132,12 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
     }
   }
 
-  // Renderizar las vidas
-  const renderLives = () => {
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(3)].map((_, i) => (
-          <Heart key={i} className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-gray-500"}`} />
-        ))}
-      </div>
-    )
-  }
-
   return (
     <div className="bg-[#1e2330] rounded-lg p-6 border border-gray-800">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold">{getPatternTitle()}</h2>
-        <p className="text-gray-400 mt-1">Observa el patrón y selecciona el siguiente elemento</p>
+        <p className="text-gray-400 mt-1">¿Cuál es el siguiente elemento en la secuencia?</p>
       </div>
-
-      <div className="flex justify-center items-center mb-8">
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Ronda:</div>
-          <div className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
-            {round}/{maxRounds}
-          </div>
-        </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Puntuación:</div>
-          <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-sm">
-            {score}/{maxRounds}
-          </div>
-        </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Vidas:</div>
-          <div>{renderLives()}</div>
-        </div>
-        <div className="mx-4 text-gray-500">|</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-400">Tiempo:</div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">{timeElapsed}s</div>
-        </div>
-      </div>
-
       <div className="flex flex-col items-center">
         {/* Patrón */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -233,7 +153,6 @@ export default function PatternRecognition({ onComplete }: PatternRecognitionPro
             ?
           </div>
         </div>
-
         {/* Opciones */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-md">
           {options.map((option, index) => (

@@ -62,12 +62,25 @@ export default function RegistroPage() {
     setIsLoading(true)
 
     try {
-      // Aquí iría la lógica real de registro
-      // Simulamos un registro exitoso después de un breve retraso
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Redirigir al usuario a la página principal
-      router.push("/")
+      // Llamar al endpoint real de registro
+      const res = await fetch("/api/usuario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          email: formData.email,
+          password: formData.password, // En producción, hashear
+          rol: "estudiante",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || "Error al crear la cuenta")
+        setIsLoading(false)
+        return
+      }
+      // Registro exitoso
+      router.push("/login")
     } catch (err) {
       setError("Error al crear la cuenta. Inténtalo de nuevo.")
     } finally {

@@ -8,14 +8,14 @@ interface SudokuControlsProps {
   onNumberInput: (num: number) => void
   onClearCell: () => void
   isNotesMode: boolean
-  onToggleNotesMode: () => void
+  onNotesModeToggle: () => void
 }
 
 export default function SudokuControls({
   onNumberInput,
   onClearCell,
   isNotesMode,
-  onToggleNotesMode,
+  onNotesModeToggle,
 }: SudokuControlsProps) {
   return (
     <div className="mt-6">
@@ -27,7 +27,7 @@ export default function SudokuControls({
             "border-gray-700 hover:bg-gray-800",
             isNotesMode && "bg-purple-500/20 border-purple-500 text-purple-400",
           )}
-          onClick={onToggleNotesMode}
+          onClick={onNotesModeToggle}
         >
           <Pencil className="h-4 w-4 mr-2" />
           Modo notas

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Usuario" ADD COLUMN     "creditos" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "maxNeuronas" INTEGER NOT NULL DEFAULT 5,
+ADD COLUMN     "neuronas" INTEGER NOT NULL DEFAULT 5,
+ADD COLUMN     "ultimaRecarga" TIMESTAMP(3);
