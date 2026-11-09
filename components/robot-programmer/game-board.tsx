@@ -170,7 +170,7 @@ export default function GameBoard({ board, robotPosition, targetCells, litCells,
   }, [board, robotPosition, targetCells, litCells, robot3D, compact, lastLit])
 
   return (
-    <div className={compact ? "bg-[#1e2330] rounded-lg p-2 border border-gray-800" : "bg-[#1e2330] rounded-lg p-6 border border-gray-800"}>
+    <div className={compact ? "bg-card rounded-lg p-2 border border-gray-800" : "bg-card rounded-lg p-6 border border-gray-800"}>
       {/* Header solo si no es compacto */}
       {!compact && <h2 className="text-xl font-bold mb-4">Tablero</h2>}
       <div className={compact ? "relative aspect-square w-full max-w-[480px] mx-auto" : "relative aspect-square w-full max-w-[700px] mx-auto"}>

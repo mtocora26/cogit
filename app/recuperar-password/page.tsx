@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { Brain, ArrowLeft, Loader2, CheckCircle } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
+import { ArrowLeft, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
@@ -43,20 +44,19 @@ export default function RecuperarPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-[#1a1d23]/90 backdrop-blur-sm">
+      <header className="border-b border-gray-800 bg-background/90 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Brain className="h-8 w-8 text-purple-400" />
-            <span className="text-xl font-bold tracking-tight">COGIT</span>
+            <Logo className="h-8 w-auto" />
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-[#1e2330] p-8 rounded-lg border border-gray-800 shadow-lg">
+        <div className="w-full max-w-md bg-card p-8 rounded-lg border border-gray-800 shadow-lg">
           <Link href="/login" className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-300 mb-6">
             <ArrowLeft className="h-4 w-4" />
             Volver al inicio de sesión
@@ -100,7 +100,7 @@ export default function RecuperarPasswordPage() {
                     placeholder="tu@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="bg-[#1a1d23] border-gray-700 focus:border-purple-500"
+                    className="bg-background border-gray-700 focus:border-purple-500"
                     disabled={isLoading}
                     required
                   />

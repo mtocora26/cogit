@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Star, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import * as React from "react"
@@ -19,13 +19,13 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
   const getCommandInfo = (command: string) => {
     switch (command) {
       case "forward":
-        return { name: "Avanzar", color: "bg-blue-500", icon: "↑" }
+        return { name: "Avanzar", color: "bg-blue-500", icon: <ArrowUp aria-hidden className="h-4 w-4" /> }
       case "turnRight":
-        return { name: "Girar Derecha", color: "bg-purple-500", icon: "→" }
+        return { name: "Girar Derecha", color: "bg-purple-500", icon: <ArrowRight aria-hidden className="h-4 w-4" /> }
       case "turnLeft":
-        return { name: "Girar Izquierda", color: "bg-indigo-500", icon: "←" }
+        return { name: "Girar Izquierda", color: "bg-purple-500", icon: <ArrowLeft aria-hidden className="h-4 w-4" /> }
       case "light":
-        return { name: "Encender", color: "bg-green-500", icon: "💡" }
+        return { name: "Encender", color: "bg-green-500", icon: <Lightbulb aria-hidden className="h-4 w-4" /> }
       default:
         return { name: command, color: "bg-gray-500", icon: "?" }
     }
@@ -63,7 +63,7 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
       {/* Header eliminado, el título lo pone el layout principal */}
       {commands.length === 0 ? (
         <div className={cn(
-          "bg-[#1a1d23] rounded-lg p-8 sm:p-6 text-center border border-dashed border-gray-700 min-h-[64px] flex items-center justify-center text-base sm:text-sm",
+          "bg-background rounded-lg p-8 sm:p-6 text-center border border-dashed border-gray-700 min-h-[64px] flex items-center justify-center text-base sm:text-sm",
           isDragOver && "border-blue-400 bg-blue-400/10"
         )}>
           <p className="text-gray-400">Haz clic o arrastra comandos aquí para programar al robot</p>
@@ -85,14 +85,14 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
                   transition={{ type: "spring", stiffness: 400, damping: 22 }}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-xl border border-gray-700 relative overflow-visible",
-                    isCurrent ? "bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-green-500/30 ring-2 ring-yellow-400 animate-glow-bounce z-10" :
-                    isPast ? "opacity-50" : "bg-[#1a1d23]",
+                    isCurrent ? "bg-primary/20 ring-2 ring-ring z-10" :
+                    isPast ? "opacity-50" : "bg-background",
                   )}
                   style={{ minHeight: 56 }}
                 >
                   <div className="flex items-center gap-3">
                     <motion.div
-                      className={cn(color, "w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg")}
+                      className={cn(color, "w-9 h-9 rounded-full flex items-center justify-center text-foreground font-bold text-xl shadow-lg")}
                       animate={isCurrent ? { scale: [1, 1.18, 0.95, 1], boxShadow: [
                         "0 0 0px #fff0", "0 0 16px #facc15,0 0 32px #818cf8", "0 0 0px #fff0", "0 0 0px #fff0"
                       ] } : {}}
@@ -100,7 +100,7 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
                     >
                       {icon}
                     </motion.div>
-                    <span className="text-base sm:text-sm font-semibold drop-shadow-lg">{name}</span>
+                    <span className="text-base sm:text-sm font-semibold">{name}</span>
                   </div>
                   {!isExecuting && (
                     <Button
@@ -121,7 +121,7 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
                       animate={{ scale: 1.2, opacity: 1, rotate: [0, 8, -8, 0] }}
                       transition={{ duration: 0.5 }}
                     >
-                      <span className="inline-block text-yellow-300 text-2xl animate-bounce">⭐</span>
+                      <Star aria-hidden className="inline-block h-6 w-6 fill-current text-signal" />
                     </motion.div>
                   )}
                 </motion.div>

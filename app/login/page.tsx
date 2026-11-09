@@ -1,26 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
+import { Logo } from "@/components/brand/logo"
+import { AuthPanel } from "@/components/brand/auth-panel"
+import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
-import { Brain, ArrowRight, Github, Mail } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import LoginForm from "@/components/login-form"
 
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [formData, setFormData] = useState({ email: "", password: "" })
-
-  const handleDemoLogin = () => {
-    setIsLoading(true)
-    // Simulación de inicio de sesión
-    setTimeout(() => {
-      router.push("/")
-    }, 1500)
-  }
+  const [formData, setFormData] = useState({ username: "", password: "" })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,25 +21,21 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       // Lógica real de login
-      const res = await fetch(
-        "/api/usuario?email=" +
-          encodeURIComponent(formData.email) +
-          "&password=" +
-          encodeURIComponent(formData.password)
-      )
+      const res = await fetch("/api/usuario/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: formData.username, password: formData.password }),
+      })
       const data = await res.json()
       if (!res.ok || !data.id) {
-        setError(data.error || "Email o contraseña incorrectos")
+        setError(data.error || "Usuario o contraseña incorrectos")
         setIsLoading(false)
         return
       }
-      // Guardar userId y rol en localStorage/sessionStorage
-      localStorage.setItem("userId", data.id)
+      // La sesión vive en una cookie httpOnly firmada por el servidor. Esto solo guarda datos para mostrar en pantalla.
+      localStorage.setItem("userId", String(data.id))
       localStorage.setItem("userRol", data.rol)
       localStorage.setItem("usuario", JSON.stringify(data))
-      // Set auth cookie for middleware (expires in 7 days)
-      document.cookie = `userId=${data.id}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      document.cookie = `userRol=${data.rol}; path=/; max-age=${60 * 60 * 24 * 7}`;
       // Redirigir al home o dashboard
       if (data.rol === "admin") {
         router.push("/admin")
@@ -61,14 +50,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-[#1a1d23]/90 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <Brain className="h-8 w-8 text-purple-400" />
-            <span className="text-xl font-bold tracking-tight">COGIT</span>
-          </Link>
+      <header className="border-b border-border bg-background/90 backdrop-blur-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <Link href="/" aria-label="COGIT, inicio" className="flex min-h-11 items-center"><Logo className="h-8 w-auto" /></Link>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -84,16 +71,19 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" htmlFor="email">
-                  Correo electrónico
+                <label className="block text-sm font-medium mb-2" htmlFor="username">
+                  Usuario
                 </label>
                 <input
-                  type="email"
-                  id="email"
+                  type="text"
+                  id="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full p-3 bg-[#2a2d34] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="w-full p-3 bg-muted border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
               <div className="mb-6">
@@ -103,53 +93,26 @@ export default function LoginPage() {
                 <input
                   type="password"
                   id="password"
+                  autoComplete="current-password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full p-3 bg-[#2a2d34] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full p-3 bg-muted border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
-              {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+              {error && (
+                <p role="alert" className="text-red-400 text-sm mb-4">
+                  {error}
+                </p>
+              )}
               <Button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 transition-colors"
+                className="min-h-11 w-full"
                 disabled={isLoading}
               >
                 {isLoading ? "Cargando..." : "Iniciar sesión"}
               </Button>
             </form>
-
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-700"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#1a1d23] text-gray-400">O continúa con</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-4">
-                <Button
-                  variant="outline"
-                  className="border-gray-700 hover:bg-gray-800 hover:text-white"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                >
-                  <Github className="mr-2 h-4 w-4" />
-                  GitHub
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-gray-700 hover:bg-gray-800 hover:text-white"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Google
-                </Button>
-              </div>
-            </div>
 
             <div className="mt-8 text-center">
               <p className="text-gray-400">
@@ -162,52 +125,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Image */}
-        <div className="hidden md:block md:w-1/2 bg-[#1e2330] relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-purple-900/40 z-10"></div>
-          <Image
-            src="https://images.unsplash.com/photo-1573164713988-8665fc963095?q=80&w=1920&auto=format&fit=crop"
-            alt="Login Background"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 z-20 flex flex-col justify-center items-center p-12">
-            <div className="max-w-md text-center">
-              <h2 className="text-4xl font-bold mb-4">Potencia tu pensamiento computacional</h2>
-              <p className="text-xl text-gray-300 mb-6">
-                Desbloquea tu potencial con desafíos, juegos y una comunidad de aprendizaje.
-              </p>
-              <div className="flex justify-center">
-                <Button className="bg-purple-600 hover:bg-purple-700 group" onClick={() => router.push("/registro")}>
-                  Comenzar ahora
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Circuit Pattern Overlay */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none z-0">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                  <path
-                    d="M0 50 H100 M50 0 V100 M25 25 L75 75 M75 25 L25 75"
-                    stroke="white"
-                    strokeWidth="1"
-                    fill="none"
-                  />
-                  <circle cx="50" cy="50" r="8" fill="none" stroke="white" strokeWidth="1" />
-                  <circle cx="25" cy="25" r="5" fill="none" stroke="white" strokeWidth="1" />
-                  <circle cx="75" cy="75" r="5" fill="none" stroke="white" strokeWidth="1" />
-                  <circle cx="75" cy="25" r="5" fill="none" stroke="white" strokeWidth="1" />
-                  <circle cx="25" cy="75" r="5" fill="none" stroke="white" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#circuit)" />
-            </svg>
-          </div>
-        </div>
+        <AuthPanel title="Potencia tu pensamiento computacional" text="Desbloquea tu potencial con desafíos, juegos y una comunidad de aprendizaje.">
+          <Button className="group min-h-11" onClick={() => router.push("/registro")}>
+            Comenzar ahora
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </AuthPanel>
       </div>
     </div>
   )

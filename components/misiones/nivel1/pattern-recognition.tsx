@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle } from "lucide-react"
+import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
@@ -210,7 +211,7 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
       if (!reviewMode) {
         if (!correct) {
           setIncorrectRounds(prev => [...prev, round - 1])
-          setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `La respuesta correcta era ${correctAnswer}` }])
+          setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `La respuesta correcta era: ${glyphName(correctAnswer)}` }])
           handleErrorRonda()
         } else {
           setScore(s => s + 1)
@@ -257,27 +258,26 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#232946] to-[#16161a] rounded-2xl p-4 md:p-8 border-2 border-purple-700 shadow-2xl max-w-xl mx-auto min-h-[70vh] flex flex-col justify-between overflow-y-auto">
+    <div className="bg-card rounded-2xl p-4 md:p-8 border border-border max-w-xl mx-auto flex flex-col gap-6 overflow-y-auto">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-extrabold text-purple-400 drop-shadow-lg animate-pulse">{getPatternTitle()}</h2>
+        <h2 className="text-3xl font-extrabold text-purple-400">{getPatternTitle()}</h2>
         <p className="text-gray-300 mt-2 text-lg">{reviewMode ? "Repaso de rondas fallidas: corrige tus errores (sin penalización)" : "¿Cuál es el siguiente elemento en la secuencia?"}</p>
         <div className="mt-2 text-purple-300 font-semibold text-base">
           {reviewMode ? `Repaso: ${reviewIndex + 1}/${incorrectRounds.length}` : `Ronda: ${round}/${maxRounds}`}
         </div>
       </div>
       <div className="flex flex-col items-center flex-1 justify-center">
-        <div className="flex items-center justify-center gap-6 mb-10 w-full py-4 min-h-[80px]">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-10 w-full py-4 min-h-[80px]">
           {pattern.map((item, index) => (
             <div
               key={index}
-              className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-2xl bg-[#232946] rounded-xl border-2 border-purple-700 shadow-lg min-w-0 transition-all duration-200"
+              className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-2xl bg-secondary rounded-xl border-2 border-purple-700 shadow-lg min-w-0 transition-all duration-200"
             >
-              {item}
+              <Glyph token={item} />
             </div>
           ))}
           <div
-            className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-2xl bg-[#232946] rounded-xl border-2 border-dashed border-purple-400 min-w-0 transition-all duration-200 animate-bounce-scale shadow-xl ring-2 ring-purple-400/60"
-            style={{ animationDuration: '1.8s', boxShadow: '0 0 24px #a78bfa, 0 2px 8px #0006' }}
+            className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-2xl bg-secondary rounded-xl border-2 border-dashed border-signal min-w-0 transition-all duration-200"
           >
             <motion.span
               initial={{ scale: 0.9, opacity: 0.7 }}
@@ -296,21 +296,21 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
                 className={cn(
                   "h-16 md:h-20 text-3xl md:text-4xl w-full rounded-xl border-2 border-transparent transition-all duration-200 py-2 md:py-4",
                   selectedOption === option && isCorrect === true
-                    ? "bg-green-600/90 border-green-400 text-white shadow-xl"
+                    ? "bg-green-600/90 border-green-400 text-white"
                     : selectedOption === option && isCorrect === false
-                      ? "bg-red-600/90 border-red-400 text-white shadow-xl"
-                      : "bg-[#232946] hover:bg-purple-900/40 text-purple-200",
+                      ? "bg-red-600/90 border-red-400 text-white"
+                      : "bg-secondary hover:bg-purple-900/40 text-purple-200",
                 )}
                 onClick={() => handleOptionSelect(option)}
                 disabled={isCorrect !== null}
               >
-                {option}
+                <Glyph token={option} className="!h-9 !w-9 md:!h-10 md:!w-10" />
                 {selectedOption === option && isCorrect !== null && (
                   <div className="absolute -top-2 -right-2">
                     {isCorrect ? (
-                      <CheckCircle className="h-7 w-7 text-green-300 drop-shadow-lg" />
+                      <CheckCircle className="h-7 w-7 text-green-300" />
                     ) : (
-                      <XCircle className="h-7 w-7 text-red-300 drop-shadow-lg" />
+                      <XCircle className="h-7 w-7 text-red-300" />
                     )}
                   </div>
                 )}

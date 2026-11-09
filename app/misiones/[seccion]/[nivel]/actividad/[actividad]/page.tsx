@@ -148,20 +148,23 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     }
     setFeedbackFinal(feedback)
 
-    // Guardar puntos en backend
-    const usuarioStr = localStorage.getItem("usuario")
-    let email = null
-    if (usuarioStr) {
-      try {
-        email = JSON.parse(usuarioStr).email
-      } catch {}
-    }
-    if (email) {
-      await fetch("/api/usuario", {
-        method: "PATCH",
+    // Guardar el avance en la cuenta (REQ-006/007): alimenta Misiones, el ranking y las estadísticas.
+    try {
+      const res = await fetch("/api/progreso", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, puntos: total })
+        body: JSON.stringify({
+          seccion,
+          nivel,
+          actividad,
+          completado: success,
+          score: Math.max(0, total),
+          tiempo: Math.max(0, Math.round(time || 0)),
+        }),
       })
+      if (!res.ok) throw new Error("no guardado")
+    } catch {
+      setFeedbackFinal((f) => f + "\nNo pudimos guardar tu progreso. Revisa tu conexión y vuelve a intentarlo.")
     }
   }
 
@@ -181,18 +184,18 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
 
   // Render principal
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <NavBar activePage="misiones" />
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center gap-2 text-gray-400 mb-4">
-          <button onClick={handleBack} className="hover:text-white transition-colors flex items-center gap-1">
+          <button onClick={handleBack} className="hover:text-foreground transition-colors flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
             <span>Volver al nivel</span>
           </button>
           <span>/</span>
           <span>{actividadInfo.nivelTitle}</span>
           <span>/</span>
-          <span className="text-white">{actividadInfo.title}</span>
+          <span className="text-foreground">{actividadInfo.title}</span>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -207,7 +210,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
       </div>
       <div className="container mx-auto px-4 py-8">
         {isCompleted ? (
-          <div className="bg-[#1e2330] rounded-lg p-8 text-center border border-gray-800 max-w-md mx-auto">
+          <div className="bg-card rounded-lg p-8 text-center border border-gray-800 max-w-md mx-auto">
             <h2 className="text-2xl font-bold mb-2 text-blue-300">¡Actividad completada!</h2>
             <p className="text-lg text-gray-200 mb-4 whitespace-pre-line">{feedbackFinal}</p>
             {erroresDetalle.length > 0 && (

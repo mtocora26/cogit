@@ -27,7 +27,7 @@ export default function SudokuBoard({
   }
 
   return (
-    <div className="bg-[#1e2330] rounded-lg p-4 border border-gray-800">
+    <div className="bg-card rounded-lg p-4 border border-gray-800">
       <div className="grid grid-cols-9 gap-0 border-2 border-gray-600">
         {board.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
@@ -40,9 +40,9 @@ export default function SudokuBoard({
             const borderRight = colIndex < 8 ? "border-r border-gray-700" : ""
             const borderBottom = rowIndex < 8 ? "border-b border-gray-700" : ""
             const thickBorderRight =
-              (colIndex + 1) % 3 === 0 && colIndex < 8 ? "border-r-2 border-r-gray-500" : borderRight
+              (colIndex + 1) % 3 === 0 && colIndex < 8 ? "border-r-2 border-r-neuron/60" : borderRight
             const thickBorderBottom =
-              (rowIndex + 1) % 3 === 0 && rowIndex < 8 ? "border-b-2 border-b-gray-500" : borderBottom
+              (rowIndex + 1) % 3 === 0 && rowIndex < 8 ? "border-b-2 border-b-neuron/60" : borderBottom
 
             return (
               <button
@@ -50,11 +50,11 @@ export default function SudokuBoard({
                 className={cn(
                   "w-14 h-14 flex items-center justify-center text-2xl font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  isInitial ? "text-gray-300" : "text-white",
+                  isInitial ? "text-foreground font-bold" : "text-neuron",
                   isSelected && "bg-blue-500/20",
                   isInvalid && "bg-red-500/20",
                   "hover:bg-gray-800",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
+                  "disabled:cursor-not-allowed",
                   "relative", // For notes positioning
                   thickBorderRight,
                   thickBorderBottom,

@@ -262,9 +262,8 @@ export default function RobotProgrammerPage() {
 
   // Estados para datos de usuario
   const [userId, setUserId] = useState<string | null>(null);
-  const [userRol, setUserRol] = useState<string>("user");
+  const [userRol, setUserRol] = useState<string>("estudiante");
   const [userNeuronas, setUserNeuronas] = useState<number>(3);
-  const [userCreditos, setUserCreditos] = useState<number>(0);
 
   // Cargar datos de usuario al montar
   useEffect(() => {
@@ -274,16 +273,15 @@ export default function RobotProgrammerPage() {
         try {
           const user = JSON.parse(usuario);
           setUserId(user.id?.toString() || null);
-          setUserRol(user.rol || "user");
+          setUserRol(user.rol || "estudiante");
           setUserNeuronas(user.neuronas ?? 3);
-          setUserCreditos(user.creditos ?? 0);
         } catch {}
       }
     }
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navbar */}
       <NavBar activePage="minijuegos" />
 
@@ -293,7 +291,7 @@ export default function RobotProgrammerPage() {
           <Button
             variant="outline"
             size="sm"
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-foreground"
             onClick={() => router.push("/minijuegos")}
           >
             <ArrowLeft className="h-5 w-5 mr-1" />
@@ -317,14 +315,6 @@ export default function RobotProgrammerPage() {
       <div className="container mx-auto px-1 sm:px-2 py-4">
         {showLevelSelector ? (
           <div className="relative">
-            <div className="absolute inset-0 z-0">
-              <Image
-                src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1200&auto=format&fit=crop"
-                alt="Robot Programmer Background"
-                fill
-                className="object-cover opacity-10"
-              />
-            </div>
             <div className="relative z-10">
               <LevelSelector
                 levels={levels}
@@ -397,7 +387,7 @@ export default function RobotProgrammerPage() {
                       transition: "left 0.4s cubic-bezier(.4,2,.6,1), top 0.4s cubic-bezier(.4,2,.6,1)"
                     }}
                   >
-                    <div style={{ filter: 'drop-shadow(0 8px 24px #818cf8cc) drop-shadow(0 0px 8px #38d9a9cc)' }}>
+                    <div>
                       <RobotSVG direction={robotPosition.direction} size={56} mood={robotMood} animate={!isComplete} />
                     </div>
                   </div>
@@ -420,7 +410,7 @@ export default function RobotProgrammerPage() {
             </div>
             {/* Panel de secuencia de comandos a la derecha */}
             <div className="w-full md:w-[320px] flex-shrink-0 flex flex-col gap-2 items-stretch order-3 md:order-none">
-              <div className="bg-[#1e2330] rounded-lg p-4 border border-gray-800 w-full">
+              <div className="bg-card rounded-lg p-4 border border-gray-800 w-full">
                 <CommandZone
                   commands={commands}
                   onRemoveCommand={removeCommand}

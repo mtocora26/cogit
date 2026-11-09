@@ -76,7 +76,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
 
   if (!nivelInfo) {
     return (
-      <div className="min-h-screen bg-[#1a1d23] text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <NavBar activePage="misiones" />
         <div className="text-2xl font-bold mb-4">Nivel no encontrado</div>
         <p className="text-gray-400 mb-8">El nivel solicitado no existe o no está disponible.</p>
@@ -157,21 +157,20 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <NavBar activePage="misiones" />
       {/* Panel de bloqueo si no hay vidas */}
       {showNoLives && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#23263a] rounded-2xl p-8 shadow-2xl flex flex-col items-center max-w-xs w-full border-2 border-purple-600 animate-pop">
+          <div className="bg-card rounded-2xl p-8 shadow-lg flex flex-col items-center max-w-xs w-full border border-border">
             <h2 className="text-2xl font-bold text-purple-400 mb-2">¡Sin vidas!</h2>
             <p className="text-gray-200 mb-4 text-center">No tienes vidas para seguir jugando misiones.<br />
               {isRecharging
                 ? `Recuperarás una vida en ${formatTimeMMSS(rechargeTime)}.`
-                : "Debes esperar la recarga automática o recargar en la tienda."}
+                : "Debes esperar la recarga automática."}
             </p>
             <div className="flex flex-col gap-2 w-full">
-              <Button className="bg-yellow-400 text-black font-bold hover:bg-yellow-300" onClick={() => { window.location.href = "/tienda" }}>Ir a la Tienda</Button>
-              <Button className="bg-blue-600 text-white font-bold hover:bg-blue-700" onClick={() => { window.location.href = "/minijuegos" }}>Ir a Minijuegos</Button>
+              <Button className="font-semibold" onClick={() => { window.location.href = "/minijuegos" }}>Ir a Minijuegos</Button>
               <Button variant="outline" className="border-gray-500 text-gray-300 mt-2" disabled>
                 Esperar recarga automática
               </Button>
@@ -202,7 +201,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
               <Progress
                 value={progress}
                 className="w-48 h-2 bg-gray-700"
-                indicatorClassName="bg-gradient-to-r from-purple-600 to-blue-500"
+                indicatorClassName="bg-primary"
               />
               <span className="text-sm text-gray-300">{progress}% completado</span>
             </div>
@@ -243,7 +242,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
       <div className="container mx-auto px-4 py-8">
         {activeTab === "actividades" && (
           <div className={`space-y-6 ${lives === 0 ? "pointer-events-none opacity-50 select-none" : ""}`}>
-            <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-6">
+            <div className="bg-card rounded-lg border border-gray-800 p-6">
               <h2 className="text-xl font-bold mb-4">Actividades del nivel</h2>
               <p className="text-gray-300 mb-6">{nivelInfo.activityDescription}</p>
 
@@ -252,13 +251,13 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                   <div
                     key={activity.id}
                     className={cn(
-                      "bg-[#1d23] rounded-lg border p-4 transition-all relative overflow-hidden group",
+                      "bg-card rounded-lg border p-4 transition-all relative overflow-hidden group",
                       activity.status === "completed"
                         ? "border-green-500/30"
                         : activity.status === "current"
                           ? "border-blue-500/30"
                           : "border-gray-700 opacity-70",
-                      activity.highlight && "hover:scale-[1.03] hover:shadow-2xl hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 focus-within:scale-[1.03] focus-within:shadow-2xl focus-within:bg-gradient-to-r focus-within:from-yellow-400 focus-within:via-pink-500 focus-within:to-purple-500 animate-pop"
+                      activity.highlight && ""
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -273,14 +272,14 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                                 : activity.type === "desafio"
                                   ? "bg-yellow-500/20 text-yellow-400"
                                   : "bg-purple-500/20 text-purple-400",
-                            activity.highlight && "group-hover:ring-4 group-hover:ring-pink-400/30 group-hover:animate-bounce group-focus:ring-4 group-focus:ring-pink-400/30 group-focus:animate-bounce"
+                            activity.highlight && ""
                           )}
                         >
-                          {activity.type === "desafio" && activity.highlight ? <Star className="h-6 w-6 text-yellow-400 drop-shadow-lg" /> : getActivityIcon(activity.type)}
+                          {activity.type === "desafio" && activity.highlight ? <Star className="h-6 w-6 text-yellow-400" /> : getActivityIcon(activity.type)}
                         </div>
                         <div>
-                          <h3 className={cn("font-medium transition-all duration-300", activity.highlight && "group-hover:text-white group-hover:drop-shadow-lg group-hover:animate-pulse group-focus:text-white group-focus:drop-shadow-lg group-focus:animate-pulse")}>{activity.title}</h3>
-                          <p className={cn("text-sm text-gray-400 transition-all duration-300", activity.highlight && "group-hover:text-white/90 group-focus:text-white/90")}>{activity.description}</p>
+                          <h3 className={cn("font-medium transition-all duration-300", false)}>{activity.title}</h3>
+                          <p className={cn("text-sm text-gray-400 transition-all duration-300", false)}>{activity.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -294,7 +293,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                               : activity.status === "current"
                                 ? "bg-blue-600 hover:bg-blue-700"
                                 : "bg-gray-700",
-                            activity.highlight && "group-hover:shadow-lg group-hover:scale-105 group-focus:shadow-lg group-focus:scale-105 animate-pop"
+                            false
                           )}
                         >
                           {activity.status === "completed"
@@ -306,7 +305,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                       </div>
                     </div>
                     {activity.badge && (
-                      <div className={`mt-2 text-xs font-semibold text-white bg-gradient-to-r ${activity.badge.color} p-1 rounded-full inline-flex items-center shadow-lg animate-bounce`}> <span className="mr-1">✨</span> {activity.badge.text} </div>
+                      <div className="mt-2 inline-flex items-center rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">{activity.badge.text}</div>
                     )}
                   </div>
                 ))}
@@ -315,7 +314,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
 
             {/* Próximo nivel */}
             {nivelId === "1" && (
-              <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-6">
+              <div className="bg-card rounded-lg border border-gray-800 p-6">
                 <h2 className="text-xl font-bold mb-4">Próximo nivel</h2>
                 <div className="flex items-center justify-between">
                   <div>
@@ -338,7 +337,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
           </div>
         )}
         {activeTab === "progreso" && (
-          <div className="bg-[#1e2330] rounded-lg border border-gray-800 p-6">
+          <div className="bg-card rounded-lg border border-gray-800 p-6">
             <h2 className="text-xl font-bold mb-4">Progreso del nivel</h2>
             <p className="text-gray-400 mb-6">Aquí puedes ver tu progreso en las actividades de este nivel.</p>
 
@@ -349,7 +348,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                   <div
                     key={activity.id}
                     className={cn(
-                      "bg-[#1d23] rounded-lg border p-4 transition-all",
+                      "bg-card rounded-lg border p-4 transition-all",
                       activity.status === "completed"
                         ? "border-green-500/30"
                         : activity.status === "current"
@@ -487,13 +486,13 @@ function getNivelInfo(seccion: string, nivel: string): NivelInfo | null {
           title: "Cazador de patrones",
           description: "Reconoce correctamente 3 patrones diferentes.",
           icon: <Trophy className="h-4 w-4" />,
-          color: "bg-gradient-to-r from-green-400 to-blue-500",
+          color: "bg-primary",
         },
         {
           title: "Maestro creativo",
           description: "Crea y comparte tu propio patrón.",
           icon: <Star className="h-4 w-4" />,
-          color: "bg-gradient-to-r from-pink-400 to-purple-500",
+          color: "bg-primary",
         },
       ],
     },
@@ -555,13 +554,13 @@ function getNivelInfo(seccion: string, nivel: string): NivelInfo | null {
           title: "Secuenciador",
           description: "Completa una actividad de secuencias.",
           icon: <Trophy className="h-4 w-4" />,
-          color: "bg-gradient-to-r from-green-400 to-blue-500",
+          color: "bg-primary",
         },
         {
           title: "Lógico",
           description: "Supera un desafío de instrucciones.",
           icon: <Star className="h-4 w-4" />,
-          color: "bg-gradient-to-r from-yellow-400 to-blue-500",
+          color: "bg-primary",
         },
       ],
     },

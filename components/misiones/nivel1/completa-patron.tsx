@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Check, XCircle } from "lucide-react"
+import { Check, PartyPopper, XCircle } from "lucide-react"
+import { Glyph } from "@/components/misiones/glyph"
 import { motion, AnimatePresence } from "framer-motion"
 
 const SEQUENCES = [
@@ -106,7 +107,7 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
   if (completed) {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center gap-6 p-8">
-        <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-5xl">🎉</motion.div>
+        <PartyPopper aria-hidden className="h-14 w-14 text-neuron" />
         <div className="text-2xl font-bold text-green-400 text-center">¡Completaste todos los patrones!</div>
         <Button onClick={handleRestart} className="bg-blue-600 hover:bg-blue-700 mt-2">Jugar de nuevo</Button>
       </motion.div>
@@ -114,14 +115,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto p-6 bg-[#181c24] rounded-2xl shadow-lg flex flex-col items-center gap-6">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto p-6 bg-card border border-border rounded-2xl flex flex-col items-center gap-6">
       <div className="w-full flex flex-col gap-2">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">Patrón {current + 1} de {SEQUENCES.length}</h2>
           <div className="text-xs text-gray-400">Progreso</div>
         </div>
         <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden mb-2">
-          <motion.div className="h-2 bg-gradient-to-r from-purple-500 to-blue-400 rounded-full" style={{ width: `${progress}%` }} />
+          <motion.div className="h-2 bg-primary rounded-full" style={{ width: `${progress}%` }} />
         </div>
       </div>
       <p className="text-gray-300 text-center max-w-md mb-2">
@@ -135,14 +136,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
             animate={seq.pattern[i] === "" && el === "❔" ? { scale: [1, 1.1, 1] } : {}}
             transition={{ repeat: Infinity, duration: 1.2 }}
           >
-            {el}
+            <Glyph token={el} className="h-9 w-9" />
           </motion.span>
         ))}
       </div>
       <div className="flex gap-3 mb-2 flex-wrap justify-center">
         {seq.options.map((opt, i) => (
           <Button key={i} variant="outline" className="text-2xl px-4 py-2" onClick={() => handleOptionClick(opt)} disabled={userInput.length >= seq.answer.length || feedback !== null}>
-            {opt}
+            <Glyph token={opt} className="!h-8 !w-8" />
           </Button>
         ))}
       </div>
@@ -157,7 +158,7 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
       <AnimatePresence>
         {feedback === true && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2 text-green-400 font-bold mt-2">
-            <Check className="h-6 w-6 animate-bounce" />
+            <Check aria-hidden className="h-6 w-6" />
             ¡Correcto!
             {showNext && current < SEQUENCES.length - 1 && (
               <Button onClick={handleNext} className="bg-green-600 hover:bg-green-700 mt-2">Siguiente patrón</Button>

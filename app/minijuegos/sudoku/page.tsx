@@ -40,7 +40,6 @@ export default function SudokuPage() {
           // setUserId(user.id?.toString() || null)
           // setUserRol(user.rol || "user")
           // setUserNeuronas(user.neuronas ?? 3)
-          // setUserCreditos(user.creditos ?? 0)
         } catch {}
       }
     }
@@ -323,7 +322,7 @@ export default function SudokuPage() {
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Reiniciar
                 </Button>
-                <Button variant="destructive" onClick={handleBackToLevels}>
+                <Button variant="outline" onClick={handleBackToLevels}>
                   <XCircle className="mr-2 h-4 w-4" />
                   Volver a niveles
                 </Button>
