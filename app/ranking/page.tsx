@@ -1,317 +1,126 @@
 "use client"
 
-import Image from "next/image"
-import { Trophy, Medal, Star, Crown, Zap, Brain } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import NavBar from "@/components/nav-bar"
-import RankingTable from "@/components/ranking-table"
+import Link from "next/link"
 import { useEffect, useState } from "react"
+import NavBar from "@/components/nav-bar"
+
+interface Fila {
+  id: number
+  name: string
+  points: number
+  rank: number
+}
+type Periodo = "weekly" | "alltime"
+
+const thread = (t: number) => `hsl(${Math.round(186 + 91 * t)} 100% calc(var(--tl0) - var(--tld) * ${t}))`
+const PERIODOS: { id: Periodo; label: string }[] = [
+  { id: "weekly", label: "Esta semana" },
+  { id: "alltime", label: "Histórico" },
+]
 
 export default function RankingPage() {
-  const [weeklyUsers, setWeeklyUsers] = useState<any[]>([])
-  const [allTimeUsers, setAllTimeUsers] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [periodo, setPeriodo] = useState<Periodo>("weekly")
+  const [datos, setDatos] = useState<Partial<Record<Periodo, Fila[]>>>({})
+  const [error, setError] = useState("")
+  const [miId, setMiId] = useState<number | null>(null)
 
   useEffect(() => {
-    async function fetchRanking() {
-      setLoading(true)
-      setError(null)
-      try {
-        const [weeklyRes, allTimeRes] = await Promise.all([
-          fetch("/api/ranking?type=weekly").then(r => r.json()),
-          fetch("/api/ranking?type=alltime").then(r => r.json()),
-        ])
-        setWeeklyUsers(
-          weeklyRes.map((u: any) => ({
-            ...u,
-            avatar: "/placeholder.svg",
-            level: 1, // TODO: calcular nivel real si hay campo
-            streak: 0, // TODO: calcular racha real si hay campo
-            change: 0, // TODO: calcular cambio real si se implementa
-          }))
-        )
-        setAllTimeUsers(
-          allTimeRes.map((u: any) => ({
-            ...u,
-            avatar: "/placeholder.svg",
-            level: 1,
-            streak: 0,
-            change: 0,
-          }))
-        )
-      } catch (e) {
-        setError("Error al cargar el ranking")
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchRanking()
+    fetch("/api/usuario/me").then((r) => (r.ok ? r.json() : null)).then((u) => setMiId(u?.id ?? null)).catch(() => {})
   }, [])
 
-  // Datos de ejemplo para los líderes por categoría
-  const categoryLeaders = [
-    { category: "Sudoku", user: "PuzzlePro", score: 3250, avatar: "/placeholder.svg?height=100&width=100" },
-    { category: "Nonogramas", user: "LogicQueen", score: 2980, avatar: "/placeholder.svg?height=100&width=100" },
-    { category: "Robot Programmer", user: "AlgoWhiz", score: 3120, avatar: "/placeholder.svg?height=100&width=100" },
-  ]
+  useEffect(() => {
+    if (datos[periodo]) return
+    setError("")
+    fetch(`/api/ranking?type=${periodo}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((rows: Fila[]) => setDatos((d) => ({ ...d, [periodo]: rows })))
+      .catch(() => setError("No pudimos cargar el ranking. Inténtalo de nuevo en un momento."))
+  }, [periodo, datos])
+
+  const filas = datos[periodo]
+  const max = Math.max(1, ...(filas ?? []).map((f) => f.points))
+  const mio = filas?.find((f) => f.id === miId)
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] text-white">
-      {/* Navbar */}
+    <div className="min-h-screen bg-background text-foreground">
       <NavBar activePage="ranking" />
+      <main className="container mx-auto px-4 py-10">
+        <h1 className="font-display text-4xl font-bold">Ranking</h1>
+        <p className="mt-3 max-w-xl text-lg text-muted-foreground">
+          Se ordena por puntaje y solo muestra alias. Si prefieres no aparecer, puedes excluirte desde{" "}
+          <Link href="/perfil" className="text-neuron underline underline-offset-4">tu perfil</Link>.
+        </p>
 
-      {/* Header */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Ranking</h1>
-            <p className="text-gray-400 mt-1">Compite con otros usuarios y demuestra tus habilidades</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-              <Trophy className="h-4 w-4" />
-              <span>Tu posición: #42</span>
-            </div>
-          </div>
+        <div role="tablist" aria-label="Periodo del ranking" className="mt-8 inline-flex rounded-lg border border-border bg-card p-1">
+          {PERIODOS.map((p) => (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={periodo === p.id}
+              onClick={() => setPeriodo(p.id)}
+              className={`min-h-11 rounded-md px-5 text-sm font-medium transition-colors duration-150 ${
+                periodo === p.id ? "bg-neuron/15 text-neuron" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Top 3 Podium */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="bg-[#1e2330] rounded-xl p-8 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <Image
-              src="/placeholder.svg?height=400&width=1200"
-              alt="Circuit Background"
-              fill
-              className="object-cover"
-            />
-          </div>
-
-          <h2 className="text-2xl font-bold mb-8 text-center">Líderes de la Semana</h2>
-
-          <div className="flex flex-col md:flex-row justify-center items-end gap-4 md:gap-8">
-            {/* 2nd Place */}
-            <div className="order-2 md:order-1 flex flex-col items-center">
-              <div className="relative">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                  <Medal className="h-8 w-8 text-gray-300" />
-                </div>
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-gray-300">
-                  <Image
-                    src="/placeholder.svg?height=100&width=100"
-                    alt="2nd Place"
-                    width={100}
-                    height={100}
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div className="mt-2 text-center">
-                <div className="font-bold">CodeNinja</div>
-                <div className="text-sm text-gray-300">2320 pts</div>
-                <div className="bg-gray-300 text-gray-800 text-xs font-bold px-2 py-1 rounded-full mt-1">2°</div>
-              </div>
-              <div className="h-24 w-16 bg-gradient-to-t from-gray-700 to-gray-600 rounded-t-lg mt-4"></div>
-            </div>
-
-            {/* 1st Place */}
-            <div className="order-1 md:order-2 flex flex-col items-center">
-              <div className="relative">
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                  <Crown className="h-10 w-10 text-yellow-500" />
-                </div>
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
-                  <Image
-                    src="/placeholder.svg?height=100&width=100"
-                    alt="1st Place"
-                    width={100}
-                    height={100}
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div className="mt-2 text-center">
-                <div className="font-bold text-lg">AlexMaster</div>
-                <div className="text-yellow-400">2450 pts</div>
-                <div className="bg-yellow-500 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full mt-1">1°</div>
-              </div>
-              <div className="h-32 w-20 bg-gradient-to-t from-yellow-700 to-yellow-600 rounded-t-lg mt-4"></div>
-            </div>
-
-            {/* 3rd Place */}
-            <div className="order-3 flex flex-col items-center">
-              <div className="relative">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                  <Medal className="h-8 w-8 text-amber-700" />
-                </div>
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-amber-700">
-                  <Image
-                    src="/placeholder.svg?height=100&width=100"
-                    alt="3rd Place"
-                    width={100}
-                    height={100}
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div className="mt-2 text-center">
-                <div className="font-bold">LogicQueen</div>
-                <div className="text-sm text-gray-300">2180 pts</div>
-                <div className="bg-amber-700 text-amber-100 text-xs font-bold px-2 py-1 rounded-full mt-1">3°</div>
-              </div>
-              <div className="h-16 w-16 bg-gradient-to-t from-amber-900 to-amber-800 rounded-t-lg mt-4"></div>
-            </div>
-          </div>
+        <div aria-live="polite" className="mt-4 min-h-6 text-sm">
+          {error && <p role="alert" className="text-destructive">{error}</p>}
+          {!error && filas && mio && (
+            <p className="text-neuron">Vas en la posición {mio.rank} con {mio.points} puntos.</p>
+          )}
+          {!error && filas && miId && !mio && filas.length > 0 && (
+            <p className="text-muted-foreground">Todavía no apareces en esta lista. Completa una actividad para sumar puntos.</p>
+          )}
         </div>
-      </div>
 
-      {/* Ranking Tabs */}
-      <div className="container mx-auto px-4 py-8">
-        {loading ? (
-          <div className="text-center py-8">Cargando ranking...</div>
-        ) : error ? (
-          <div className="text-center py-8 text-red-500">{error}</div>
-        ) : (
-          <Tabs defaultValue="weekly" className="w-full">
-            <TabsList className="grid grid-cols-3 mb-8">
-              <TabsTrigger value="weekly">Semanal</TabsTrigger>
-              <TabsTrigger value="alltime">De Todos los Tiempos</TabsTrigger>
-              <TabsTrigger value="friends">Amigos</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="weekly">
-              <RankingTable users={weeklyUsers} showChange={true} />
-            </TabsContent>
-
-            <TabsContent value="alltime">
-              <RankingTable users={allTimeUsers} showChange={false} />
-            </TabsContent>
-
-            <TabsContent value="friends">
-              <RankingTable users={[]} showChange={false} />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-
-      {/* Category Leaders */}
-      <div className="bg-[#1e2330] py-12">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8">Líderes por Categoría</h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {categoryLeaders.map((leader, index) => (
-              <div key={index} className="bg-[#1a1d23] rounded-lg p-6 border border-blue-500/20">
-                <h3 className="text-xl font-bold mb-4">{leader.category}</h3>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full overflow-hidden">
-                    <Image
-                      src={leader.avatar || "/placeholder.svg"}
-                      alt={leader.user}
-                      width={100}
-                      height={100}
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="font-bold">{leader.user}</div>
-                    <div className="text-sm text-gray-400">{leader.score} puntos</div>
-                  </div>
-                  <div className="ml-auto">
-                    <Trophy className="h-8 w-8 text-yellow-500" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="mt-2 overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full min-w-[28rem] text-left">
+            <thead className="border-b border-border text-sm text-muted-foreground">
+              <tr>
+                <th scope="col" className="w-20 px-5 py-3 font-medium">Puesto</th>
+                <th scope="col" className="px-5 py-3 font-medium">Alias</th>
+                <th scope="col" className="px-5 py-3 font-medium">Puntos</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {!filas && !error && (
+                <tr><td colSpan={3} className="px-5 py-10 text-center text-muted-foreground">Cargando ranking…</td></tr>
+              )}
+              {filas?.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-5 py-10 text-center text-muted-foreground">
+                    Aún no hay puntajes {periodo === "weekly" ? "esta semana" : "registrados"}. Completa una actividad para abrir la lista.
+                  </td>
+                </tr>
+              )}
+              {filas?.map((f) => {
+                const yo = f.id === miId
+                return (
+                  <tr key={f.id} className={yo ? "bg-neuron/10" : undefined}>
+                    <td className="px-5 py-3 font-display text-lg font-semibold tabular-nums">{f.rank}</td>
+                    <td className="px-5 py-3 font-medium">
+                      {f.name}
+                      {yo && <span className="ml-2 text-xs font-normal text-neuron">(tú)</span>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-14 tabular-nums">{f.points}</span>
+                        <span aria-hidden className="hidden h-2.5 w-full max-w-40 rounded-[2px] bg-accent sm:block">
+                          <span className="block h-full rounded-[2px]" style={{ width: `${(f.points / max) * 100}%`, background: thread(f.rank <= 3 ? 0.1 : 0.8) }} />
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      {/* Your Stats */}
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6">Tus Estadísticas</h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-[#1e2330] rounded-lg p-6">
-            <h3 className="text-lg font-bold mb-4">Rendimiento</h3>
-
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Nivel</span>
-                  <span className="text-sm font-medium">8</span>
-                </div>
-                <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
-                  <div className="bg-purple-500 h-full" style={{ width: "65%" }}></div>
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-gray-400">650/1000 XP</span>
-                  <span className="text-xs text-gray-400">Nivel 9</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#1a1d23] p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="h-5 w-5 text-yellow-500" />
-                    <span className="font-medium">Racha</span>
-                  </div>
-                  <div className="text-2xl font-bold">5 días</div>
-                </div>
-
-                <div className="bg-[#1a1d23] p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">Total</span>
-                  </div>
-                  <div className="text-2xl font-bold">1250 pts</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#1e2330] rounded-lg p-6">
-            <h3 className="text-lg font-bold mb-4">Logros Recientes</h3>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-[#1a1d23] rounded-lg">
-                <div className="bg-green-500/20 p-2 rounded-full">
-                  <Trophy className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <div className="font-medium">Maestro de Algoritmos</div>
-                  <div className="text-sm text-gray-400">Completaste 10 desafíos de algoritmos</div>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">Hace 2d</div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-[#1a1d23] rounded-lg">
-                <div className="bg-blue-500/20 p-2 rounded-full">
-                  <Zap className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <div className="font-medium">Racha de 5 días</div>
-                  <div className="text-sm text-gray-400">Has practicado durante 5 días seguidos</div>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">Hoy</div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-[#1a1d23] rounded-lg">
-                <div className="bg-purple-500/20 p-2 rounded-full">
-                  <Brain className="h-5 w-5 text-purple-500" />
-                </div>
-                <div>
-                  <div className="font-medium">Pensador Lógico</div>
-                  <div className="text-sm text-gray-400">Resolviste 5 sudokus difíciles</div>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">Hace 3d</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   )
 }
