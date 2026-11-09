@@ -74,6 +74,44 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   // Obtener información del nivel según los parámetros
   const nivelInfo: NivelInfo | null = getNivelInfo(seccionId, nivelId)
 
+  // Estado y porcentaje a partir del progreso guardado en la cuenta (REQ-006/007).
+  // Mientras no se conozca el progreso (cargando o error) no se afirma nada: todo queda pendiente.
+  const [completadas, setCompletadas] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    let cancel = false
+    fetch("/api/progreso")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((rows: { seccion: string; nivel: string; actividad: string; completado: boolean }[]) => {
+        if (cancel || !Array.isArray(rows)) return
+        setCompletadas(
+          new Set(
+            rows
+              .filter((r) => r.completado && String(r.seccion) === seccionId && String(r.nivel) === nivelId)
+              .map((r) => String(r.actividad)),
+          ),
+        )
+      })
+      .catch(() => {})
+    return () => {
+      cancel = true
+    }
+  }, [seccionId, nivelId])
+
+  useEffect(() => {
+    if (!nivelInfo) return
+    const base = Array.isArray(nivelInfo.activities) ? nivelInfo.activities : []
+    const hechas = base.map((a) => completadas.has(`${seccionId}-${nivelId}-${a.id}`))
+    // Un estudiante desbloquea cada actividad al completar la anterior; el administrador accede a todas.
+    const updated: Activity[] = base.map((a, i) => ({
+      ...a,
+      type: a.type as ActivityType,
+      status: hechas[i] ? "completed" : isAdmin || i === 0 || hechas[i - 1] ? "current" : "locked",
+    }))
+    const completedCount = hechas.filter(Boolean).length
+    setActivities(updated)
+    setProgress(updated.length > 0 ? Math.round((completedCount / updated.length) * 100) : 0)
+  }, [seccionId, nivelId, isAdmin, completadas])
+
   if (!nivelInfo) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
@@ -84,45 +122,6 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
       </div>
     )
   }
-
-  // Cargar el progreso guardado
-  useEffect(() => {
-    if (!nivelInfo) return;
-    const activitiesArr = Array.isArray(nivelInfo.activities) ? nivelInfo.activities : [];
-    let updatedActivities: Activity[] = activitiesArr.map((activity) => {
-      let status: ActivityStatus = activity.status as ActivityStatus;
-      // Si es admin, todo desbloqueado excepto los completados
-      if (isAdmin && status !== "completed") {
-        status = "current";
-      }
-      return {
-        ...activity,
-        type: activity.type as ActivityType,
-        status,
-      };
-    });
-    let completedCount = updatedActivities.filter((a) => a.status === "completed").length;
-    // Lógica de desbloqueo de actividades (solo si no es admin)
-    if (!isAdmin) {
-      if (updatedActivities.length > 0 && updatedActivities[0].status !== "completed") {
-        updatedActivities[0].status = "current"
-      }
-      if (updatedActivities.length > 1 && updatedActivities[0].status === "completed") {
-        if (updatedActivities[1].status !== "completed") {
-          updatedActivities[1].status = "current"
-        }
-      }
-      if (updatedActivities.length > 2 && updatedActivities[1].status === "completed") {
-        if (updatedActivities[2].status !== "completed") {
-          updatedActivities[2].status = "current"
-        }
-      }
-    }
-    // Calcular el progreso
-    const calculatedProgress = updatedActivities.length > 0 ? Math.round((completedCount / updatedActivities.length) * 100) : 0;
-    setActivities(updatedActivities);
-    setProgress(calculatedProgress)
-  }, [seccionId, nivelId, isAdmin]); // Dependencias SIEMPRE del mismo tamaño y orden
 
   // Función para volver a la página de misiones
   const handleBack = () => {
