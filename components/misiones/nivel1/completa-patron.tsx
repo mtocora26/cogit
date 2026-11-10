@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Check, PartyPopper, XCircle } from "lucide-react"
 import { Glyph } from "@/components/misiones/glyph"
 import { motion, AnimatePresence } from "framer-motion"
+import Pistas from "@/components/misiones/pistas"
+import { findCyclicBase } from "@/lib/patrones"
 
 const SEQUENCES = [
   {
-    pattern: ["🟦", "🟩", "🟦", "🟩", "", "🟦", "🟩"],
+    pattern: ["🟦", "🟩", "🟦", "🟩", "", "🟩", "🟦"],
     options: ["🟦", "🟩", "🟥"],
     answer: [4],
     solution: ["🟦"],
@@ -27,17 +29,17 @@ const SEQUENCES = [
   },
   // Patrón 4: alternancia clara entre estrella y rombo
   {
-    pattern: ["⭐", "🔷", "⭐", "", "🔷", "⭐", "", "🔷"],
+    pattern: ["⭐", "🔷", "⭐", "", "⭐", "", "⭐", "🔷"],
     options: ["⭐", "🔷", "🔶"],
-    answer: [3, 6],
-    solution: ["🔷", "⭐"],
+    answer: [3, 5],
+    solution: ["🔷", "🔷"],
   },
   // Patrón 5: dificultad mayor, tres espacios, secuencia mixta
   {
     pattern: ["⬆️", "➡️", "⬇️", "", "⬆️", "", "⬇️", "", "⬆️"],
     options: ["⬆️", "➡️", "⬇️", "⬅️"],
     answer: [3, 5, 7],
-    solution: ["➡️", "⬆️", "➡️"],
+    solution: ["➡️", "➡️", "➡️"],
   },
 ]
 
@@ -147,6 +149,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
           </Button>
         ))}
       </div>
+      <Pistas
+        key={current}
+        pistas={[
+          { texto: "Mira las fichas que ya están colocadas: busca el grupo que se repite una y otra vez." },
+          { texto: "El grupo que se repite es:", fichas: findCyclicBase(seq.pattern.map((el, i) => el || seq.solution[seq.answer.indexOf(i)])) },
+          { texto: "Los huecos, de izquierda a derecha, llevan:", fichas: seq.solution },
+        ]}
+      />
       <div className="flex gap-2">
         <Button onClick={handleCheck} disabled={userInput.length !== seq.answer.length || feedback !== null} className="bg-blue-600 hover:bg-blue-700 text-white">
           Comprobar

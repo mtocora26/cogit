@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Heart, Lightbulb } from "lucide-react"
+import { CheckCircle, XCircle, Heart } from "lucide-react"
 import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
+import Pistas from "@/components/misiones/pistas"
 
 interface OutlierPatternProps {
   onComplete: (
@@ -68,10 +69,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
   const [reviewMode, setReviewMode] = useState(false)
   const [reviewIndex, setReviewIndex] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const [hint, setHint] = useState<string | null>(null)
-  const [hintUsed, setHintUsed] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [hintsLeft, setHintsLeft] = useState(3)
   const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
   const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
 
@@ -123,9 +120,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     setIsCorrect(null)
     setShowExplanation(false)
     setExplanation("")
-    setHint(null)
-    setHintUsed(false)
-    setShowPaywall(false)
   }
 
   const handleOptionSelect = (idx: number) => {
@@ -157,16 +151,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
   const handleErrorRonda = () => {
     if (onRondaError) onRondaError()
     setLives(l => l - 1)
-  }
-
-  const handleShowHint = () => {
-    if (!hintUsed) {
-      setHint(`El patrón base es: ${base.map(glyphName).join(", ")}`)
-      setHintUsed(true)
-      setHintsLeft(hintsLeft - 1)
-    } else {
-      setShowPaywall(true)
-    }
   }
 
   const handleContinue = () => {
@@ -225,14 +209,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Pistas</span>
-          <div className="flex gap-1">
-            {[...Array(hintsLeft)].map((_, i) => (
-              <Lightbulb key={i} className="h-5 w-5 text-yellow-400" />
-            ))}
-          </div>
-        </div>
       </div>
       {/* Secuencia y opciones */}
       <div className="flex flex-col items-center gap-6 md:gap-8 flex-1 justify-center">
@@ -243,39 +219,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
             </div>
           ))}
         </div>
-        {/* Mensaje de pista */}
-        <AnimatePresence>
-          {hint && (
-            <motion.div
-              className="bg-yellow-500/10 text-yellow-400 p-4 rounded-lg mb-4 text-center font-semibold shadow animate-fade-in"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-            >
-              <Lightbulb className="inline h-5 w-5 mr-1" /> {hint}
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {/* Paywall simulado */}
-        <AnimatePresence>
-          {showPaywall && (
-            <motion.div
-              className="bg-purple-900/90 border-2 border-yellow-400 text-yellow-200 p-6 rounded-xl mb-4 text-center shadow-xl max-w-xs animate-fade-in z-20"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <div className="mb-2">
-                <Lightbulb className="inline h-6 w-6 mr-2 text-yellow-400" />
-                <span className="font-bold">¡Pista extra!</span>
-              </div>
-              <div className="mb-3 text-sm text-yellow-100">Solo puedes usar una pista por ronda.<br />Se renuevan en cada ronda.</div>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold mt-2" onClick={() => setShowPaywall(false)}>
-                Cerrar
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 w-full max-w-md">
           {pattern.map((option, index) => (
             <Button
@@ -326,17 +269,15 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Botón de pista animado */}
       <div className="flex justify-center mt-8">
-        <Button
-          variant="outline"
-          className="border-yellow-400 text-yellow-400 hover:bg-yellow-500/10"
-          onClick={handleShowHint}
-          disabled={hintsLeft === 0}
-        >
-          <Lightbulb className="h-5 w-5 mr-2" />
-          {hintsLeft > 0 ? "Usar pista" : "Sin pistas"}
-        </Button>
+        <Pistas
+          key={`${reviewMode ? "r" : "n"}-${reviewMode ? reviewIndex : round}-${pattern.join("")}`}
+          pistas={[
+            { texto: "Casi todas las fichas siguen un grupo que se repite. Busca la que rompe esa repetición." },
+            { texto: "El grupo que se repite es:", fichas: base },
+            { texto: `El intruso es la ficha número ${outlierIdx + 1}, contando desde la izquierda:`, fichas: pattern[outlierIdx] ? [pattern[outlierIdx]] : [] },
+          ]}
+        />
       </div>
     </motion.div>
   )

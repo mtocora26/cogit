@@ -7,6 +7,8 @@ import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
+import Pistas from "@/components/misiones/pistas"
+import { findCyclicBase } from "@/lib/patrones"
 
 interface PatternRecognitionProps {
   onComplete: (
@@ -69,34 +71,6 @@ const generatePattern = (type: PatternType, length: number) => {
   }
 
   return pattern
-}
-
-// Detecta el ciclo base considerando cualquier desplazamiento
-function findCyclicBase(pat: string[]): string[] {
-  for (let size = 1; size <= Math.floor(pat.length / 2); size++) {
-    const base = pat.slice(0, size);
-    let isCycle = true;
-    for (let shift = 0; shift < size; shift++) {
-      isCycle = true;
-      for (let i = 0; i < pat.length; i++) {
-        if (pat[i] !== base[(i + shift) % size]) {
-          isCycle = false;
-          break;
-        }
-      }
-      if (isCycle) return base;
-    }
-  }
-  return pat;
-}
-
-// Valida si un patrón es perfectamente cíclico
-function isPerfectCycle(pat: string[]): boolean {
-  const base = findCyclicBase(pat);
-  for (let i = 0; i < pat.length; i++) {
-    if (pat[i] !== base[i % base.length]) return false;
-  }
-  return true;
 }
 
 const CELEBRATION_SCORE = 4
@@ -317,6 +291,16 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
               </Button>
             </div>
           ))}
+        </div>
+        <div className="mt-8 w-full flex justify-center">
+          <Pistas
+            key={`${reviewMode ? "r" : "n"}-${reviewMode ? reviewIndex : round}-${pattern.join("")}`}
+            pistas={[
+              { texto: "Fíjate en cómo se repiten las fichas: hay un grupo que vuelve a empezar una y otra vez." },
+              { texto: `El grupo que se repite tiene ${findCyclicBase([...pattern, getNextInPattern(pattern)]).length} fichas:`, fichas: findCyclicBase([...pattern, getNextInPattern(pattern)]) },
+              { texto: "La ficha que sigue es:", fichas: [getNextInPattern(pattern)] },
+            ]}
+          />
         </div>
       </div>
     </div>
