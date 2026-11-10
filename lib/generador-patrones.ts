@@ -66,9 +66,9 @@ export function crearRng(semilla: number): Rng {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
-const entero = (rng: Rng, min: number, max: number) => min + Math.floor(rng() * (max - min + 1))
-const elegir = <T,>(rng: Rng, xs: T[]): T => xs[Math.floor(rng() * xs.length)]
-function barajar<T>(rng: Rng, xs: T[]): T[] {
+export const entero = (rng: Rng, min: number, max: number) => min + Math.floor(rng() * (max - min + 1))
+export const elegir = <T,>(rng: Rng, xs: T[]): T => xs[Math.floor(rng() * xs.length)]
+export function barajar<T>(rng: Rng, xs: T[]): T[] {
   const a = [...xs]
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1))

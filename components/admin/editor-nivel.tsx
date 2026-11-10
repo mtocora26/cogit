@@ -42,14 +42,16 @@ const aForm = (n: NivelCatalogo): NivelForm => ({
     minutos: String(a.minutos),
     juego: a.juego,
     reglas: a.reglas.join("\n"),
-    secuencia: a.ejemplo.secuencia.join(" "),
+    secuencia: unir(a.ejemplo.secuencia),
     resaltar: a.ejemplo.resaltar === undefined ? "" : String(a.ejemplo.resaltar),
-    respuesta: a.ejemplo.respuesta.join(" "),
+    respuesta: unir(a.ejemplo.respuesta),
     explicacion: a.ejemplo.explicacion,
   })),
 })
 
-const fichas = (s: string) => s.split(/\s+/).filter(Boolean)
+// Fichas separadas por espacio; si alguna es una frase (pasos de una tarea), se separan con «|».
+const fichas = (s: string) => (s.includes("|") ? s.split("|") : s.split(/\s+/)).map((x) => x.trim()).filter(Boolean)
+const unir = (xs: string[]) => (xs.some((x) => /\s/.test(x)) ? xs.join(" | ") : xs.join(" "))
 
 const aNivel = (id: string, f: NivelForm): unknown => ({
   id,
@@ -224,11 +226,11 @@ export default function EditorNivel({ nivel }: { nivel: NivelCatalogo }) {
                 <p className="text-sm font-medium">Ejemplo resuelto</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor={`${p}-secuencia`}>Fichas de la secuencia (separadas por espacio; ❔ marca un hueco)</Label>
+                    <Label htmlFor={`${p}-secuencia`}>Fichas de la secuencia (separadas por espacio, o por | si son frases; ❔ marca un hueco)</Label>
                     <Input id={`${p}-secuencia`} value={a.secuencia} onChange={(e) => setAct(i, { secuencia: e.target.value })} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor={`${p}-respuesta`}>Fichas de la respuesta</Label>
+                    <Label htmlFor={`${p}-respuesta`}>Fichas de la respuesta (mismo formato)</Label>
                     <Input id={`${p}-respuesta`} value={a.respuesta} onChange={(e) => setAct(i, { respuesta: e.target.value })} />
                   </div>
                   <div className="space-y-1.5">
