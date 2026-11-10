@@ -11,6 +11,9 @@ import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
 import OrdenarPasos from "@/components/misiones/nivel2/ordenar-pasos"
 import CompletarInstrucciones from "@/components/misiones/nivel2/completar-instrucciones"
 import EjecutarAlgoritmo from "@/components/misiones/nivel2/ejecutar-algoritmo"
+import ClasificarRegla from "@/components/misiones/nivel3/clasificar"
+import QueSobra from "@/components/misiones/nivel3/que-sobra"
+import LoEsencial from "@/components/misiones/nivel3/lo-esencial"
 import { useLives } from "@/components/misiones/lives-context"
 import { buscarActividad, buscarNivel } from "@/lib/misiones-catalogo"
 import { useCatalogo } from "@/components/misiones/use-catalogo"
@@ -36,6 +39,9 @@ const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
   ordenar: OrdenarPasos,
   instrucciones: CompletarInstrucciones,
   ejecutar: EjecutarAlgoritmo,
+  clasificar: ClasificarRegla,
+  sobra: QueSobra,
+  esencial: LoEsencial,
 }
 
 function descontarVidaPorError(loseLife: () => void) {
