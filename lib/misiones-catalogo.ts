@@ -47,6 +47,7 @@ export const NIVELES: NivelCatalogo[] = [
           "Observa la secuencia: se repite siguiendo una regla.",
           "Elige, entre las opciones, la ficha que continúa la secuencia.",
           "Si te equivocas pierdes una vida; al final repasas las rondas falladas.",
+          "Puedes pedir hasta 3 pistas por ronda; las pistas no cuentan como error ni dan puntos.",
         ],
         ejemplo: {
           secuencia: ["🔴", "🔵", "🔴", "🔵", "🔴", "❔"],
@@ -62,6 +63,7 @@ export const NIVELES: NivelCatalogo[] = [
           "Casi todas las fichas siguen la misma regla; una no encaja.",
           "Toca la ficha que no pertenece al patrón.",
           "Si te equivocas pierdes una vida; al final repasas las rondas falladas.",
+          "Puedes pedir hasta 3 pistas por ronda; las pistas no cuentan como error ni dan puntos.",
         ],
         ejemplo: {
           secuencia: ["🔺", "🔺", "⭐", "🔺", "🔺"],
@@ -78,6 +80,7 @@ export const NIVELES: NivelCatalogo[] = [
           "Observa la secuencia: algunos espacios están vacíos.",
           "Haz clic en las opciones para colocar la ficha correcta en cada hueco.",
           "Comprueba tu respuesta cuando hayas llenado todos los huecos.",
+          "Puedes pedir hasta 3 pistas por patrón; no cuentan como error ni dan puntos.",
         ],
         ejemplo: {
           secuencia: ["🟢", "🟡", "🟢", "❔", "🟢", "❔"],
