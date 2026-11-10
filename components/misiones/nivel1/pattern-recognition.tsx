@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
-import { describirRegla, findCyclicBase } from "@/lib/patrones"
+import { describirRegla, findCyclicBase, type EstadoJuego } from "@/lib/patrones"
 
 interface PatternRecognitionProps {
   onComplete: (
@@ -19,6 +19,10 @@ interface PatternRecognitionProps {
     erroresRepetidos?: number[]
   ) => void
   onRondaError?: () => void // NUEVO: callback para error de ronda
+  /** Estado guardado para retomar la actividad a mitad. */
+  estadoInicial?: EstadoJuego | null
+  /** Se llama al cambiar de ronda con la foto del estado, para guardarla. */
+  onEstado?: (estado: EstadoJuego) => void
 }
 
 // Definición de los tipos de patrones
@@ -75,29 +79,30 @@ const generatePattern = (type: PatternType, length: number) => {
 
 const CELEBRATION_SCORE = 4
 
-export default function PatternRecognition({ onComplete, onRondaError }: PatternRecognitionProps) {
+export default function PatternRecognition({ onComplete, onRondaError, estadoInicial, onEstado }: PatternRecognitionProps) {
+  const ini = (estadoInicial ?? {}) as Record<string, any>
   const [patternType, setPatternType] = useState<PatternType>("color")
   const [pattern, setPattern] = useState<string[]>([])
   const [options, setOptions] = useState<string[]>([])
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [mounted, setMounted] = useState(false)
-  const [round, setRound] = useState(1)
-  const [incorrectRounds, setIncorrectRounds] = useState<number[]>([])
-  const [reviewMode, setReviewMode] = useState(false)
-  const [reviewIndex, setReviewIndex] = useState(0)
-  const [score, setScore] = useState(0)
+  const [round, setRound] = useState<number>(ini.round ?? 1)
+  const [incorrectRounds, setIncorrectRounds] = useState<number[]>(ini.incorrectRounds ?? [])
+  const [reviewMode, setReviewMode] = useState<boolean>(ini.reviewMode ?? false)
+  const [reviewIndex, setReviewIndex] = useState<number>(ini.reviewIndex ?? 0)
+  const [score, setScore] = useState<number>(ini.score ?? 0)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [timeElapsed, setTimeElapsed] = useState(0)
-  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
-  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
+  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>(ini.erroresDetalle ?? [])
+  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>(ini.erroresRepetidos ?? [])
   const [mensajeError, setMensajeError] = useState<string | null>(null)
   const maxRounds = 5
 
   // Solo generar patrones cuando el componente está montado en el cliente
   useEffect(() => {
     setMounted(true)
-    setStartTime(Date.now())
+    setStartTime(Date.now() - (Number(ini.tiempo) || 0) * 1000)
   }, [])
 
   useEffect(() => {
@@ -110,10 +115,18 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
 
   useEffect(() => {
     if (mounted) {
-      startNewRound()
+      startNewRound(Boolean(ini.reviewMode))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted])
+
+  // Foto del estado al cambiar de ronda (no en la primera, para no guardar algo sin avance).
+  useEffect(() => {
+    if (!mounted || !onEstado) return
+    if (round === 1 && !reviewMode && score === 0 && erroresDetalle.length === 0) return
+    onEstado({ round, score, incorrectRounds, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo: timeElapsed })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, round, reviewMode, reviewIndex, score])
 
   if (!mounted) return null
 

@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
         tiempo,
       },
     })
+    // Al terminar la actividad (completada o no) ya no hay nada que retomar a medias.
+    await prisma.progresoParcial.deleteMany({ where: { userId, seccion, nivel, actividad } })
     return NextResponse.json(progreso)
   } catch (error) {
     return NextResponse.json({ error: 'Error al guardar progreso', details: error }, { status: 500 })

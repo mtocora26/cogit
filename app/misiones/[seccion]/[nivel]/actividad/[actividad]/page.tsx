@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, HelpCircle, RotateCcw, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
 import { useLives } from "@/components/misiones/lives-context"
 import { buscarActividad } from "@/lib/misiones-catalogo"
 import ReglasActividad from "@/components/misiones/reglas-actividad"
+import type { EstadoJuego } from "@/lib/patrones"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // --- Configuración de rondas y puntos por nivel ---
@@ -32,7 +33,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
   const [activityScore, setActivityScore] = useState(0)
-  const { loseLife, lives } = useLives()
+  const { loseLife, lives, setLives } = useLives()
+  const livesRef = useRef(lives)
+  livesRef.current = lives
   // Cada intento monta el juego desde cero (clave nueva); lo ya guardado en la cuenta no se toca.
   const [intento, setIntento] = useState(0)
   const [confirmarReinicio, setConfirmarReinicio] = useState(false)
@@ -46,12 +49,73 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     params.then(setRouteParams)
   }, [params])
 
+  // Avance a medias guardado en la cuenta (REQ-006): undefined = cargando, null = no hay.
+  const [parcial, setParcial] = useState<{ estado: EstadoJuego; vidas: number } | null | undefined>(undefined)
+  const [errorGuardado, setErrorGuardado] = useState(false)
+  const ultimoEstado = useRef<EstadoJuego | null>(null)
+  const terminado = useRef(false)
+
+  useEffect(() => {
+    if (!routeParams) return
+    let cancel = false
+    const q = new URLSearchParams({ seccion: routeParams.seccion, nivel: routeParams.nivel, actividad: routeParams.actividad })
+    fetch(`/api/progreso/parcial?${q}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (cancel) return
+        if (p && p.estado) {
+          setParcial({ estado: p.estado, vidas: Number(p.vidas) })
+          // Retomar con las vidas guardadas, sin devolver las que ya se gastaron en este dispositivo.
+          if (Number.isInteger(p.vidas)) setLives(Math.min(p.vidas, livesRef.current))
+          setIntroVista(true)
+        } else setParcial(null)
+      })
+      .catch(() => !cancel && setParcial(null))
+    return () => {
+      cancel = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeParams])
+
+  async function guardarEstado(estado: EstadoJuego) {
+    if (!routeParams) return
+    try {
+      const res = await fetch("/api/progreso/parcial", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...routeParams, estado, vidas: livesRef.current }),
+      })
+      if (!res.ok) throw new Error("no guardado")
+      setErrorGuardado(false)
+    } catch {
+      setErrorGuardado(true)
+    }
+  }
+
+  // Los juegos avisan al cambiar de ronda; tras terminar la actividad ya no se guarda nada a medias.
+  function handleEstado(estado: EstadoJuego) {
+    if (terminado.current) return
+    ultimoEstado.current = estado
+    guardarEstado(estado)
+  }
+
+  function descartarParcial() {
+    if (!routeParams) return
+    const q = new URLSearchParams({ seccion: routeParams.seccion, nivel: routeParams.nivel, actividad: routeParams.actividad })
+    fetch(`/api/progreso/parcial?${q}`, { method: "DELETE" }).catch(() => {})
+  }
+
   if (!routeParams) return null
   const { seccion, nivel, actividad } = routeParams
   const actividadInfo = getActividadInfo(seccion, nivel, actividad)
   const datos = buscarActividad(seccion, nivel, actividad.split("-").pop() ?? "")
   // Reinicia solo el intento actual. No cuesta vidas (las ya perdidas no se recuperan) y no borra lo completado.
   const reiniciar = () => {
+    terminado.current = false
+    ultimoEstado.current = null
+    descartarParcial()
+    setParcial(null)
+    setErrorGuardado(false)
     setIsCompleted(false)
     setActivityScore(0)
     setErroresDetalle([])
@@ -72,6 +136,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
 
   // --- Sistema de puntos y repaso para juegos reales ---
   async function handleGameComplete(success: boolean, time: number, score?: number, detalleErrores?: { ronda: number; explicacion: string }[], repetidos?: number[]) {
+    terminado.current = true
     // Lógica de sumatoria detallada
     let total = 0
     let bonus = 0
@@ -143,13 +208,13 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
 
   function renderJuego() {
     if (seccion === "1" && nivel === "1" && actividad === "1-1-1") {
-      return <PatternRecognition onComplete={handleGameComplete} onRondaError={handleRondaError} />
+      return <PatternRecognition onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
     }
     if (seccion === "1" && nivel === "1" && actividad === "1-1-2") {
-      return <OutlierPattern onComplete={handleGameComplete} onRondaError={handleRondaError} />
+      return <OutlierPattern onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
     }
     if (seccion === "1" && nivel === "1" && actividad === "1-1-3") {
-      return <PatternCreator onComplete={handleGameComplete} onRondaError={handleRondaError} />
+      return <PatternCreator onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
     }
     // ...otros juegos...
     return <div className="p-8 text-center">Actividad no encontrada</div>
@@ -217,6 +282,8 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
                 : "Reintentar no cuesta vidas. Cada error durante el intento sí cuesta 1. Lo que ya completaste se conserva."}
             </p>
           </div>
+        ) : parcial === undefined ? (
+          <p role="status" className="text-center text-muted-foreground">Cargando tu avance…</p>
         ) : datos && !introVista ? (
           <div className="bg-card rounded-lg p-6 border border-gray-800 max-w-xl mx-auto">
             <h2 className="text-xl font-bold mb-4">Antes de empezar</h2>
@@ -228,6 +295,19 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
           </div>
         ) : (
           <>
+            {parcial && (
+              <p role="status" className="mb-3 rounded-lg border border-border bg-secondary p-3 text-sm">
+                Retomaste tu actividad donde la dejaste. Si prefieres, usa «Reiniciar actividad» para empezar de cero.
+              </p>
+            )}
+            {errorGuardado && (
+              <div role="alert" className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                <span>No pudimos guardar tu avance. Si sales ahora, podrías perderlo.</span>
+                <Button size="sm" variant="outline" className="min-h-11" onClick={() => ultimoEstado.current && guardarEstado(ultimoEstado.current)}>
+                  Reintentar guardado
+                </Button>
+              </div>
+            )}
             {datos && (
               <div className="mb-4 flex flex-wrap justify-end gap-2">
                 <Button variant="outline" size="sm" className="min-h-11" onClick={() => setConfirmarReinicio(true)}>
