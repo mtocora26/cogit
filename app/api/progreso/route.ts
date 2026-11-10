@@ -13,7 +13,11 @@ export async function POST(req: NextRequest) {
     if (!userId || !seccion || !nivel || !actividad) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
     }
-    // Si ya existe un progreso para esa actividad y usuario, actualiza
+    // Reintentar nunca deshace lo ya logrado: una actividad completada sigue completada y se conserva la mejor puntuación.
+    const previo = await prisma.progreso.findUnique({
+      where: { userId_seccion_nivel_actividad: { userId, seccion, nivel, actividad } },
+    })
+    const mejor = previo?.completado ? previo : null
     const progreso = await prisma.progreso.upsert({
       where: {
         userId_seccion_nivel_actividad: {
@@ -24,9 +28,9 @@ export async function POST(req: NextRequest) {
         },
       },
       update: {
-        completado,
-        score,
-        tiempo,
+        completado: Boolean(completado) || Boolean(mejor),
+        score: mejor ? Math.max(mejor.score, score) : score,
+        tiempo: mejor && mejor.score >= score ? mejor.tiempo : tiempo,
         fecha: new Date(),
       },
       create: {
