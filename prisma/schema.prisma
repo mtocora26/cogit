@@ -68,3 +68,37 @@ model ProgresoParcial {
 
   @@unique([userId, seccion, nivel, actividad], name: "userId_seccion_nivel_actividad")
 }
+
+/// REQ-011: contenido de las misiones. Un nivel agrupa actividades; cada actividad elige un juego por clave.
+model Nivel {
+  id          Int         @id @default(autoincrement())
+  seccion     String
+  /// Identificador en la URL ("1", "2"...).
+  clave       String
+  titulo      String
+  texto       String
+  objetivo    String
+  orden       Int
+  actividades Actividad[]
+
+  @@unique([seccion, clave])
+}
+
+model Actividad {
+  id          Int    @id @default(autoincrement())
+  nivel       Nivel  @relation(fields: [nivelId], references: [id], onDelete: Cascade)
+  nivelId     Int
+  clave       String
+  titulo      String
+  descripcion String
+  objetivo    String
+  minutos     Int
+  /// Clave del juego: reconocer | intruso | completa.
+  juego       String
+  /// string[] con las reglas y el ejemplo resuelto. Se validan con lib/contenido-schema.ts.
+  reglas      Json
+  ejemplo     Json
+  orden       Int
+
+  @@unique([nivelId, clave])
+}

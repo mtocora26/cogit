@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ArrowRight } from "lucide-react"
-import { NIVELES, SECCION, minutosNivel } from "@/lib/misiones-catalogo"
+import { minutosNivel } from "@/lib/misiones-catalogo"
+import { useCatalogo } from "@/components/misiones/use-catalogo"
 
 /**
  * Los niveles de la sección como una columna de tarjetas perforadas unidas por un hilo.
@@ -29,6 +30,7 @@ const thread = (t: number) => `hsl(${Math.round(186 + 91 * t)} 100% calc(var(--t
 
 export default function MisionesTelar() {
   const [done, setDone] = useState<Record<string, number> | null>(null)
+  const catalogo = useCatalogo()
 
   useEffect(() => {
     let cancel = false
@@ -40,7 +42,7 @@ export default function MisionesTelar() {
         .then((rows: { seccion: string; nivel: string; completado: boolean }[]) => {
           if (cancel || !Array.isArray(rows)) return
           const acc: Record<string, number> = {}
-          for (const row of rows) if (row.completado && String(row.seccion) === SECCION.id) acc[String(row.nivel)] = (acc[String(row.nivel)] ?? 0) + 1
+          for (const row of rows) if (row.completado) acc[`${row.seccion}:${row.nivel}`] = (acc[`${row.seccion}:${row.nivel}`] ?? 0) + 1
           setDone(acc)
         })
         .catch(() => {})
@@ -51,6 +53,10 @@ export default function MisionesTelar() {
       cancel = true
     }
   }, [])
+
+  if (!catalogo) return <p role="status" className="text-muted-foreground">Cargando misiones…</p>
+  const { seccion: SECCION, niveles: NIVELES } = catalogo
+  const hechas = (nivelId: string) => done?.[`${SECCION.id}:${nivelId}`] ?? 0
 
   return (
     <section aria-labelledby="seccion-titulo">
@@ -63,11 +69,11 @@ export default function MisionesTelar() {
 
       <ol className="relative flex flex-col gap-4 pl-8 sm:pl-12">
         {NIVELES.map((n, i) => {
-          const count = done?.[n.id] ?? 0
+          const count = hechas(n.id)
           const started = count > 0
           // Solo el primer nivel sin completar es la acción principal; los demás quedan en segundo plano.
           const disponible = n.actividades.length > 0
-          const primero = disponible && (NIVELES.findIndex((x) => x.actividades.length > 0 && !(done?.[x.id])) === i || (done === null && i === 0))
+          const primero = disponible && (NIVELES.findIndex((x) => x.actividades.length > 0 && !hechas(x.id)) === i || (done === null && i === 0))
           return (
             <li key={n.id} className="relative">
               {i < NIVELES.length - 1 && (

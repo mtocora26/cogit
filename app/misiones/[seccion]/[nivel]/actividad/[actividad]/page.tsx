@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState, type ComponentType } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, HelpCircle, RotateCcw, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,9 @@ import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition
 import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
 import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
 import { useLives } from "@/components/misiones/lives-context"
-import { buscarActividad } from "@/lib/misiones-catalogo"
+import { buscarActividad, buscarNivel } from "@/lib/misiones-catalogo"
+import { useCatalogo } from "@/components/misiones/use-catalogo"
+import type { Juego } from "@/lib/contenido-schema"
 import ReglasActividad from "@/components/misiones/reglas-actividad"
 import type { EstadoJuego } from "@/lib/patrones"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -22,6 +24,14 @@ const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion
 }
 
 // --- NUEVO: Función robusta para descontar vidas por error de ronda ---
+// Cada actividad del catálogo elige su juego por clave: agregar una actividad no exige tocar esta página.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
+  reconocer: PatternRecognition,
+  intruso: OutlierPattern,
+  completa: PatternCreator,
+}
+
 function descontarVidaPorError(loseLife: () => void) {
   if (typeof loseLife === "function") {
     loseLife();
@@ -52,6 +62,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   // Avance a medias guardado en la cuenta (REQ-006): undefined = cargando, null = no hay.
   const [parcial, setParcial] = useState<{ estado: EstadoJuego; vidas: number } | null | undefined>(undefined)
   const [errorGuardado, setErrorGuardado] = useState(false)
+  const catalogo = useCatalogo()
   const ultimoEstado = useRef<EstadoJuego | null>(null)
   const terminado = useRef(false)
 
@@ -107,8 +118,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
 
   if (!routeParams) return null
   const { seccion, nivel, actividad } = routeParams
-  const actividadInfo = getActividadInfo(seccion, nivel, actividad)
-  const datos = buscarActividad(seccion, nivel, actividad.split("-").pop() ?? "")
+  const nivelCat = catalogo ? buscarNivel(catalogo, seccion, nivel) : undefined
+  const datos = catalogo ? buscarActividad(catalogo, seccion, nivel, actividad.split("-").pop() ?? "") : undefined
+  const actividadInfo = { nivelTitle: nivelCat?.title ?? "Nivel", title: datos?.title ?? "Actividad", description: datos?.descripcion ?? "" }
   // Reinicia solo el intento actual. No cuesta vidas (las ya perdidas no se recuperan) y no borra lo completado.
   const reiniciar = () => {
     terminado.current = false
@@ -207,17 +219,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   }
 
   function renderJuego() {
-    if (seccion === "1" && nivel === "1" && actividad === "1-1-1") {
-      return <PatternRecognition onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
-    }
-    if (seccion === "1" && nivel === "1" && actividad === "1-1-2") {
-      return <OutlierPattern onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
-    }
-    if (seccion === "1" && nivel === "1" && actividad === "1-1-3") {
-      return <PatternCreator onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
-    }
-    // ...otros juegos...
-    return <div className="p-8 text-center">Actividad no encontrada</div>
+    if (!datos) return <div className="p-8 text-center">Actividad no encontrada</div>
+    const Juego = JUEGOS_UI[datos.juego]
+    return <Juego onComplete={handleGameComplete} onRondaError={handleRondaError} estadoInicial={parcial?.estado} onEstado={handleEstado} />
   }
 
   // Render principal
@@ -282,7 +286,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
                 : "Reintentar no cuesta vidas. Cada error durante el intento sí cuesta 1. Lo que ya completaste se conserva."}
             </p>
           </div>
-        ) : parcial === undefined ? (
+        ) : parcial === undefined || !catalogo ? (
           <p role="status" className="text-center text-muted-foreground">Cargando tu avance…</p>
         ) : datos && !introVista ? (
           <div className="bg-card rounded-lg p-6 border border-gray-800 max-w-xl mx-auto">
@@ -351,41 +355,4 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
       </div>
     </div>
   )
-}
-
-// Función para obtener la información de la actividad según los parámetros
-function getActividadInfo(seccionId: string, nivelId: string, actividadId: string) {
-  // Para la actividad de reconocimiento de patrones
-  if (seccionId === "1" && nivelId === "1" && actividadId === "1-1-1") {
-    return {
-      nivelTitle: "Reconocimiento de patrones",
-      title: "Observa y Reconoce",
-      description: "Identifica patrones visuales y selecciona el siguiente elemento en la secuencia.",
-    }
-  }
-
-  // Para la actividad de encontrar el intruso
-  if (seccionId === "1" && nivelId === "1" && actividadId === "1-1-2") {
-    return {
-      nivelTitle: "Reconocimiento de patrones",
-      title: "Desafío: ¿Quién no encaja aquí?",
-      description: "Pon a prueba tu lógica visual: observa la secuencia y detecta el elemento que no pertenece al patrón.",
-    }
-  }
-
-  // Para la actividad de crear tu propio patrón
-  if (seccionId === "1" && nivelId === "1" && actividadId === "1-1-3") {
-    return {
-      nivelTitle: "Reconocimiento de patrones",
-      title: "Completa el patrón",
-      description: "Observa la secuencia de elementos. Algunos espacios están en blanco. Elige, entre las opciones disponibles, el elemento correcto para completar el patrón y haz clic para colocarlo en el lugar correspondiente.\n\nObjetivo: Identificar la lógica detrás del patrón mostrado y completarlo correctamente, reforzando la habilidad para reconocer regularidades y anticipar lo que sigue en una secuencia.",
-    }
-  }
-
-  // Datos por defecto si no coincide con ninguna actividad específica
-  return {
-    nivelTitle: "Nivel",
-    title: "Actividad",
-    description: "Descripción de la actividad",
-  }
 }
