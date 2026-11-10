@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, HelpCircle, Star } from "lucide-react"
+import { ArrowLeft, HelpCircle, RotateCcw, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition"
@@ -32,7 +32,10 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
   const [activityScore, setActivityScore] = useState(0)
-  const { loseLife } = useLives()
+  const { loseLife, lives } = useLives()
+  // Cada intento monta el juego desde cero (clave nueva); lo ya guardado en la cuenta no se toca.
+  const [intento, setIntento] = useState(0)
+  const [confirmarReinicio, setConfirmarReinicio] = useState(false)
   const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
   const [feedbackFinal, setFeedbackFinal] = useState("")
   // Reglas y ejemplo: pantalla previa (omitible) y diálogo para reabrirlas sin desmontar el juego.
@@ -47,6 +50,16 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const { seccion, nivel, actividad } = routeParams
   const actividadInfo = getActividadInfo(seccion, nivel, actividad)
   const datos = buscarActividad(seccion, nivel, actividad.split("-").pop() ?? "")
+  // Reinicia solo el intento actual. No cuesta vidas (las ya perdidas no se recuperan) y no borra lo completado.
+  const reiniciar = () => {
+    setIsCompleted(false)
+    setActivityScore(0)
+    setErroresDetalle([])
+    setFeedbackFinal("")
+    setConfirmarReinicio(false)
+    setIntento((i) => i + 1)
+  }
+
   // Función para volver al nivel
   const handleBack = () => {
     router.push(`/misiones/${seccion}/${nivel}`)
@@ -191,7 +204,18 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
                 </ul>
               </div>
             )}
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleBack}>Volver al nivel</Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Button className="bg-blue-600 hover:bg-blue-700 min-h-11" onClick={handleBack}>Volver al nivel</Button>
+              <Button variant="outline" className="min-h-11" onClick={reiniciar} disabled={lives === 0}>
+                <RotateCcw aria-hidden className="mr-2 h-4 w-4" />
+                Reintentar la actividad
+              </Button>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              {lives === 0
+                ? "No tienes vidas para reintentar ahora. Se recargan solas."
+                : "Reintentar no cuesta vidas. Cada error durante el intento sí cuesta 1. Lo que ya completaste se conserva."}
+            </p>
           </div>
         ) : datos && !introVista ? (
           <div className="bg-card rounded-lg p-6 border border-gray-800 max-w-xl mx-auto">
@@ -205,16 +229,34 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
         ) : (
           <>
             {datos && (
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex flex-wrap justify-end gap-2">
+                <Button variant="outline" size="sm" className="min-h-11" onClick={() => setConfirmarReinicio(true)}>
+                  <RotateCcw aria-hidden className="mr-2 h-4 w-4" />
+                  Reiniciar actividad
+                </Button>
                 <Button variant="outline" size="sm" className="min-h-11" onClick={() => setReglasAbiertas(true)}>
                   <HelpCircle aria-hidden className="mr-2 h-4 w-4" />
                   Ver reglas
                 </Button>
               </div>
             )}
-            {renderJuego()}
+            <Fragment key={intento}>{renderJuego()}</Fragment>
           </>
         )}
+        <Dialog open={confirmarReinicio} onOpenChange={setConfirmarReinicio}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>¿Reiniciar la actividad?</DialogTitle>
+              <DialogDescription>
+                Empiezas de nuevo desde la primera ronda. Reiniciar no cuesta vidas, pero las que ya perdiste no se recuperan. Lo que tienes completado se conserva.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="ghost" className="min-h-11" onClick={() => setConfirmarReinicio(false)}>Cancelar</Button>
+              <Button className="min-h-11" onClick={reiniciar}>Reiniciar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         {datos && (
           <Dialog open={reglasAbiertas} onOpenChange={setReglasAbiertas}>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
