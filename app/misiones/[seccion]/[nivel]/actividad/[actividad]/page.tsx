@@ -9,6 +9,7 @@ import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition
 import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
 import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
 import { useLives } from "@/components/misiones/lives-context"
+import { buscarActividad } from "@/lib/misiones-catalogo"
 
 // --- Configuración de rondas y puntos por nivel ---
 const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion: number; bonus: number }> = {
@@ -40,6 +41,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   if (!routeParams) return null
   const { seccion, nivel, actividad } = routeParams
   const actividadInfo = getActividadInfo(seccion, nivel, actividad)
+  const datos = buscarActividad(seccion, nivel, actividad.split("-").pop() ?? "")
   // Función para volver al nivel
   const handleBack = () => {
     router.push(`/misiones/${seccion}/${nivel}`)
@@ -154,6 +156,12 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
           <div>
             <h1 className="text-3xl font-bold">{actividadInfo.title}</h1>
             <p className="text-gray-400 mt-1">{actividadInfo.description}</p>
+            {datos && (
+              <p className="text-sm mt-2">
+                <span className="font-medium">Objetivo:</span> {datos.objetivo}
+                <span className="text-gray-400"> · ≈ {datos.minutos} min</span>
+              </p>
+            )}
           </div>
           {isCompleted && (
             <div className="flex items-center gap-1">

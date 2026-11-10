@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { use } from "react"
 import { useLives } from "@/components/misiones/lives-context"
-import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
+import { buscarActividad, buscarNivel, minutosNivel } from "@/lib/misiones-catalogo"
 
 // Tipos para las actividades
 type ActivityType = "teoria" | "ejercicio" | "desafio" | "quiz"
@@ -114,8 +114,8 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   }, [seccionId, nivelId, isAdmin, completadas])
 
   // Nivel del catálogo sin actividades jugables: se explica en vez de mostrar actividades que no se pueden abrir.
-  const enCatalogo = seccionId === SECCION.id ? NIVELES.find((n) => n.id === nivelId) : undefined
-  if (enCatalogo && enCatalogo.actividades === 0) {
+  const enCatalogo = buscarNivel(seccionId, nivelId)
+  if (enCatalogo && enCatalogo.actividades.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3 px-4 text-center">
         <NavBar activePage="misiones" />
@@ -208,6 +208,12 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
           <div>
             <h1 className="text-3xl font-bold">{nivelInfo.title}</h1>
             <p className="text-gray-400 mt-1">{nivelInfo.description}</p>
+            {enCatalogo && (
+              <p className="text-sm mt-2">
+                <span className="font-medium">Objetivo:</span> {enCatalogo.objetivo}
+                <span className="text-gray-400"> · ≈ {minutosNivel(enCatalogo)} min</span>
+              </p>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -293,6 +299,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                         <div>
                           <h3 className={cn("font-medium transition-all duration-300", false)}>{activity.title}</h3>
                           <p className={cn("text-sm text-gray-400 transition-all duration-300", false)}>{activity.description}</p>
+                          <DatosActividad seccion={seccionId} nivel={nivelId} id={activity.id} />
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -388,6 +395,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                         <div>
                           <h3 className="font-medium">{activity.title}</h3>
                           <p className="text-sm text-gray-400">{activity.description}</p>
+                          <DatosActividad seccion={seccionId} nivel={nivelId} id={activity.id} />
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -582,6 +590,17 @@ function getNivelInfo(seccion: string, nivel: string): NivelInfo | null {
 
   // Buscar el nivel por título, sin exigir coincidencia exacta de sección
   return data.find((nivelInfo) => nivelInfo.title.toLowerCase() === nivelTitle.toLowerCase()) || null;
+}
+
+// Objetivo y duración de una actividad, leídos del catálogo.
+function DatosActividad({ seccion, nivel, id }: { seccion: string; nivel: string; id: string }) {
+  const a = buscarActividad(seccion, nivel, id)
+  if (!a) return null
+  return (
+    <p className="text-sm mt-1">
+      <span className="font-medium">Objetivo:</span> {a.objetivo} <span className="text-gray-400">· ≈ {a.minutos} min</span>
+    </p>
+  )
 }
 
 // Función para obtener el ícono de la actividad (robusta y sin errores)
