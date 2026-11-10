@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, PartyPopper, XCircle } from "lucide-react"
-import { Glyph } from "@/components/misiones/glyph"
+import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { motion, AnimatePresence } from "framer-motion"
 import Pistas from "@/components/misiones/pistas"
-import { findCyclicBase } from "@/lib/patrones"
+import { describirRegla, findCyclicBase } from "@/lib/patrones"
 
 const SEQUENCES = [
   {
@@ -54,6 +54,7 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
   const [completed, setCompleted] = useState(false)
   const [showNext, setShowNext] = useState(false)
   const [startTime] = useState(Date.now())
+  const [mensajeError, setMensajeError] = useState<string | null>(null)
 
   const seq = SEQUENCES[current]
   const patternWithInput = seq.pattern.map((el, i) =>
@@ -71,6 +72,18 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     const isCorrect = userInput.every((v, i) => v === seq.solution[i])
     setFeedback(isCorrect)
     setShowNext(isCorrect)
+    if (isCorrect) setMensajeError(null)
+    else {
+      // Distingue cuántos huecos están bien y nombra la regla, sin dar por completada la actividad ni revelar la solución.
+      const bien = userInput.filter((v, i) => v === seq.solution[i]).length
+      const total = seq.answer.length
+      const completa = seq.pattern.map((el, i) => el || seq.solution[seq.answer.indexOf(i)])
+      const estado =
+        bien === 0
+          ? "Ningún hueco coincide con la regla."
+          : `${bien} de ${total} huecos coinciden con la regla; revisa los demás.`
+      setMensajeError(`${estado} ${describirRegla(completa, glyphName)}`)
+    }
     if (isCorrect && current === SEQUENCES.length - 1) {
       setTimeout(() => {
         setCompleted(true)
@@ -86,12 +99,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     setCurrent(current + 1)
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
   }
 
   function handleReset() {
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
   }
 
@@ -99,6 +114,7 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     setCurrent(0)
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
     setCompleted(false)
   }
@@ -178,7 +194,8 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
         {feedback === false && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2 text-red-400 font-bold mt-2">
             <XCircle className="h-6 w-6 animate-shake" />
-            Intenta de nuevo
+            Aún no es correcto. Puedes intentarlo de nuevo.
+            {mensajeError && <p role="status" className="max-w-md text-center text-sm font-normal text-red-200">{mensajeError}</p>}
           </motion.div>
         )}
       </AnimatePresence>

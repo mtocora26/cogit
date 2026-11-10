@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
-import { findCyclicBase } from "@/lib/patrones"
+import { describirRegla, findCyclicBase } from "@/lib/patrones"
 
 interface PatternRecognitionProps {
   onComplete: (
@@ -91,6 +91,7 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
   const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
+  const [mensajeError, setMensajeError] = useState<string | null>(null)
   const maxRounds = 5
 
   // Solo generar patrones cuando el componente está montado en el cliente
@@ -166,6 +167,17 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
     }
     setSelectedOption(null)
     setIsCorrect(null)
+    setMensajeError(null)
+  }
+
+  // Explica la regla y distingue el tipo de error, sin dar por completada la actividad.
+  const explicarError = (option: string, correctAnswer: string) => {
+    const regla = describirRegla([...pattern, correctAnswer], glyphName, patternType)
+    const grupo = findCyclicBase([...pattern, correctAnswer])
+    const tipo = grupo.includes(option)
+      ? `${glyphName(option)} sí forma parte del patrón, pero no es la que toca en este punto.`
+      : `${glyphName(option)} no aparece en el patrón.`
+    return `${tipo} ${regla} Mira dónde vas dentro del grupo que se repite.`
   }
 
   // Cuando el usuario falla una ronda:
@@ -181,11 +193,13 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
     const correctAnswer = getNextInPattern(pattern)
     const correct = option === correctAnswer
     setIsCorrect(correct)
+    const explicacion = correct ? null : explicarError(option, correctAnswer)
+    setMensajeError(explicacion)
     setTimeout(() => {
       if (!reviewMode) {
         if (!correct) {
           setIncorrectRounds(prev => [...prev, round - 1])
-          setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `La respuesta correcta era: ${glyphName(correctAnswer)}` }])
+          setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: explicacion ?? "" }])
           handleErrorRonda()
         } else {
           setScore(s => s + 1)
@@ -212,7 +226,7 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
           onComplete(score >= 3, timeElapsed, score, erroresDetalle, erroresRepetidos)
         }
       }
-    }, 1200)
+    }, correct ? 1200 : 4500)
   }
 
   // Obtener el título según el tipo de patrón
@@ -291,6 +305,11 @@ export default function PatternRecognition({ onComplete, onRondaError }: Pattern
               </Button>
             </div>
           ))}
+        </div>
+        <div role="status" aria-live="polite" className="w-full max-w-md text-center">
+          {mensajeError && (
+            <p className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{mensajeError}</p>
+          )}
         </div>
         <div className="mt-8 w-full flex justify-center">
           <Pistas
