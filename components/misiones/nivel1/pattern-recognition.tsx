@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
-import { describirRegla, findCyclicBase, type EstadoJuego } from "@/lib/patrones"
+import type { EstadoJuego } from "@/lib/patrones"
+import { dificultadDeRonda, explicarRegla, generarRonda, type Dificultad, type Ronda, type TipoPatron } from "@/lib/generador-patrones"
 
 interface PatternRecognitionProps {
   onComplete: (
@@ -25,63 +26,12 @@ interface PatternRecognitionProps {
   onEstado?: (estado: EstadoJuego) => void
 }
 
-// Definición de los tipos de patrones
-type PatternType = "color" | "shape" | "number" | "direction"
-
-// Definición de los elementos para cada tipo de patrón
-const patternElements = {
-  color: ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤"],
-  shape: ["⭐", "🔶", "🔷", "⬛", "⬜", "🔺", "🔻", "⭕", "🔘"],
-  number: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"],
-  direction: ["⬆️", "➡️", "⬇️", "⬅️", "↗️", "↘️", "↙️", "↖️", "↔️"],
-}
-
-// Función para generar un patrón aleatorio
-const generatePattern = (type: PatternType, length: number) => {
-  const elements = patternElements[type]
-  const pattern: string[] = []
-
-  // Patrones posibles:
-  // 1. Alternancia (A,B,A,B,...)
-  // 2. Repetición (A,A,B,B,A,A,...)
-  // 3. Incremento (A,B,C,A,B,C,...)
-
-  const patternType = Math.floor(Math.random() * 3)
-
-  if (patternType === 0) {
-    // Alternancia
-    const elemA = elements[Math.floor(Math.random() * elements.length)]
-    const elemB = elements.filter((e) => e !== elemA)[Math.floor(Math.random() * (elements.length - 1))]
-
-    for (let i = 0; i < length; i++) {
-      pattern.push(i % 2 === 0 ? elemA : elemB)
-    }
-  } else if (patternType === 1) {
-    // Repetición
-    const elemA = elements[Math.floor(Math.random() * elements.length)]
-    const elemB = elements.filter((e) => e !== elemA)[Math.floor(Math.random() * (elements.length - 1))]
-
-    for (let i = 0; i < length; i++) {
-      pattern.push(Math.floor(i / 2) % 2 === 0 ? elemA : elemB)
-    }
-  } else {
-    // Incremento
-    const startIdx = Math.floor(Math.random() * (elements.length - 3))
-    const patternLength = 3
-
-    for (let i = 0; i < length; i++) {
-      pattern.push(elements[(startIdx + (i % patternLength)) % elements.length])
-    }
-  }
-
-  return pattern
-}
-
 const CELEBRATION_SCORE = 4
 
 export default function PatternRecognition({ onComplete, onRondaError, estadoInicial, onEstado }: PatternRecognitionProps) {
   const ini = (estadoInicial ?? {}) as Record<string, any>
-  const [patternType, setPatternType] = useState<PatternType>("color")
+  const [patternType, setPatternType] = useState<TipoPatron>("color")
+  const [ronda, setRonda] = useState<Ronda | null>(null)
   const [pattern, setPattern] = useState<string[]>([])
   const [options, setOptions] = useState<string[]>([])
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
@@ -115,7 +65,7 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
 
   useEffect(() => {
     if (mounted) {
-      startNewRound(Boolean(ini.reviewMode))
+      startNewRound(Boolean(ini.reviewMode), round)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted])
@@ -130,67 +80,26 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
 
   if (!mounted) return null
 
-  const getNextInPattern = (pat: string[]): string => {
-    if (pat[0] === pat[2] && pat[1] === pat[3]) {
-      // Alternancia (A,B,A,B)
-      return pat[pat.length % 2];
-    } else if (pat[0] === pat[1] && pat[2] === pat[3]) {
-      // Repetición (A,A,B,B)
-      return pat[pat.length % 4 < 2 ? 0 : 2];
-    } else {
-      // Secuencia cíclica robusta
-      const base = findCyclicBase(pat);
-      // Buscar la posición del último elemento mostrado dentro del ciclo base
-      const last = pat[pat.length - 1];
-      const idx = base.findIndex((v) => v === last);
-      if (idx === -1) return base[0];
-      return base[(idx + 1) % base.length];
-    }
-  };
-
-  // Generar opciones (incluye la respuesta correcta y evita duplicados)
-  const generateOptions = (correctAnswer: string, elements: string[], count = 4) => {
-    const filtered = elements.filter(e => e !== correctAnswer)
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5)
-    const options = [correctAnswer, ...shuffled].slice(0, count)
-    // Barajar para que la respuesta no siempre esté en la misma posición
-    return options.sort(() => Math.random() - 0.5)
-  }
-
-  // Iniciar una nueva ronda
-  const startNewRound = (isReview = false) => {
-    let type: PatternType
-    let newPattern: string[]
-    if (isReview && incorrectRounds.length > 0) {
-      const idx = incorrectRounds[reviewIndex]
-      type = patternType
-      newPattern = generatePattern(type, 6)
-      setPatternType(type)
-      setPattern(newPattern)
-      const correctAnswer = getNextInPattern(newPattern)
-      setOptions(generateOptions(correctAnswer, patternElements[type]))
-    } else {
-      const types: PatternType[] = ["color", "shape", "number", "direction"]
-      type = types[Math.floor(Math.random() * types.length)]
-      newPattern = generatePattern(type, 6)
-      setPatternType(type)
-      setPattern(newPattern)
-      const correctAnswer = getNextInPattern(newPattern)
-      setOptions(generateOptions(correctAnswer, patternElements[type]))
-    }
+  // Iniciar una nueva ronda: la regla y la dificultad salen del generador (la respuesta es única).
+  const startNewRound = (isReview = false, numRonda = round) => {
+    const dificultad: Dificultad = isReview ? "media" : dificultadDeRonda(numRonda, maxRounds)
+    const r = generarRonda(dificultad)
+    setRonda(r)
+    setPatternType(r.tipo)
+    setPattern(r.visible)
+    setOptions(r.opciones)
     setSelectedOption(null)
     setIsCorrect(null)
     setMensajeError(null)
   }
 
   // Explica la regla y distingue el tipo de error, sin dar por completada la actividad.
-  const explicarError = (option: string, correctAnswer: string) => {
-    const regla = describirRegla([...pattern, correctAnswer], glyphName, patternType)
-    const grupo = findCyclicBase([...pattern, correctAnswer])
-    const tipo = grupo.includes(option)
-      ? `${glyphName(option)} sí forma parte del patrón, pero no es la que toca en este punto.`
+  const explicarError = (option: string) => {
+    if (!ronda) return ""
+    const tipo = ronda.completa.includes(option)
+      ? `${glyphName(option)} sí aparece en el patrón, pero no es la que toca en este punto.`
       : `${glyphName(option)} no aparece en el patrón.`
-    return `${tipo} ${regla} Mira dónde vas dentro del grupo que se repite.`
+    return `${tipo} ${explicarRegla(ronda, glyphName)}`
   }
 
   // Cuando el usuario falla una ronda:
@@ -203,10 +112,10 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
   const handleOptionSelect = (option: string) => {
     if (isCorrect !== null) return
     setSelectedOption(option)
-    const correctAnswer = getNextInPattern(pattern)
+    const correctAnswer = ronda?.respuesta ?? ""
     const correct = option === correctAnswer
     setIsCorrect(correct)
-    const explicacion = correct ? null : explicarError(option, correctAnswer)
+    const explicacion = correct ? null : explicarError(option)
     setMensajeError(explicacion)
     setTimeout(() => {
       if (!reviewMode) {
@@ -219,7 +128,7 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
         }
         if (round < maxRounds) {
           setRound(round + 1)
-          startNewRound()
+          startNewRound(false, round + 1)
         } else if (incorrectRounds.length > 0) {
           setReviewMode(true)
           setReviewIndex(0)
@@ -265,6 +174,7 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
         <p className="text-gray-300 mt-2 text-lg">{reviewMode ? "Repaso de rondas fallidas: corrige tus errores (sin penalización)" : "¿Cuál es el siguiente elemento en la secuencia?"}</p>
         <div className="mt-2 text-purple-300 font-semibold text-base">
           {reviewMode ? `Repaso: ${reviewIndex + 1}/${incorrectRounds.length}` : `Ronda: ${round}/${maxRounds}`}
+          {ronda && <span className="ml-3 text-sm font-normal text-muted-foreground">Dificultad: {ronda.dificultad}</span>}
         </div>
       </div>
       <div className="flex flex-col items-center flex-1 justify-center">
@@ -327,11 +237,15 @@ export default function PatternRecognition({ onComplete, onRondaError, estadoIni
         <div className="mt-8 w-full flex justify-center">
           <Pistas
             key={`${reviewMode ? "r" : "n"}-${reviewMode ? reviewIndex : round}-${pattern.join("")}`}
-            pistas={[
-              { texto: "Fíjate en cómo se repiten las fichas: hay un grupo que vuelve a empezar una y otra vez." },
-              { texto: `El grupo que se repite tiene ${findCyclicBase([...pattern, getNextInPattern(pattern)]).length} fichas:`, fichas: findCyclicBase([...pattern, getNextInPattern(pattern)]) },
-              { texto: "La ficha que sigue es:", fichas: [getNextInPattern(pattern)] },
-            ]}
+            pistas={
+              ronda
+                ? [
+                    { texto: "Busca qué se repite o cómo cambian las fichas de una a otra: ahí está la regla." },
+                    { texto: explicarRegla(ronda, glyphName) },
+                    { texto: "La ficha que sigue es:", fichas: [ronda.respuesta] },
+                  ]
+                : []
+            }
           />
         </div>
       </div>

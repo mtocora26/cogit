@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
-import { describirRegla, type EstadoJuego } from "@/lib/patrones"
+import type { EstadoJuego } from "@/lib/patrones"
+import { dificultadDeRonda, explicarRegla, generarIntruso, type RondaIntruso, type TipoPatron } from "@/lib/generador-patrones"
 
 interface OutlierPatternProps {
   onComplete: (
@@ -23,39 +24,13 @@ interface OutlierPatternProps {
   onEstado?: (estado: EstadoJuego) => void
 }
 
-type PatternType = "color" | "shape" | "number" | "direction"
-
-const patternElements = {
-  color: ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤"],
-  shape: ["⭐", "🔶", "🔷", "⬛", "⬜", "🔺", "🔻", "⭕", "🔘"],
-  number: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"],
-  direction: ["⬆️", "➡️", "⬇️", "⬅️", "↗️", "↘️", "↙️", "↖️", "↔️"],
-}
-
 const maxRounds = 5
 const initialLives = 3
 
-function generateOutlierPattern(type: PatternType, length: number) {
-  const elements = patternElements[type]
-  // Elegir un subconjunto de 3 elementos para el patrón base
-  const base = [] as string[]
-  while (base.length < 3) {
-    const e = elements[Math.floor(Math.random() * elements.length)]
-    if (!base.includes(e)) base.push(e)
-  }
-  // Generar el patrón base repetido
-  const pattern = Array.from({ length }, (_, i) => base[i % base.length])
-  // Elegir una posición aleatoria para el intruso
-  const outlierIdx = Math.floor(Math.random() * length)
-  // Elegir un elemento que no esté en el patrón base
-  const outlier = elements.filter(e => !base.includes(e))[Math.floor(Math.random() * (elements.length - 3))]
-  pattern[outlierIdx] = outlier
-  return { pattern, outlierIdx, outlier, base }
-}
-
 export default function OutlierPattern({ onComplete, onRondaError, estadoInicial, onEstado }: OutlierPatternProps) {
   const ini = (estadoInicial ?? {}) as Record<string, any>
-  const [patternType, setPatternType] = useState<PatternType>("color")
+  const [patternType, setPatternType] = useState<TipoPatron>("color")
+  const [ronda, setRonda] = useState<RondaIntruso | null>(null)
   const [pattern, setPattern] = useState<string[]>([])
   const [outlierIdx, setOutlierIdx] = useState<number>(-1)
   const [outlier, setOutlier] = useState<string>("")
@@ -80,7 +55,7 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
   useEffect(() => {
     if (mounted) {
       setStartTime(Date.now() - (Number(ini.tiempo) || 0) * 1000)
-      startNewRound(Boolean(ini.reviewMode))
+      startNewRound(Boolean(ini.reviewMode), round)
     }
     // eslint-disable-next-line
   }, [mounted])
@@ -101,29 +76,28 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
 
   if (!mounted) return null
 
-  const startNewRound = (isReview = false) => {
-    let type: PatternType
+  const startNewRound = (isReview = false, numRonda = round) => {
     let pat: string[]
     let idx: number
     let out: string
     let basePat: string[]
+    let r: RondaIntruso
     if (isReview && incorrectRounds.length > 0) {
       const review = incorrectRounds[reviewIndex]
-      type = review.type
+      r = review.ronda
       pat = review.pattern
       idx = review.outlierIdx
       out = review.outlier
       basePat = review.base
     } else {
-      const types: PatternType[] = ["color", "shape", "number", "direction"]
-      type = types[Math.floor(Math.random() * types.length)]
-      const { pattern, outlierIdx, outlier, base } = generateOutlierPattern(type, 7)
-      pat = pattern
-      idx = outlierIdx
-      out = outlier
-      basePat = base
-      setPatternType(type)
+      r = generarIntruso(dificultadDeRonda(numRonda, maxRounds))
+      pat = r.pattern
+      idx = r.outlierIdx
+      out = r.outlier
+      basePat = r.fichasRegla
+      setPatternType(r.tipo)
     }
+    setRonda(r)
     setPattern(pat)
     setOutlierIdx(idx)
     setOutlier(out)
@@ -140,9 +114,7 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
     const correct = idx === outlierIdx
     setIsCorrect(correct)
     setShowExplanation(true)
-    // Secuencia sin el intruso, para nombrar la regla: se repite cada 3 fichas.
-    const limpia = pattern.map((_, i) => base[i % base.length])
-    const regla = describirRegla(limpia, glyphName, patternType)
+    const regla = ronda ? explicarRegla(ronda, glyphName) : ""
     const explicacion = correct
       ? `¡Correcto! Esa ficha rompe la regla. ${regla}`
       : `${glyphName(pattern[idx])} sí sigue el patrón: no es el intruso. ${regla} Busca la ficha que no encaja en esa repetición.`
@@ -153,7 +125,7 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
       setTimeout(() => handleContinue(), 1200)
     } else {
       if (!reviewMode) {
-        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: round - 1, explicacion }])
+        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: ronda, rondaNum: round - 1, explicacion }])
         setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion }])
       } else {
         setErroresRepetidos(prev => [...prev, reviewIndex])
@@ -176,7 +148,7 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
       }
       if (round < maxRounds) {
         setRound(round + 1)
-        startNewRound()
+        startNewRound(false, round + 1)
       } else if (incorrectRounds.length > 0 && lives > 0) {
         setReviewMode(true)
         setReviewIndex(0)
@@ -286,11 +258,15 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
       <div className="flex justify-center mt-8">
         <Pistas
           key={`${reviewMode ? "r" : "n"}-${reviewMode ? reviewIndex : round}-${pattern.join("")}`}
-          pistas={[
-            { texto: "Casi todas las fichas siguen un grupo que se repite. Busca la que rompe esa repetición." },
-            { texto: "El grupo que se repite es:", fichas: base },
-            { texto: `El intruso es la ficha número ${outlierIdx + 1}, contando desde la izquierda:`, fichas: pattern[outlierIdx] ? [pattern[outlierIdx]] : [] },
-          ]}
+          pistas={
+            ronda
+              ? [
+                  { texto: "Casi todas las fichas siguen una misma regla. Busca la que no la cumple." },
+                  { texto: explicarRegla(ronda, glyphName) },
+                  { texto: `El intruso es la ficha número ${outlierIdx + 1}, contando desde la izquierda:`, fichas: pattern[outlierIdx] ? [pattern[outlierIdx]] : [] },
+                ]
+              : []
+          }
         />
       </div>
     </motion.div>
