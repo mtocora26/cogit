@@ -6,7 +6,7 @@ import { z } from "zod"
  */
 
 /** Juegos disponibles. Una actividad elige uno por clave; agregar una actividad no exige tocar la presentación. */
-export const JUEGOS = ["reconocer", "intruso", "completa", "ordenar", "instrucciones", "ejecutar", "clasificar", "sobra", "esencial"] as const
+export const JUEGOS = ["reconocer", "intruso", "completa", "ordenar", "instrucciones", "ejecutar", "clasificar", "sobra", "esencial", "subtareas", "error", "depurar"] as const
 export type Juego = (typeof JUEGOS)[number]
 export const NOMBRE_JUEGO: Record<Juego, string> = {
   reconocer: "¿Qué ficha sigue?",
@@ -18,6 +18,9 @@ export const NOMBRE_JUEGO: Record<Juego, string> = {
   clasificar: "Clasifica con la regla oculta",
   sobra: "¿Qué sobra?",
   esencial: "Quédate con lo esencial",
+  subtareas: "Divide la tarea",
+  error: "Encuentra el error",
+  depurar: "Depura el programa",
 }
 
 const texto = (max: number) => z.string().trim().min(1, "No puede estar vacío").max(max, `Máximo ${max} caracteres`)
