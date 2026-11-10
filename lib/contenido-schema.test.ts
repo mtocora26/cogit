@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { readFileSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { ActividadSchema, CatalogoSchema, JUEGOS } from "./contenido-schema"
@@ -21,7 +21,12 @@ describe("contenido inicial", () => {
   })
 
   it("la migración inserta el mismo contenido (sin desvíos)", () => {
-    const sql = readFileSync(join(process.cwd(), "prisma/migrations/20261110010000_contenido_misiones/migration.sql"), "utf8")
+    // La carga inicial y las migraciones posteriores de contenido (cada nivel nuevo agrega la suya).
+    const dir = join(process.cwd(), "prisma/migrations")
+    const sql = readdirSync(dir)
+      .filter((d) => d.includes("contenido_"))
+      .map((d) => readFileSync(join(dir, d, "migration.sql"), "utf8"))
+      .join("\n")
     const q = (s: string) => s.replace(/'/g, "''")
     for (const n of CATALOGO_INICIAL.niveles) {
       expect(sql).toContain(`'${q(n.title)}'`)
@@ -71,9 +76,9 @@ describe("validación", () => {
 
   it("agregar una actividad solo es cuestión de datos", () => {
     const c = clonar(CATALOGO_INICIAL)
-    c.niveles[1].actividades.push({ ...clonar(c.niveles[0].actividades[0]), id: "1" })
+    c.niveles[2].actividades.push({ ...clonar(c.niveles[0].actividades[0]), id: "1" })
     expect(CatalogoSchema.safeParse(c).success).toBe(true)
-    expect(c.niveles[1].actividades).toHaveLength(1)
+    expect(c.niveles[2].actividades).toHaveLength(1)
   })
 })
 
@@ -85,5 +90,6 @@ describe("consultas", () => {
     expect(minutosNivel(CATALOGO_INICIAL.niveles[0])).toBe(9)
     expect(siguienteNivel(CATALOGO_INICIAL, "1")?.id).toBe("2")
     expect(siguienteNivel(CATALOGO_INICIAL, "3")).toBeUndefined()
+    expect(CATALOGO_INICIAL.niveles[1].actividades.map((a) => a.juego)).toEqual(["ordenar", "instrucciones", "ejecutar"])
   })
 })

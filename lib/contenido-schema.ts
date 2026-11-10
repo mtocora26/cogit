@@ -6,12 +6,15 @@ import { z } from "zod"
  */
 
 /** Juegos disponibles. Una actividad elige uno por clave; agregar una actividad no exige tocar la presentación. */
-export const JUEGOS = ["reconocer", "intruso", "completa"] as const
+export const JUEGOS = ["reconocer", "intruso", "completa", "ordenar", "instrucciones", "ejecutar"] as const
 export type Juego = (typeof JUEGOS)[number]
 export const NOMBRE_JUEGO: Record<Juego, string> = {
   reconocer: "¿Qué ficha sigue?",
   intruso: "Encuentra el intruso",
   completa: "Completa los huecos",
+  ordenar: "Ordena los pasos",
+  instrucciones: "Completa las instrucciones",
+  ejecutar: "Ejecuta el algoritmo",
 }
 
 const texto = (max: number) => z.string().trim().min(1, "No puede estar vacío").max(max, `Máximo ${max} caracteres`)
@@ -19,10 +22,10 @@ const clave = z.string().regex(/^[a-z0-9]{1,20}$/, "Solo minúsculas y números"
 
 export const EjemploSchema = z
   .object({
-    /** Fichas del ejemplo; "❔" marca un hueco. */
-    secuencia: z.array(texto(16)).min(3).max(12),
+    /** Fichas (o pasos, en frases cortas) del ejemplo; "❔" marca un hueco. */
+    secuencia: z.array(texto(80)).min(3).max(12),
     resaltar: z.number().int().min(0).optional(),
-    respuesta: z.array(texto(16)).min(1).max(4),
+    respuesta: z.array(texto(80)).min(1).max(4),
     explicacion: texto(400),
   })
   .refine((e) => e.resaltar === undefined || e.resaltar < e.secuencia.length, {

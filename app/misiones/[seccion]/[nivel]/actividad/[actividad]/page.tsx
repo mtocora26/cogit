@@ -8,6 +8,9 @@ import NavBar from "@/components/nav-bar"
 import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition"
 import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
 import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
+import OrdenarPasos from "@/components/misiones/nivel2/ordenar-pasos"
+import CompletarInstrucciones from "@/components/misiones/nivel2/completar-instrucciones"
+import EjecutarAlgoritmo from "@/components/misiones/nivel2/ejecutar-algoritmo"
 import { useLives } from "@/components/misiones/lives-context"
 import { buscarActividad, buscarNivel } from "@/lib/misiones-catalogo"
 import { useCatalogo } from "@/components/misiones/use-catalogo"
@@ -30,6 +33,9 @@ const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
   reconocer: PatternRecognition,
   intruso: OutlierPattern,
   completa: PatternCreator,
+  ordenar: OrdenarPasos,
+  instrucciones: CompletarInstrucciones,
+  ejecutar: EjecutarAlgoritmo,
 }
 
 function descontarVidaPorError(loseLife: () => void) {
