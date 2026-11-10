@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Star } from "lucide-react"
+import { ArrowLeft, HelpCircle, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import PatternRecognition from "@/components/misiones/nivel1/pattern-recognition"
@@ -10,6 +10,8 @@ import OutlierPattern from "@/components/misiones/nivel1/outlier-pattern"
 import PatternCreator from "@/components/misiones/nivel1/pattern-creator"
 import { useLives } from "@/components/misiones/lives-context"
 import { buscarActividad } from "@/lib/misiones-catalogo"
+import ReglasActividad from "@/components/misiones/reglas-actividad"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // --- Configuración de rondas y puntos por nivel ---
 const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion: number; bonus: number }> = {
@@ -33,6 +35,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const { loseLife } = useLives()
   const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
   const [feedbackFinal, setFeedbackFinal] = useState("")
+  // Reglas y ejemplo: pantalla previa (omitible) y diálogo para reabrirlas sin desmontar el juego.
+  const [introVista, setIntroVista] = useState(false)
+  const [reglasAbiertas, setReglasAbiertas] = useState(false)
 
   useEffect(() => {
     params.then(setRouteParams)
@@ -188,7 +193,39 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             )}
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleBack}>Volver al nivel</Button>
           </div>
-        ) : renderJuego()}
+        ) : datos && !introVista ? (
+          <div className="bg-card rounded-lg p-6 border border-gray-800 max-w-xl mx-auto">
+            <h2 className="text-xl font-bold mb-4">Antes de empezar</h2>
+            <ReglasActividad actividad={datos} />
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <Button className="min-h-11" autoFocus onClick={() => setIntroVista(true)}>Empezar la actividad</Button>
+              <Button variant="ghost" className="min-h-11" onClick={() => setIntroVista(true)}>Omitir</Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {datos && (
+              <div className="mb-4 flex justify-end">
+                <Button variant="outline" size="sm" className="min-h-11" onClick={() => setReglasAbiertas(true)}>
+                  <HelpCircle aria-hidden className="mr-2 h-4 w-4" />
+                  Ver reglas
+                </Button>
+              </div>
+            )}
+            {renderJuego()}
+          </>
+        )}
+        {datos && (
+          <Dialog open={reglasAbiertas} onOpenChange={setReglasAbiertas}>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Reglas y ejemplo</DialogTitle>
+                <DialogDescription>Es solo una guía: tu ronda sigue donde la dejaste y no cuenta como intento.</DialogDescription>
+              </DialogHeader>
+              <ReglasActividad actividad={datos} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   )
