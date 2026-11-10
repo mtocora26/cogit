@@ -76,9 +76,9 @@ describe("validación", () => {
 
   it("agregar una actividad solo es cuestión de datos", () => {
     const c = clonar(CATALOGO_INICIAL)
-    c.niveles[2].actividades.push({ ...clonar(c.niveles[0].actividades[0]), id: "1" })
+    c.niveles[0].actividades.push({ ...clonar(c.niveles[0].actividades[0]), id: "9" })
     expect(CatalogoSchema.safeParse(c).success).toBe(true)
-    expect(c.niveles[2].actividades).toHaveLength(1)
+    expect(c.niveles[0].actividades).toHaveLength(4)
   })
 })
 
@@ -91,5 +91,6 @@ describe("consultas", () => {
     expect(siguienteNivel(CATALOGO_INICIAL, "1")?.id).toBe("2")
     expect(siguienteNivel(CATALOGO_INICIAL, "3")).toBeUndefined()
     expect(CATALOGO_INICIAL.niveles[1].actividades.map((a) => a.juego)).toEqual(["ordenar", "instrucciones", "ejecutar"])
+    expect(CATALOGO_INICIAL.niveles[2].actividades.map((a) => a.juego)).toEqual(["clasificar", "sobra", "esencial"])
   })
 })
