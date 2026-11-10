@@ -1,34 +1,80 @@
-// Función para generar un tablero de Sudoku válido
+// Genera un puzzle con exactamente una solución.
+// Se quitan celdas una a una y solo se mantiene la que deja la solución única,
+// comprobándolo con el solucionador. Si no alcanza las celdas vacías pedidas,
+// se reintenta con otro tablero; como último recurso devuelve el que más se acercó.
 export function generateSudoku(emptyCells = 40) {
-  // Crear un tablero vacío
-  const board: number[][] = Array(9)
-    .fill(0)
-    .map(() => Array(9).fill(0))
+  const objetivo = Math.max(0, Math.min(emptyCells, 64))
+  let mejor: { puzzle: number[][]; solution: number[][]; vacias: number } | null = null
 
-  // Llenar el tablero con una solución válida
-  solveSudoku(board)
+  for (let intento = 0; intento < 30; intento++) {
+    const solution: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0))
+    solveSudoku(solution)
 
-  // Guardar la solución completa
-  const solution = JSON.parse(JSON.stringify(board))
+    const puzzle = solution.map((fila) => [...fila])
+    const positions: number[][] = []
+    for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) positions.push([i, j])
+    shuffleArray(positions)
 
-  // Eliminar números para crear el puzzle
-  const positions = []
-  for (let i = 0; i < 9; i++) {
-    for (let j = 0; j < 9; j++) {
-      positions.push([i, j])
+    let vacias = 0
+    for (const [row, col] of positions) {
+      if (vacias >= objetivo) break
+      const valor = puzzle[row][col]
+      puzzle[row][col] = 0
+      if (countSolutions(puzzle, 2) === 1) {
+        vacias++
+      } else {
+        puzzle[row][col] = valor
+      }
+    }
+
+    if (!mejor || vacias > mejor.vacias) mejor = { puzzle, solution, vacias }
+    if (vacias >= objetivo) break
+  }
+
+  return { puzzle: mejor!.puzzle, solution: mejor!.solution }
+}
+
+// Cuenta las soluciones de un tablero (se detiene al llegar a `limit`).
+// No modifica el tablero recibido.
+export function countSolutions(board: number[][], limit = 2) {
+  const copia = board.map((fila) => [...fila])
+  let total = 0
+
+  const buscar = () => {
+    // Celda vacía con menos candidatos: poda mucho el árbol de búsqueda
+    let mejorFila = -1
+    let mejorCol = -1
+    let mejorCandidatos: number[] = []
+    let minimo = 10
+    for (let i = 0; i < 9 && minimo > 0; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (copia[i][j] !== 0) continue
+        const candidatos: number[] = []
+        for (let n = 1; n <= 9; n++) if (isValidPlacement(copia, i, j, n)) candidatos.push(n)
+        if (candidatos.length < minimo) {
+          minimo = candidatos.length
+          mejorFila = i
+          mejorCol = j
+          mejorCandidatos = candidatos
+          if (minimo === 0) break
+        }
+      }
+    }
+
+    if (mejorFila === -1) {
+      total++
+      return
+    }
+    for (const n of mejorCandidatos) {
+      copia[mejorFila][mejorCol] = n
+      buscar()
+      copia[mejorFila][mejorCol] = 0
+      if (total >= limit) return
     }
   }
 
-  // Mezclar las posiciones para eliminar números aleatoriamente
-  shuffleArray(positions)
-
-  // Eliminar números hasta alcanzar el número deseado de celdas vacías
-  for (let i = 0; i < emptyCells; i++) {
-    const [row, col] = positions[i]
-    board[row][col] = 0
-  }
-
-  return { puzzle: board, solution }
+  buscar()
+  return total
 }
 
 // Función para resolver un tablero de Sudoku usando backtracking
