@@ -12,6 +12,10 @@ interface NonogramBoardProps {
   showHint: boolean
   solution: number[][]
   isPreview?: boolean
+  /** Celdas sugeridas por la pista (se resaltan mientras showHint sea true). */
+  hintCells?: { row: number; col: number }[]
+  /** Fila o columna sugerida: se resaltan sus números. */
+  hintLine?: { tipo: "fila" | "columna"; indice: number } | null
 }
 
 export default function NonogramBoard({
@@ -23,6 +27,8 @@ export default function NonogramBoard({
   showHint,
   solution,
   isPreview = false,
+  hintCells = [],
+  hintLine = null,
 }: NonogramBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null)
 
@@ -52,25 +58,11 @@ export default function NonogramBoard({
   // Verificar si una celda debe mostrarse como pista
   const shouldShowHint = (row: number, col: number) => {
     if (!showHint) return false
-
-    // Mostrar una pista aleatoria (una celda que debería estar rellena)
-    const filledCells = []
-    for (let r = 0; r < solution.length; r++) {
-      for (let c = 0; c < solution[0].length; c++) {
-        if (solution[r][c] === 1 && board[r][c] !== 1) {
-          filledCells.push({ row: r, col: c })
-        }
-      }
-    }
-
-    if (filledCells.length === 0) return false
-
-    // Elegir una celda aleatoria para mostrar como pista
-    const randomIndex = Math.floor(Math.random() * filledCells.length)
-    const hintCell = filledCells[randomIndex]
-
-    return row === hintCell.row && col === hintCell.col
+    return hintCells.some((h) => h.row === row && h.col === col)
   }
+
+  const lineaResaltada = (tipo: "fila" | "columna", indice: number) =>
+    showHint && hintLine?.tipo === tipo && hintLine.indice === indice
 
   // Si es una vista previa, mostrar solo el tablero completado sin pistas
   if (isPreview) {
@@ -117,7 +109,7 @@ export default function NonogramBoard({
           {colClues.map((clues, colIndex) => (
             <div
               key={`col-${colIndex}`}
-              className="flex flex-col items-center justify-end"
+              className={cn("flex flex-col items-center justify-end rounded-t", lineaResaltada("columna", colIndex) && "bg-green-500/30")}
               style={{ gridColumn: maxRowClueLength + colIndex + 1, gridRow: `1 / span ${maxColClueLength}` }}
             >
               {clues.map((clue, i) => (
@@ -135,7 +127,7 @@ export default function NonogramBoard({
           {rowClues.map((clues, rowIndex) => (
             <div
               key={`row-${rowIndex}`}
-              className="flex items-center justify-end pr-2"
+              className={cn("flex items-center justify-end pr-2 rounded-l", lineaResaltada("fila", rowIndex) && "bg-green-500/30")}
               style={{ gridColumn: `1 / span ${maxRowClueLength}`, gridRow: maxColClueLength + rowIndex + 1 }}
             >
               {clues.map((clue, i) => (

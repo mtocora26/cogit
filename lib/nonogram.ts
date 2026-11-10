@@ -1,3 +1,5 @@
+import { DIBUJOS_EXTRA } from "./nonogram-extra"
+
 // Definición de tipos
 export interface NonogramLevel {
   id: number
@@ -273,5 +275,6 @@ export function getNonogramLevels(): NonogramLevel[] {
       rowClues: brainClues.rowClues,
       colClues: brainClues.colClues,
     },
+    ...DIBUJOS_EXTRA.map((d) => ({ ...d, ...generateClues(d.solution) })),
   ]
 }

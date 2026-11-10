@@ -9,6 +9,8 @@ import NonogramBoard from "@/components/nonogram/nonogram-board"
 import NonogramControls from "@/components/nonogram/nonogram-controls"
 import LevelSelector from "@/components/nonogram/level-selector"
 import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
+import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
+import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
 import { formatTime } from "@/lib/utils"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -26,6 +28,7 @@ export default function NonogramasPage() {
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [pista, setPista] = useState<{ mensaje: string; sugerencia: SugerenciaNonograma | null } | null>(null)
   const [levels] = useState(getNonogramLevels())
   const [errors, setErrors] = useState<{ row: number; col: number }[]>([])
   const [showTutorial, setShowTutorial] = useState(false)
@@ -54,6 +57,7 @@ export default function NonogramasPage() {
     setShowLevelSelector(false)
     setErrors([])
     setShowHint(false)
+    setPista(null)
     setShowCompletionAnimation(false)
 
     // Mostrar tutorial solo para el primer nivel y solo la primera vez
@@ -117,6 +121,7 @@ export default function NonogramasPage() {
   // Manejar clic en una celda
   const handleCellClick = (row: number, col: number, rightClick = false) => {
     if (isComplete) return
+    setShowHint(false)
 
     const newBoard = [...board.map((row) => [...row])]
 
@@ -181,6 +186,7 @@ export default function NonogramasPage() {
     setIsActive(true)
     setErrors([])
     setShowHint(false)
+    setPista(null)
     setShowCompletionAnimation(false)
   }
 
@@ -199,10 +205,17 @@ export default function NonogramasPage() {
 
   // Mostrar pista
   const handleShowHint = () => {
+    const sugerencia = sugerirPista(board, rowClues, colClues)
+    setPista({
+      sugerencia,
+      mensaje:
+        sugerencia?.mensaje ??
+        "No encuentro ninguna jugada segura ahora. Revisa que tus celdas rellenas coincidan con las pistas de su fila y su columna.",
+    })
     setShowHint(true)
     setTimeout(() => {
       setShowHint(false)
-    }, 3000)
+    }, 10000)
   }
 
   return (
@@ -441,7 +454,15 @@ export default function NonogramasPage() {
                     showHint={showHint}
                     solution={solution}
                     isPreview={false}
+                    hintCells={pista?.sugerencia?.celdas}
+                    hintLine={pista?.sugerencia ? { tipo: pista.sugerencia.tipo, indice: pista.sugerencia.indice } : null}
                   />
+
+                  {showHint && pista && (
+                    <p role="status" className="mt-4 rounded-md border border-green-500/40 bg-green-500/10 p-3 text-sm">
+                      {pista.mensaje}
+                    </p>
+                  )}
 
                   <NonogramControls />
                 </div>
@@ -451,81 +472,7 @@ export default function NonogramasPage() {
         )}
       </div>
 
-      {/* Tutorial Modal */}
-      {showTutorial && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-700">
-            <h2 className="text-2xl font-bold mb-4">Cómo jugar a Nonogramas</h2>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">¿Qué son los nonogramas?</h3>
-                <p className="text-gray-300">
-                  Los nonogramas son puzzles lógicos donde debes rellenar celdas en una cuadrícula para revelar una
-                  imagen oculta. Las pistas numéricas en cada fila y columna te indican cómo rellenar las celdas.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Reglas básicas</h3>
-                <ul className="space-y-2 text-gray-300 list-disc pl-5">
-                  <li>Los números al lado de cada fila indican bloques consecutivos de celdas que deben rellenarse.</li>
-                  <li>
-                    Por ejemplo, "3 1" significa que hay un bloque de 3 celdas seguido de al menos una celda vacía y
-                    luego un bloque de 1 celda.
-                  </li>
-                  <li>Lo mismo aplica para las columnas con los números en la parte superior.</li>
-                  <li>
-                    Usa el clic izquierdo para rellenar una celda y el clic derecho para marcarla con una X (indicando
-                    que debe quedar vacía).
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Ejemplo</h3>
-                <div className="bg-background p-4 rounded-lg">
-                  <p className="text-gray-300 mb-2">
-                    En una fila con la pista "3 1" y 5 celdas, la solución podría ser:
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right w-10">3 1</div>
-                    <div className="flex">
-                      {["■", "■", "■", "□", "■"].map((cell, i) => (
-                        <div key={i} className="w-6 h-6 border border-gray-600 flex items-center justify-center">
-                          {cell}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Consejos</h3>
-                <ul className="space-y-2 text-gray-300 list-disc pl-5">
-                  <li>
-                    Comienza con las filas y columnas que tienen números grandes o muchos bloques, ya que tienen menos
-                    posibilidades.
-                  </li>
-                  <li>Usa las X para marcar celdas que sabes que deben estar vacías.</li>
-                  <li>
-                    Busca superposiciones: si un bloque solo puede estar en cierta posición, puedes rellenar esas
-                    celdas.
-                  </li>
-                  <li>
-                    Revisa constantemente las filas y columnas para asegurarte de que tus marcas son consistentes.
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <Button onClick={() => setShowTutorial(false)}>Entendido</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <NonogramaTutorial open={showTutorial} onClose={() => setShowTutorial(false)} />
     </div>
   )
 }
