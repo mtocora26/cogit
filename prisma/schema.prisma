@@ -32,6 +32,7 @@ model Usuario {
   /// REQ-008: el estudiante puede excluirse del ranking. Por defecto aparece, con su alias.
   visibleEnRanking Boolean @default(true)
   progreso  Progreso[]
+  parciales ProgresoParcial[]
   creadoEn  DateTime  @default(now())
   neuronas     Int      @default(5)
   maxNeuronas  Int      @default(5)
@@ -52,4 +53,18 @@ model Progreso {
   @@unique([userId, seccion, nivel, actividad], name: "userId_seccion_nivel_actividad")
 }
 
+/// REQ-006: actividad a medias (ronda, puntos y vidas) para retomarla al volver a entrar con la misma cuenta.
+/// Se borra al completar la actividad o al reiniciarla.
+model ProgresoParcial {
+  id          Int      @id @default(autoincrement())
+  user        Usuario  @relation(fields: [userId], references: [id])
+  userId      Int
+  seccion     String
+  nivel       String
+  actividad   String
+  estado      Json
+  vidas       Int
+  actualizado DateTime @updatedAt
 
+  @@unique([userId, seccion, nivel, actividad], name: "userId_seccion_nivel_actividad")
+}

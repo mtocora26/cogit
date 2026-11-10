@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, PartyPopper, XCircle } from "lucide-react"
 import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { motion, AnimatePresence } from "framer-motion"
 import Pistas from "@/components/misiones/pistas"
-import { describirRegla, findCyclicBase } from "@/lib/patrones"
+import { describirRegla, findCyclicBase, type EstadoJuego } from "@/lib/patrones"
 
 const SEQUENCES = [
   {
@@ -45,16 +45,24 @@ const SEQUENCES = [
 
 interface CompletaPatronProps {
   onComplete: (success: boolean, time: number, score?: number) => void
+  estadoInicial?: EstadoJuego | null
+  onEstado?: (estado: EstadoJuego) => void
 }
 
-export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
-  const [current, setCurrent] = useState(0)
+export default function CompletaPatron({ onComplete, estadoInicial, onEstado }: CompletaPatronProps) {
+  const [current, setCurrent] = useState<number>(Math.min(Math.max(Number(estadoInicial?.current) || 0, 0), SEQUENCES.length - 1))
   const [userInput, setUserInput] = useState<string[]>([])
   const [feedback, setFeedback] = useState<null | boolean>(null)
   const [completed, setCompleted] = useState(false)
   const [showNext, setShowNext] = useState(false)
   const [startTime] = useState(Date.now())
   const [mensajeError, setMensajeError] = useState<string | null>(null)
+
+  // Foto del estado al pasar de patrón (no en el primero, para no guardar algo sin avance).
+  useEffect(() => {
+    if (onEstado && current > 0) onEstado({ current })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current])
 
   const seq = SEQUENCES[current]
   const patternWithInput = seq.pattern.map((el, i) =>

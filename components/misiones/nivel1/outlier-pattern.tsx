@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
-import { describirRegla } from "@/lib/patrones"
+import { describirRegla, type EstadoJuego } from "@/lib/patrones"
 
 interface OutlierPatternProps {
   onComplete: (
@@ -19,6 +19,8 @@ interface OutlierPatternProps {
     erroresRepetidos?: number[]
   ) => void
   onRondaError?: () => void // NUEVO: callback para error de ronda
+  estadoInicial?: EstadoJuego | null
+  onEstado?: (estado: EstadoJuego) => void
 }
 
 type PatternType = "color" | "shape" | "number" | "direction"
@@ -51,7 +53,8 @@ function generateOutlierPattern(type: PatternType, length: number) {
   return { pattern, outlierIdx, outlier, base }
 }
 
-export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatternProps) {
+export default function OutlierPattern({ onComplete, onRondaError, estadoInicial, onEstado }: OutlierPatternProps) {
+  const ini = (estadoInicial ?? {}) as Record<string, any>
   const [patternType, setPatternType] = useState<PatternType>("color")
   const [pattern, setPattern] = useState<string[]>([])
   const [outlierIdx, setOutlierIdx] = useState<number>(-1)
@@ -59,25 +62,25 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
   const [base, setBase] = useState<string[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
-  const [score, setScore] = useState(0)
-  const [round, setRound] = useState(1)
-  const [lives, setLives] = useState(initialLives)
+  const [score, setScore] = useState<number>(ini.score ?? 0)
+  const [round, setRound] = useState<number>(ini.round ?? 1)
+  const [lives, setLives] = useState<number>(ini.lives ?? initialLives)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [showExplanation, setShowExplanation] = useState(false)
   const [explanation, setExplanation] = useState("")
-  const [incorrectRounds, setIncorrectRounds] = useState<any[]>([])
-  const [reviewMode, setReviewMode] = useState(false)
-  const [reviewIndex, setReviewIndex] = useState(0)
+  const [incorrectRounds, setIncorrectRounds] = useState<any[]>(ini.incorrectRounds ?? [])
+  const [reviewMode, setReviewMode] = useState<boolean>(ini.reviewMode ?? false)
+  const [reviewIndex, setReviewIndex] = useState<number>(ini.reviewIndex ?? 0)
   const [mounted, setMounted] = useState(false)
-  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
-  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
+  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>(ini.erroresDetalle ?? [])
+  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>(ini.erroresRepetidos ?? [])
 
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     if (mounted) {
-      setStartTime(Date.now())
-      startNewRound()
+      setStartTime(Date.now() - (Number(ini.tiempo) || 0) * 1000)
+      startNewRound(Boolean(ini.reviewMode))
     }
     // eslint-disable-next-line
   }, [mounted])
@@ -88,6 +91,14 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     }, 1000)
     return () => clearInterval(timer)
   }, [startTime])
+  // Foto del estado al cambiar de ronda (no en la primera, para no guardar algo sin avance).
+  useEffect(() => {
+    if (!mounted || !onEstado) return
+    if (round === 1 && !reviewMode && score === 0 && erroresDetalle.length === 0) return
+    onEstado({ round, score, lives, incorrectRounds, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo: timeElapsed })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, round, reviewMode, reviewIndex, score])
+
   if (!mounted) return null
 
   const startNewRound = (isReview = false) => {

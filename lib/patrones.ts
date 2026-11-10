@@ -30,3 +30,6 @@ export function describirRegla(completa: string[], nombre: (ficha: string) => st
   }
   return `${de}se repite cada ${n} fichas: ${base.map(nombre).join(", ")}.`
 }
+
+/** Foto serializable del estado de un juego, para guardarla y retomarla (REQ-006). */
+export type EstadoJuego = Record<string, unknown>
