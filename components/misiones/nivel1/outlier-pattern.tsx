@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 import Pistas from "@/components/misiones/pistas"
+import { describirRegla } from "@/lib/patrones"
 
 interface OutlierPatternProps {
   onComplete: (
@@ -128,19 +129,21 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     const correct = idx === outlierIdx
     setIsCorrect(correct)
     setShowExplanation(true)
-    setExplanation(
-      correct
-        ? "¡Correcto! Has encontrado el elemento que no pertenece al patrón."
-        : `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`
-    )
+    // Secuencia sin el intruso, para nombrar la regla: se repite cada 3 fichas.
+    const limpia = pattern.map((_, i) => base[i % base.length])
+    const regla = describirRegla(limpia, glyphName, patternType)
+    const explicacion = correct
+      ? `¡Correcto! Esa ficha rompe la regla. ${regla}`
+      : `${glyphName(pattern[idx])} sí sigue el patrón: no es el intruso. ${regla} Busca la ficha que no encaja en esa repetición.`
+    setExplanation(explicacion)
     if (correct) {
       setScore(score + 1)
       setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 } }), 500)
       setTimeout(() => handleContinue(), 1200)
     } else {
       if (!reviewMode) {
-        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: round - 1, explicacion: `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`}])
-        setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`}])
+        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: round - 1, explicacion }])
+        setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion }])
       } else {
         setErroresRepetidos(prev => [...prev, reviewIndex])
       }
