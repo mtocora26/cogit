@@ -8,6 +8,7 @@ import NavBar from "@/components/nav-bar"
 import SudokuBoard from "@/components/sudoku/sudoku-board"
 import SudokuControls from "@/components/sudoku/sudoku-controls"
 import LevelSelector from "@/components/sudoku/level-selector"
+import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
 import { generateSudoku, checkSolution } from "@/lib/sudoku"
 import { formatTime } from "@/lib/utils"
 
@@ -314,6 +315,7 @@ export default function SudokuPage() {
                 isNotesMode={isNotesMode}
               />
               <div className="flex flex-col gap-2">
+                <SudokuReglas />
                 <Button variant="outline" onClick={handleHint} disabled={hintsUsed >= 3 || !selectedCell}>
                   <Lightbulb className="mr-2 h-4 w-4" />
                   Pista ({3 - hintsUsed} restantes)
