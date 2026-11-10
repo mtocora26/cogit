@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
+import { leerCatalogo } from "@/lib/contenido"
 
 export const dynamic = "force-dynamic"
 
@@ -11,6 +11,7 @@ export default async function AdminEstadisticas() {
   desde.setHours(0, 0, 0, 0)
   desde.setDate(desde.getDate() - (DIAS - 1))
 
+  const { seccion: SECCION, niveles: NIVELES } = await leerCatalogo()
   const [registros, completadas] = await Promise.all([
     prisma.usuario.findMany({ where: { creadoEn: { gte: desde } }, select: { creadoEn: true } }),
     prisma.progreso.findMany({ where: { completado: true }, select: { seccion: true, nivel: true, userId: true } }),
@@ -31,9 +32,9 @@ export default async function AdminEstadisticas() {
   // Avance por nivel
   const niveles = NIVELES.map((n) => {
     const filas = completadas.filter((c) => c.seccion === SECCION.id && c.nivel === n.id)
-    return { ...n, actividades: filas.length, estudiantes: new Set(filas.map((f) => f.userId)).size }
+    return { ...n, completadas: filas.length, estudiantes: new Set(filas.map((f) => f.userId)).size }
   })
-  const maxAct = Math.max(1, ...niveles.map((n) => n.actividades))
+  const maxAct = Math.max(1, ...niveles.map((n) => n.completadas))
 
   return (
     <div className="space-y-10">
@@ -60,9 +61,9 @@ export default async function AdminEstadisticas() {
                   <td className="px-5 py-3 tabular-nums">{n.estudiantes}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <span className="w-6 tabular-nums">{n.actividades}</span>
+                      <span className="w-6 tabular-nums">{n.completadas}</span>
                       <span aria-hidden className="h-2.5 w-full max-w-48 rounded-[2px] bg-accent">
-                        <span className="block h-full rounded-[2px]" style={{ width: `${(n.actividades / maxAct) * 100}%`, background: thread(i / 2) }} />
+                        <span className="block h-full rounded-[2px]" style={{ width: `${(n.completadas / maxAct) * 100}%`, background: thread(i / 2) }} />
                       </span>
                     </div>
                   </td>
