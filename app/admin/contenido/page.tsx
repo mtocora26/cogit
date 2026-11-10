@@ -1,5 +1,6 @@
 import { leerCatalogo } from "@/lib/contenido"
 import { minutosNivel } from "@/lib/misiones-catalogo"
+import EditorNivel from "@/components/admin/editor-nivel"
 
 export const dynamic = "force-dynamic"
 
@@ -10,8 +11,8 @@ export default async function AdminContenido() {
       <header>
         <h1 className="font-display text-3xl font-semibold">Contenido de misiones</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          El contenido de las misiones se lee de la base de datos. Cada actividad elige su juego por clave, así que agregar una
-          actividad no exige cambiar la interfaz.
+          Edita el objetivo, la duración, las reglas y el ejemplo de cada misión. Los cambios se validan antes de guardarse y los
+          estudiantes los ven al instante. Cada actividad elige su juego, así que agregar una no exige cambiar la interfaz.
         </p>
       </header>
 
@@ -19,29 +20,23 @@ export default async function AdminContenido() {
         <h2 id="catalogo" className="mb-3 font-display text-xl font-semibold">
           {seccion.title} <span className="text-base font-normal text-muted-foreground">· {seccion.subtitle}</span>
         </h2>
-        <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+        <div className="space-y-3">
           {niveles.map((n) => (
-            <li key={n.id} className="px-5 py-4">
-              <p className="font-medium">
-                Nivel {n.id}: {n.title}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">{n.text}</p>
-              <p className="mt-1 text-sm">
-                <span className="font-medium">Objetivo:</span> {n.objetivo}
-                {n.actividades.length > 0 ? ` · ≈ ${minutosNivel(n)} min` : " · Próximamente"}
-              </p>
-              {n.actividades.length > 0 && (
-                <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-                  {n.actividades.map((a) => (
-                    <li key={a.id}>
-                      {a.id}. {a.title} · {a.minutos} min
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
+            <details key={n.id} className="group rounded-xl border border-border bg-card">
+              <summary className="flex min-h-11 cursor-pointer flex-wrap items-baseline justify-between gap-2 px-5 py-4">
+                <span className="font-medium">
+                  Nivel {n.id}: {n.title}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {n.actividades.length > 0 ? `${n.actividades.length} actividades · ≈ ${minutosNivel(n)} min` : "Próximamente"}
+                </span>
+              </summary>
+              <div className="border-t border-border px-5 py-5">
+                <EditorNivel nivel={n} />
+              </div>
+            </details>
           ))}
-        </ul>
+        </div>
       </section>
     </div>
   )

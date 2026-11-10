@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { CatalogoSchema, type Catalogo } from "@/lib/contenido-schema"
+import { CatalogoSchema, type Catalogo, type NivelCatalogo } from "@/lib/contenido-schema"
 import { CATALOGO_INICIAL } from "@/lib/misiones-catalogo"
 
 /** Sección de las misiones. Hoy hay una sola; sus niveles y actividades viven en la base. */
@@ -46,4 +46,36 @@ export async function leerCatalogo(): Promise<Catalogo> {
     console.error("No se pudo leer el contenido de misiones; se usa el inicial", e)
     return CATALOGO_INICIAL
   }
+}
+
+export class NivelNoEncontrado extends Error {}
+
+/**
+ * Guarda un nivel ya validado: sus textos y sus actividades (en el orden recibido; las que faltan se quitan).
+ * El progreso de los estudiantes no se toca: se guarda por clave de actividad, no por fila de contenido.
+ */
+export async function guardarNivel(nivel: NivelCatalogo): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const fila = await tx.nivel.findUnique({ where: { seccion_clave: { seccion: SECCION.id, clave: nivel.id } } })
+    if (!fila) throw new NivelNoEncontrado(nivel.id)
+    await tx.nivel.update({ where: { id: fila.id }, data: { titulo: nivel.title, texto: nivel.text, objetivo: nivel.objetivo } })
+    await tx.actividad.deleteMany({ where: { nivelId: fila.id, clave: { notIn: nivel.actividades.map((a) => a.id) } } })
+    for (const [orden, a] of nivel.actividades.entries()) {
+      const datos = {
+        titulo: a.title,
+        descripcion: a.descripcion,
+        objetivo: a.objetivo,
+        minutos: a.minutos,
+        juego: a.juego,
+        reglas: a.reglas,
+        ejemplo: a.ejemplo,
+        orden,
+      }
+      await tx.actividad.upsert({
+        where: { nivelId_clave: { nivelId: fila.id, clave: a.id } },
+        update: datos,
+        create: { nivelId: fila.id, clave: a.id, ...datos },
+      })
+    }
+  })
 }
