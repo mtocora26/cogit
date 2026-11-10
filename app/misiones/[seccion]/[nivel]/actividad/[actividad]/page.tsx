@@ -14,6 +14,9 @@ import EjecutarAlgoritmo from "@/components/misiones/nivel2/ejecutar-algoritmo"
 import ClasificarRegla from "@/components/misiones/nivel3/clasificar"
 import QueSobra from "@/components/misiones/nivel3/que-sobra"
 import LoEsencial from "@/components/misiones/nivel3/lo-esencial"
+import DividirTarea from "@/components/misiones/nivel4/dividir-tarea"
+import EncuentraError from "@/components/misiones/nivel4/encuentra-error"
+import DepuraPrograma from "@/components/misiones/nivel4/depura-programa"
 import { useLives } from "@/components/misiones/lives-context"
 import { buscarActividad, buscarNivel } from "@/lib/misiones-catalogo"
 import { useCatalogo } from "@/components/misiones/use-catalogo"
@@ -27,6 +30,7 @@ const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion
   "1": { rondas: 5, puntos: 5, penalizacion: 2, bonus: 10 },
   "2": { rondas: 5, puntos: 8, penalizacion: 2, bonus: 15 },
   "3": { rondas: 3, puntos: 12, penalizacion: 2, bonus: 20 },
+  "4": { rondas: 5, puntos: 15, penalizacion: 2, bonus: 25 },
 }
 
 // --- NUEVO: Función robusta para descontar vidas por error de ronda ---
@@ -42,6 +46,9 @@ const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
   clasificar: ClasificarRegla,
   sobra: QueSobra,
   esencial: LoEsencial,
+  subtareas: DividirTarea,
+  error: EncuentraError,
+  depurar: DepuraPrograma,
 }
 
 function descontarVidaPorError(loseLife: () => void) {

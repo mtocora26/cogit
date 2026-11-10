@@ -210,6 +210,73 @@ export const CATALOGO_INICIAL: Catalogo = {
         },
       ],
     },
+    {
+      id: "4",
+      title: "Descomposición y depuración",
+      text: "Divide tareas grandes en partes pequeñas y encuentra dónde falla un procedimiento.",
+      objetivo: "Partir un problema en subtareas y localizar el paso que tiene el error.",
+      actividades: [
+        {
+          id: "1",
+          title: "Divide la tarea",
+          descripcion: "Una tarea grande trae sus pasos mezclados: repártelos en las partes más pequeñas a las que pertenecen.",
+          objetivo: "Descomponer una tarea grande en subtareas con un objetivo propio.",
+          minutos: 4,
+          juego: "subtareas",
+          reglas: [
+            "Verás una tarea grande, sus partes y los pasos mezclados.",
+            "Para cada paso, elige la parte a la que ayuda.",
+            "Pulsa «Comprobar». Si te equivocas pierdes una vida y se te explica a qué parte no pertenece ese paso.",
+            "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
+          ],
+          ejemplo: {
+            secuencia: ["Hacer la lista de invitados", "Comprar los ingredientes", "Enviar los mensajes de invitación"],
+            respuesta: ["Lista y mensajes → Invitaciones; ingredientes → Comida"],
+            explicacion: "En una fiesta, avisar a la gente es una parte (invitaciones) y tener qué comer es otra (comida). Cada paso va con la parte a la que ayuda.",
+          },
+        },
+        {
+          id: "2",
+          title: "Encuentra el error",
+          descripcion: "Unos pasos no tienen sentido tal como están: señala el que está mal.",
+          objetivo: "Detectar el paso que no encaja o que está fuera de lugar en una secuencia.",
+          minutos: 3,
+          juego: "error",
+          reglas: [
+            "Verás los pasos de una tarea con un error: un paso ajeno o un paso en el momento equivocado.",
+            "Léelos en orden y pregúntate si lo que cada paso necesita ya se hizo.",
+            "Toca el paso con error y pulsa «Este es el error». Si te equivocas pierdes una vida y se te explica por qué.",
+            "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
+          ],
+          ejemplo: {
+            secuencia: ["Tomar el teléfono", "Hablar con la persona", "Marcar el número"],
+            resaltar: 1,
+            respuesta: ["Hablar con la persona"],
+            explicacion: "No se puede hablar antes de marcar: ese paso está fuera de lugar. Marcar el número debía ir antes.",
+          },
+        },
+        {
+          id: "3",
+          title: "Depura el programa",
+          descripcion: "Un programa mostró un resultado equivocado: revisa línea por línea y encuentra la cuenta que falló.",
+          objetivo: "Localizar la línea de un programa donde empieza un error.",
+          minutos: 4,
+          juego: "depurar",
+          reglas: [
+            "Verás un programa con el valor antes y después de cada línea; el resultado final no es el esperado.",
+            "Comprueba cada línea por separado: toma el valor anterior, aplica la instrucción y compara.",
+            "Elige la línea con la cuenta mal hecha y pulsa «Esta línea tiene el error». Si te equivocas pierdes una vida y se te explica por qué esa línea sí estaba bien.",
+            "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
+          ],
+          ejemplo: {
+            secuencia: ["Empieza con 2", "Suma 3 → 5", "Duplica el valor → 11"],
+            resaltar: 2,
+            respuesta: ["Duplica el valor"],
+            explicacion: "5 duplicado es 10, no 11: esa línea falló. Por eso el resultado final salió mal.",
+          },
+        },
+      ],
+    },
   ],
 }
 
