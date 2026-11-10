@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ArrowRight } from "lucide-react"
-import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
+import { NIVELES, SECCION, minutosNivel } from "@/lib/misiones-catalogo"
 
 /**
  * Los niveles de la sección como una columna de tarjetas perforadas unidas por un hilo.
@@ -66,8 +66,8 @@ export default function MisionesTelar() {
           const count = done?.[n.id] ?? 0
           const started = count > 0
           // Solo el primer nivel sin completar es la acción principal; los demás quedan en segundo plano.
-          const disponible = n.actividades > 0
-          const primero = disponible && (NIVELES.findIndex((x) => x.actividades > 0 && !(done?.[x.id])) === i || (done === null && i === 0))
+          const disponible = n.actividades.length > 0
+          const primero = disponible && (NIVELES.findIndex((x) => x.actividades.length > 0 && !(done?.[x.id])) === i || (done === null && i === 0))
           return (
             <li key={n.id} className="relative">
               {i < NIVELES.length - 1 && (
@@ -90,6 +90,14 @@ export default function MisionesTelar() {
                 <div>
                   <h3 className="font-display text-xl font-semibold">{n.title}</h3>
                   <p className="mt-1 max-w-xl text-muted-foreground">{n.text}</p>
+                  <p className="mt-2 max-w-xl text-sm">
+                    <span className="font-medium">Objetivo:</span> {n.objetivo}
+                  </p>
+                  {disponible && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      ≈ {minutosNivel(n)} min · {n.actividades.length} actividades
+                    </p>
+                  )}
                   <div aria-hidden className="mt-4 flex max-w-sm gap-1.5">
                     {Array.from({ length: CELLS }, (_, k) => (
                       <span
