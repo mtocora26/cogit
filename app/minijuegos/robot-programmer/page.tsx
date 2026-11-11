@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Play, RotateCcw, Info } from "lucide-react"
+import { ArrowLeft, Play, RotateCcw, Info, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import GameBoard from "@/components/robot-programmer/game-board"
 import CommandZone from "@/components/robot-programmer/command-zone"
 import LevelSelector from "@/components/robot-programmer/level-selector"
-import { getLevels, validateSolution } from "@/lib/robot-programmer"
+import { getLevels, runProgram, explainFailure } from "@/lib/robot-programmer"
 import { formatTime } from "@/lib/utils"
 import Image from "next/image"
 import RobotSVG from "@/components/robot-programmer/robot-svg"
@@ -36,6 +36,8 @@ export default function RobotProgrammerPage() {
   const [lives, setLives] = useState(3)
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [robot3D, setRobot3D] = useState(false)
+  const [hintsShown, setHintsShown] = useState(0) // pistas reveladas del nivel actual
+  const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
   // Iniciar el juego con un nivel seleccionado
@@ -54,6 +56,8 @@ export default function RobotProgrammerPage() {
     setCommandLimit(level.commandLimit || 10)
     setSteps(0)
     setLives(3)
+    setHintsShown(0)
+    setFailureMessage(null)
   }
 
   // Manejar el temporizador
@@ -120,112 +124,51 @@ export default function RobotProgrammerPage() {
 
   // Ejecutar los comandos
   const executeCommands = async () => {
-    if (isExecuting || commands.length === 0) return;
+    if (isExecuting || commands.length === 0) return
 
-    setIsExecuting(true);
-    setSteps(0);
+    setIsExecuting(true)
+    setSteps(0)
+    setFailureMessage(null)
 
     // Reiniciar el estado del robot
-    const level = levels[currentLevel];
-    setRobotPosition({ ...level.startPosition });
-    setLitCells([]);
+    const level = levels[currentLevel]
+    setRobotPosition({ ...level.startPosition })
+    setLitCells([])
 
-    // Ejecutar cada comando secuencialmente
-    let currentPosition = { ...level.startPosition };
-    let currentLitCells: { x: number; y: number }[] = [];
-
-    for (let i = 0; i < commands.length; i++) {
-      const command = commands[i];
-      setSteps(i + 1);
-      const result = executeCommand(command, currentPosition, currentLitCells, level.board);
-      currentPosition = result.position;
-      currentLitCells = result.litCells;
-      setRobotPosition({ ...currentPosition });
-      setLitCells([...currentLitCells]);
-      await new Promise((resolve) => setTimeout(resolve, executionSpeed));
+    // Simular el programa completo y animar cada paso
+    const run = runProgram(commands, level)
+    for (let i = 0; i < run.frames.length; i++) {
+      setSteps(i + 1)
+      setRobotPosition({ ...run.frames[i].position })
+      setLitCells([...run.frames[i].litCells])
+      await new Promise((resolve) => setTimeout(resolve, executionSpeed))
     }
 
-    // Verificar si se completó el nivel
-    const success = validateSolution(currentLitCells, level.targetCells);
-
-    if (success) {
-      setIsSuccess(true);
-      setIsComplete(true);
-      setIsActive(false);
+    if (run.success) {
+      setIsSuccess(true)
+      setIsComplete(true)
+      setIsActive(false)
     } else {
-      // Si no se completó correctamente, reducir vidas de forma segura
+      // Explicar en qué paso y por qué falló, y restar una vida
+      setFailureMessage(explainFailure(run))
       setLives((prev) => {
-        const newLives = Math.max(0, prev - 1);
+        const newLives = Math.max(0, prev - 1)
         if (newLives <= 0) {
-          setIsComplete(true);
-          setIsSuccess(false);
-          setIsActive(false);
+          setIsComplete(true)
+          setIsSuccess(false)
+          setIsActive(false)
         }
-        return newLives;
-      });
+        return newLives
+      })
     }
 
-    setIsExecuting(false);
-  };
+    setIsExecuting(false)
+  }
 
-  // Ejecutar un comando individual
-  const executeCommand = (
-    command: string,
-    position: { x: number; y: number; direction: number },
-    litCells: { x: number; y: number }[],
-    board: number[][],
-  ) => {
-    const newPosition = { ...position }
-    const newLitCells = [...litCells]
-
-    switch (command) {
-      case "forward":
-        // Calcular nueva posición basada en la dirección
-        const directionVectors = [
-          { x: 0, y: -1 }, // Norte
-          { x: 1, y: 0 }, // Este
-          { x: 0, y: 1 }, // Sur
-          { x: -1, y: 0 }, // Oeste
-        ]
-
-        const vector = directionVectors[position.direction]
-        const newX = position.x + vector.x
-        const newY = position.y + vector.y
-
-        // Verificar si la nueva posición está dentro del tablero y no es un obstáculo
-        if (
-          newX >= 0 &&
-          newX < board[0].length &&
-          newY >= 0 &&
-          newY < board.length &&
-          board[newY][newX] !== 1 // 1 representa un obstáculo
-        ) {
-          newPosition.x = newX
-          newPosition.y = newY
-        }
-        break
-
-      case "turnRight":
-        newPosition.direction = (position.direction + 1) % 4
-        break
-
-      case "turnLeft":
-        newPosition.direction = (position.direction + 3) % 4 // +3 es equivalente a -1 en módulo 4
-        break
-
-      case "light":
-        // Verificar si la celda ya está encendida
-        const alreadyLit = newLitCells.some((cell) => cell.x === position.x && cell.y === position.y)
-
-        if (!alreadyLit) {
-          newLitCells.push({ x: position.x, y: position.y })
-        }
-        break
-
-      // Aquí se pueden añadir más comandos como bucles o funciones
-    }
-
-    return { position: newPosition, litCells: newLitCells }
+  // Revelar la siguiente pista (no completa el nivel ni resta vidas)
+  const showNextHint = () => {
+    const total = levels[currentLevel].hints.length
+    setHintsShown((n) => Math.min(n + 1, total))
   }
 
   // Reiniciar el nivel actual
@@ -241,6 +184,8 @@ export default function RobotProgrammerPage() {
     setLives(3)
     setTime(0)
     setIsActive(true)
+    setHintsShown(0)
+    setFailureMessage(null)
   }
 
   // Volver al selector de niveles
@@ -419,6 +364,20 @@ export default function RobotProgrammerPage() {
                   vertical
                 />
               </div>
+              {/* Por qué falló el último programa */}
+              {failureMessage && (
+                <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                  {failureMessage}
+                </div>
+              )}
+              {/* Pistas graduales */}
+              {hintsShown > 0 && (
+                <ol aria-live="polite" className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-100 space-y-2 list-decimal list-inside">
+                  {levels[currentLevel].hints.slice(0, hintsShown).map((hint, i) => (
+                    <li key={i}>{hint}</li>
+                  ))}
+                </ol>
+              )}
               {/* Botones principales debajo de comandos */}
               <div className="flex flex-col gap-2 w-full mt-2">
                 <Button
@@ -428,6 +387,19 @@ export default function RobotProgrammerPage() {
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Ejecutar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-amber-400/50 text-amber-200 hover:bg-amber-400/10 w-full text-base py-3"
+                  onClick={showNextHint}
+                  disabled={isExecuting || isComplete || hintsShown >= levels[currentLevel].hints.length}
+                >
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  {hintsShown === 0
+                    ? "Pedir pista"
+                    : hintsShown >= levels[currentLevel].hints.length
+                      ? "Sin más pistas"
+                      : `Otra pista (${hintsShown}/${levels[currentLevel].hints.length})`}
                 </Button>
                 <Button
                   variant="outline"
