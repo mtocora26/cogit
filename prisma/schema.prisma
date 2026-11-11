@@ -34,6 +34,9 @@ model Usuario {
   progreso  Progreso[]
   parciales ProgresoParcial[]
   creadoEn  DateTime  @default(now())
+  /// REQ-021: versión de los términos que aceptó al registrarse y cuándo. Nulos en cuentas anteriores.
+  terminosVersion     String?
+  terminosAceptadosEn DateTime?
   neuronas     Int      @default(5)
   maxNeuronas  Int      @default(5)
   ultimaRecarga DateTime?
