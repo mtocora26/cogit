@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { formatTime } from "@/lib/utils"
 import { DifficultyCard } from "@/components/brand/difficulty-card"
 import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
 
 interface LevelSelectorProps {
   onStartGame: (level: "facil" | "medio" | "dificil") => void
@@ -46,6 +48,14 @@ export default function LevelSelector({ onStartGame }: LevelSelectorProps) {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  // Mejores tiempos guardados en la cuenta (REQ-002): se suman a los del navegador
+  const resultadosCuenta = useResultadosCuenta("sudoku")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta = Object.fromEntries(resultadosCuenta.map((r) => [r.actividad, r.tiempo]))
+    setBestTimes((prev) => fusionarTiempos(prev as Record<string, number>, deCuenta))
+  }, [resultadosCuenta])
 
   return (
     <div className="w-full overflow-y-auto px-4 py-8">

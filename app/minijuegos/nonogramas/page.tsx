@@ -12,6 +12,8 @@ import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
 import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
 import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -94,6 +96,22 @@ export default function NonogramasPage() {
       setCompletedImages(JSON.parse(savedCompletedImages))
     }
   }, [])
+
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("nonogramas")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta: Record<string, number> = {}
+    resultadosCuenta.forEach((r) => {
+      const i = levels.findIndex((l) => String(l.id) === r.actividad)
+      if (i >= 0) deCuenta[String(i)] = r.tiempo
+    })
+    setBestTimes((prev) => {
+      const fusion = fusionarTiempos(Object.fromEntries(Object.entries(prev)), deCuenta)
+      return Object.fromEntries(Object.entries(fusion).map(([k, v]) => [Number(k), v]))
+    })
+    setCompletedImages((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(deCuenta).map((k) => [Number(k), true])) }))
+  }, [resultadosCuenta, levels])
 
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {
