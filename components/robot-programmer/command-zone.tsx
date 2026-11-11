@@ -1,6 +1,7 @@
 "use client"
 
-import { ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Star, Trash2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Star, Trash2, Repeat, CornerDownLeft } from "lucide-react"
+import { parseRepeat } from "@/lib/robot-programmer"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import * as React from "react"
@@ -17,7 +18,11 @@ interface CommandZoneProps {
 export default function CommandZone({ commands, onRemoveCommand, isExecuting, currentStep, vertical = false }: CommandZoneProps) {
   // Función para obtener el nombre y el color del comando
   const getCommandInfo = (command: string) => {
+    const n = parseRepeat(command)
+    if (n !== null) return { name: `Repetir ${n} veces`, color: "bg-amber-500", icon: <Repeat aria-hidden className="h-4 w-4" /> }
     switch (command) {
+      case "endRepeat":
+        return { name: "Fin de repetición", color: "bg-amber-500", icon: <CornerDownLeft aria-hidden className="h-4 w-4" /> }
       case "forward":
         return { name: "Avanzar", color: "bg-blue-500", icon: <ArrowUp aria-hidden className="h-4 w-4" /> }
       case "turnRight":
@@ -73,6 +78,12 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
           <AnimatePresence initial={false}>
             {commands.map((command, index) => {
               const { name, color, icon } = getCommandInfo(command)
+              let depth = 0
+              for (let k = 0; k < index; k++) {
+                if (parseRepeat(commands[k]) !== null) depth++
+                else if (commands[k] === "endRepeat") depth = Math.max(0, depth - 1)
+              }
+              if (command === "endRepeat") depth = Math.max(0, depth - 1)
               // Animación: pop al agregar, glow/bounce al ejecutar
               const isCurrent = isExecuting && index === currentStep - 1
               const isPast = isExecuting && index < currentStep - 1
@@ -88,7 +99,7 @@ export default function CommandZone({ commands, onRemoveCommand, isExecuting, cu
                     isCurrent ? "bg-primary/20 ring-2 ring-ring z-10" :
                     isPast ? "opacity-50" : "bg-background",
                   )}
-                  style={{ minHeight: 56 }}
+                  style={{ minHeight: 56, marginLeft: depth * 20 }}
                 >
                   <div className="flex items-center gap-3">
                     <motion.div

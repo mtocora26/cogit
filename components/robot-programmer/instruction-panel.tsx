@@ -1,6 +1,7 @@
 "use client"
 
-import { ArrowLeft, ArrowRight, ArrowUp, Lightbulb } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Repeat, CornerDownLeft } from "lucide-react"
+import { parseRepeat } from "@/lib/robot-programmer"
 import { cn } from "@/lib/utils"
 
 interface InstructionPanelProps {
@@ -12,7 +13,23 @@ interface InstructionPanelProps {
 export default function InstructionPanel({ onAddCommand, availableCommands, disabled }: InstructionPanelProps) {
   // Función para obtener el nombre y el color del comando
   const getCommandInfo = (command: string) => {
+    const n = parseRepeat(command)
+    if (n !== null) {
+      return {
+        name: `Repetir ${n} veces`,
+        color: "bg-amber-500",
+        icon: <Repeat aria-hidden className="h-4 w-4" />,
+        description: "Repite lo que pongas hasta el 'Fin de repetición'",
+      }
+    }
     switch (command) {
+      case "endRepeat":
+        return {
+          name: "Fin de repetición",
+          color: "bg-amber-500",
+          icon: <CornerDownLeft aria-hidden className="h-4 w-4" />,
+          description: "Cierra el bucle que abriste",
+        }
       case "forward":
         return {
           name: "Avanzar",
