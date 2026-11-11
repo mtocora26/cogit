@@ -33,6 +33,7 @@ model Usuario {
   visibleEnRanking Boolean @default(true)
   progreso  Progreso[]
   parciales ProgresoParcial[]
+  recuperaciones RecuperacionPassword[]
   creadoEn  DateTime  @default(now())
   /// REQ-021: versión de los términos que aceptó al registrarse y cuándo. Nulos en cuentas anteriores.
   terminosVersion     String?
@@ -104,4 +105,17 @@ model Actividad {
   orden       Int
 
   @@unique([nivelId, clave])
+}
+
+/// REQ-010: enlace de un solo uso para restablecer la contraseña. Se guarda el hash, no el enlace.
+model RecuperacionPassword {
+  id        Int       @id @default(autoincrement())
+  user      Usuario   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  tokenHash String    @unique
+  expiraEn  DateTime
+  usadoEn   DateTime?
+  creadoEn  DateTime  @default(now())
+
+  @@index([userId])
 }

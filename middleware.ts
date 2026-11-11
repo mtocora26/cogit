@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { SESSION_COOKIE, readSession } from "@/lib/session"
 
 // Rutas públicas: landing, auth, términos y las APIs (cada API valida su propia sesión).
-const PUBLIC_PATHS = ["/", "/login", "/registro", "/recuperar-password", "/terminos", "/api", "/_next", "/favicon.ico", "/public"]
+const PUBLIC_PATHS = ["/", "/login", "/registro", "/recuperar-password", "/restablecer-password", "/terminos", "/api", "/_next", "/favicon.ico", "/public"]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

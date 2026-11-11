@@ -17,7 +17,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ sin implementar.
 | REQ-007 Consultar avance | 🟡 | Avance de misiones correcto. Los resultados de minijuegos solo se reflejan en el ranking; ninguna pantalla los muestra. |
 | REQ-008 Ranking con control de identidad | ✅ | Ordenado por puntaje, con alias y exclusión desde el perfil. |
 | REQ-009 Comunidad demostrativa | ✅ | Solo lectura, con publicaciones marcadas como ejemplo. |
-| REQ-010 Registro y acceso | 🟡 | Registro, inicio y cierre de sesión funcionan. La recuperación de contraseña está simulada (`/recuperar-password` no envía ningún correo). |
+| REQ-010 Registro y acceso | ✅ | Registro, inicio y cierre de sesión. Recuperación real por correo: enlace de un solo uso (hash SHA-256 en base, vigencia 60 min), misma respuesta exista o no la cuenta y envío con Resend. Requiere `RESEND_API_KEY`, `APP_URL` y la migración `20261111010000_recuperacion_password`. Sin dominio verificado, Resend solo entrega al correo del dueño de su cuenta. Las sesiones ya abiertas siguen válidas hasta expirar (cookie sin estado en el servidor). |
 | REQ-011 Administración básica | ✅ | Usuarios y edición de contenido, solo para administradores. |
 | REQ-021 Términos y condiciones | ✅ | Página `/terminos` con versión y fecha, casilla en el registro, validación en el servidor y registro de versión y fecha aceptadas. Requiere aplicar la migración `20261111000000_aceptacion_terminos` en producción. |
 
