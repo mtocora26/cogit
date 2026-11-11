@@ -37,6 +37,7 @@ export default function RobotProgrammerPage() {
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [robot3D, setRobot3D] = useState(false)
   const [hintsShown, setHintsShown] = useState(0) // pistas reveladas del nivel actual
+  const [introClosed, setIntroClosed] = useState<number[]>([]) // niveles cuya explicación se cerró
   const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
@@ -137,8 +138,14 @@ export default function RobotProgrammerPage() {
 
     // Simular el programa completo y animar cada paso
     const run = runProgram(commands, level)
+    if (run.error) {
+      // Bucle mal formado: no se ejecuta ni resta vidas
+      setFailureMessage(run.error)
+      setIsExecuting(false)
+      return
+    }
     for (let i = 0; i < run.frames.length; i++) {
-      setSteps(i + 1)
+      setSteps(run.frames[i].source + 1)
       setRobotPosition({ ...run.frames[i].position })
       setLitCells([...run.frames[i].litCells])
       await new Promise((resolve) => setTimeout(resolve, executionSpeed))
@@ -364,6 +371,21 @@ export default function RobotProgrammerPage() {
                   vertical
                 />
               </div>
+              {/* Reglas y ejemplo antes de usar un concepto nuevo */}
+              {levels[currentLevel].intro && !introClosed.includes(currentLevel) && (
+                <div className="rounded-lg border border-blue-400/40 bg-blue-400/10 p-3 text-sm text-blue-100 space-y-2">
+                  <div className="font-bold">{levels[currentLevel].intro!.title}</div>
+                  <ul className="list-disc list-inside space-y-1">
+                    {levels[currentLevel].intro!.rules.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                  <p className="italic">{levels[currentLevel].intro!.example}</p>
+                  <Button size="sm" variant="outline" onClick={() => setIntroClosed((c) => [...c, currentLevel])}>
+                    Entendido
+                  </Button>
+                </div>
+              )}
               {/* Por qué falló el último programa */}
               {failureMessage && (
                 <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
