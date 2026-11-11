@@ -30,11 +30,16 @@ export default function RecuperarPasswordPage() {
     setIsLoading(true)
 
     try {
-      // Aquí iría la lógica real de recuperación de contraseña
-      // Simulamos un proceso exitoso después de un breve retraso
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Mostrar mensaje de éxito
+      const res = await fetch("/api/usuario/recuperar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || "No pudimos procesar la solicitud. Inténtalo de nuevo.")
+        return
+      }
       setSuccess(true)
     } catch (err) {
       setError("Error al enviar el correo de recuperación. Inténtalo de nuevo.")
@@ -65,10 +70,10 @@ export default function RecuperarPasswordPage() {
           {success ? (
             <div className="text-center py-8">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold mb-2">Correo enviado</h1>
+              <h1 className="text-2xl font-bold mb-2">Revisa tu correo</h1>
               <p className="text-gray-300 mb-6">
-                Hemos enviado instrucciones para restablecer tu contraseña a {email}. Por favor revisa tu bandeja de
-                entrada.
+                Si {email} tiene una cuenta, te enviamos un enlace para restablecer tu contraseña. Vale 60 minutos y
+                solo se puede usar una vez. Revisa también la carpeta de spam.
               </p>
               <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/login")}>
                 Volver al inicio de sesión
