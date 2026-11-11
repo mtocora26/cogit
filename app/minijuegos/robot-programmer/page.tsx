@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Play, RotateCcw, Info, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,9 @@ import { formatTime } from "@/lib/utils"
 import { useResultadosCuenta } from "@/lib/use-resultados"
 import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoRobot, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 import Image from "next/image"
 import RobotSVG from "@/components/robot-programmer/robot-svg"
 import { useIsMobile } from "@/components/ui/use-mobile"
@@ -40,27 +43,33 @@ export default function RobotProgrammerPage() {
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [robot3D, setRobot3D] = useState(false)
   const [hintsShown, setHintsShown] = useState(0) // pistas reveladas del nivel actual
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
   const [introClosed, setIntroClosed] = useState<number[]>([]) // niveles cuya explicación se cerró
   const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
-  // Iniciar el juego con un nivel seleccionado
-  const startLevel = (levelIndex: number) => {
+  // Iniciar el juego con un nivel seleccionado (retomando la partida guardada de la cuenta si existe)
+  const startLevel = async (levelIndex: number) => {
     const level = levels[levelIndex]
+    const guardada = await leerPartida("robot", String(level.id))
+    const retoma =
+      guardada && esEstadoRobot(guardada.estado, level.commandLimit || 10, level.hints.length) ? guardada : null
     setCurrentLevel(levelIndex)
-    setCommands([])
+    setCommands(retoma ? (retoma.estado as { commands: string[] }).commands : [])
     setIsExecuting(false)
     setIsComplete(false)
     setIsSuccess(false)
     setRobotPosition({ ...level.startPosition })
     setLitCells([])
-    setTime(0)
+    setTime(retoma ? (retoma.estado as { time: number }).time : 0)
     setIsActive(true)
     setShowLevelSelector(false)
     setCommandLimit(level.commandLimit || 10)
     setSteps(0)
-    setLives(3)
-    setHintsShown(0)
+    setLives(retoma && Number.isInteger(retoma.vidas) && retoma.vidas >= 1 && retoma.vidas <= 3 ? retoma.vidas : 3)
+    setHintsShown(retoma ? (retoma.estado as { hintsShown: number }).hintsShown : 0)
+    setRetomada(Boolean(retoma))
     setFailureMessage(null)
   }
 
@@ -88,6 +97,24 @@ export default function RobotProgrammerPage() {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  tiempoRef.current = time
+  // REQ-006: el programa en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(
+    () => (showLevelSelector ? null : { commands, hintsShown }),
+    [showLevelSelector, commands, hintsShown],
+  )
+  const { errorGuardado } = useAutoguardado(
+    "robot",
+    showLevelSelector ? null : String(levels[currentLevel].id),
+    estadoPartida,
+    isActive && !isComplete,
+    { vidas: lives, extra: () => ({ time: tiempoRef.current }) },
+  )
+  // Si se pierde el nivel no queda nada que retomar
+  useEffect(() => {
+    if (isComplete && !isSuccess && !showLevelSelector) descartarPartida("robot", String(levels[currentLevel].id))
+  }, [isComplete, isSuccess, showLevelSelector, currentLevel, levels])
 
   // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
   const resultadosCuenta = useResultadosCuenta("robot")
@@ -199,6 +226,8 @@ export default function RobotProgrammerPage() {
   // Reiniciar el nivel actual
   const resetLevel = () => {
     const level = levels[currentLevel]
+    setRetomada(false)
+    descartarPartida("robot", String(level.id))
     setCommands([])
     setIsExecuting(false)
     setIsComplete(false)
@@ -407,6 +436,7 @@ export default function RobotProgrammerPage() {
                   </Button>
                 </div>
               )}
+              <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
               {/* Por qué falló el último programa */}
               {failureMessage && (
                 <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">

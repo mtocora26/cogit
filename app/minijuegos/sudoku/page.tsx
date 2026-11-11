@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Lightbulb, RotateCcw, CheckCircle, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,9 @@ import { formatTime } from "@/lib/utils"
 import { useResultadosCuenta } from "@/lib/use-resultados"
 import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoSudoku, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 
 export default function SudokuPage() {
   const router = useRouter()
@@ -33,6 +36,18 @@ export default function SudokuPage() {
   const [solution, setSolution] = useState<number[][]>([])
   const [gameStarted, setGameStarted] = useState(false)
   const [bestTimes, setBestTimes] = useState<{ [key in "facil" | "medio" | "dificil"]?: number }>({})
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
+  tiempoRef.current = time
+
+  // REQ-006: la partida en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(
+    () => (gameStarted ? { board, initialBoard, solution, notes, hintsUsed } : null),
+    [gameStarted, board, initialBoard, solution, notes, hintsUsed],
+  )
+  const { errorGuardado } = useAutoguardado("sudoku", gameStarted ? difficulty : null, estadoPartida, isActive && !isComplete, {
+    extra: () => ({ time: tiempoRef.current }),
+  })
 
   // Cargar datos de usuario al montar
   useEffect(() => {
@@ -50,8 +65,30 @@ export default function SudokuPage() {
   }, [])
 
   // Iniciar el juego con un nivel seleccionado
-  const startGame = (level: "facil" | "medio" | "dificil") => {
+  const startGame = async (level: "facil" | "medio" | "dificil") => {
     setDifficulty(level)
+    // ¿Hay una partida guardada de este nivel en la cuenta? Se retoma tal cual.
+    const guardada = await leerPartida("sudoku", level)
+    if (guardada && esEstadoSudoku(guardada.estado)) {
+      const g = guardada.estado
+      setBoard(g.board)
+      setInitialBoard(g.initialBoard)
+      setSolution(g.solution)
+      setNotes(g.notes)
+      setHintsUsed(g.hintsUsed)
+      setTime(g.time)
+      setSelectedCell(null)
+      setIsComplete(false)
+      setIsCorrect(false)
+      setErrors([])
+      setIsNotesMode(false)
+      setIsActive(true)
+      setShowLevelSelector(false)
+      setGameStarted(true)
+      setRetomada(true)
+      return
+    }
+    setRetomada(false)
     const emptyCells = level === "facil" ? 30 : level === "medio" ? 45 : 55
     const { puzzle, solution: solvedPuzzle } = generateSudoku(emptyCells)
     setBoard(JSON.parse(JSON.stringify(puzzle)))
@@ -239,6 +276,8 @@ export default function SudokuPage() {
 
   // Reiniciar el juego actual
   const handleReset = () => {
+    setRetomada(false)
+    descartarPartida("sudoku", difficulty)
     setBoard(JSON.parse(JSON.stringify(initialBoard)))
     setSelectedCell(null)
     setIsComplete(false)
@@ -299,6 +338,10 @@ export default function SudokuPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
+
+          <div className="mx-auto mb-4 max-w-xl">
+            <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={handleReset} />
+          </div>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <div className="order-2 md:order-1">

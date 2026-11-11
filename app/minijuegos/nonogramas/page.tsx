@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Heart, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,9 @@ import { formatTime } from "@/lib/utils"
 import { useResultadosCuenta } from "@/lib/use-resultados"
 import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoNonograma, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -38,10 +41,26 @@ export default function NonogramasPage() {
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [completedImages, setCompletedImages] = useState<{ [key: number]: boolean }>({})
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false)
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
+  tiempoRef.current = time
+
+  // REQ-006: el tablero en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(() => (showLevelSelector ? null : { board }), [showLevelSelector, board])
+  const { errorGuardado } = useAutoguardado(
+    "nonogramas",
+    showLevelSelector ? null : String(levels[currentLevel].id),
+    estadoPartida,
+    isActive && !isComplete,
+    { extra: () => ({ time: tiempoRef.current }) },
+  )
 
   // Iniciar el juego con un nivel seleccionado
-  const startLevel = (levelIndex: number) => {
+  const startLevel = async (levelIndex: number) => {
     const level = levels[levelIndex]
+    const guardada = await leerPartida("nonogramas", String(level.id))
+    const lado = level.solution.length
+    const retoma = guardada && esEstadoNonograma(guardada.estado, lado, level.solution[0].length) ? guardada.estado : null
     setCurrentLevel(levelIndex)
     setSolution(level.solution)
 
@@ -50,12 +69,13 @@ export default function NonogramasPage() {
       .fill(0)
       .map(() => Array(level.solution[0].length).fill(0))
 
-    setBoard(emptyBoard)
+    setBoard(retoma ? retoma.board : emptyBoard)
+    setRetomada(Boolean(retoma))
     setRowClues(level.rowClues)
     setColClues(level.colClues)
     setIsComplete(false)
     setIsCorrect(false)
-    setTime(0)
+    setTime(retoma ? retoma.time : 0)
     setIsActive(true)
     setShowLevelSelector(false)
     setErrors([])
@@ -130,6 +150,11 @@ export default function NonogramasPage() {
     }
   }, [isComplete, isCorrect, currentLevel, time, bestTimes, completedImages])
 
+  // Si se pierde el nivel no queda nada que retomar
+  useEffect(() => {
+    if (isComplete && !isCorrect && !showLevelSelector) descartarPartida("nonogramas", String(levels[currentLevel].id))
+  }, [isComplete, isCorrect, showLevelSelector, currentLevel, levels])
+
   // Marcar tutorial como visto
   useEffect(() => {
     if (!showTutorial && currentLevel === 0) {
@@ -194,6 +219,8 @@ export default function NonogramasPage() {
 
   // Reiniciar el nivel actual
   const resetLevel = () => {
+    setRetomada(false)
+    descartarPartida("nonogramas", String(levels[currentLevel].id))
     const emptyBoard = Array(solution.length)
       .fill(0)
       .map(() => Array(solution[0].length).fill(0))
@@ -380,6 +407,9 @@ export default function NonogramasPage() {
 
             {/* Center Column - Game Board */}
             <div className="md:col-span-2">
+              <div className="mb-3">
+                <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
+              </div>
               {isComplete ? (
                 <div className="bg-card rounded-lg p-8 text-center border border-gray-800 h-full flex flex-col items-center justify-center">
                   <div
