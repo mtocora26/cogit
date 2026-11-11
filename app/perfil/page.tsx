@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import NavBar from "@/components/nav-bar"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import ResultadosPerfil from "@/components/minijuegos/resultados-perfil"
 
 interface Cuenta {
   username: string
@@ -84,6 +85,8 @@ export default function PerfilPage() {
                 <dd className="font-medium">{cuenta.rol === "admin" ? "Administrador" : "Estudiante"}</dd>
               </div>
             </dl>
+
+            {cuenta.rol === "estudiante" && <ResultadosPerfil />}
 
             {cuenta.rol === "estudiante" && (
               <section aria-labelledby="privacidad" className="rounded-xl border border-border bg-card p-5">

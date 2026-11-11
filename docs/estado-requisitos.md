@@ -9,12 +9,12 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ sin implementar.
 | Req | Estado | Qué hay y qué falta |
 |---|---|---|
 | REQ-001 Misiones cortas y progresivas | ✅ | Objetivo, duración estimada y nivel visibles en cada misión. |
-| REQ-002 Catálogo de minijuegos | 🟡 | Los 3 juegos se inician y guardan el resultado en la cuenta (#50). Los selectores de nivel aún leen los mejores tiempos de `localStorage`, no de la cuenta. |
+| REQ-002 Catálogo de minijuegos | ✅ | Los 3 juegos se inician; los resultados se guardan en la cuenta (#50) y los selectores de nivel muestran los logros de la cuenta además de los del navegador, así que no se pierden al cambiar de dispositivo. |
 | REQ-003 Instrucciones y ejemplos | ✅ | Reglas y ejemplo en Sudoku, nonogramas, Robot y nivel 1, consultables durante la partida. |
 | REQ-004 Retroalimentación de errores | ✅ | Mensajes que explican el error, sin completar la actividad. |
 | REQ-005 Pistas y reintentos | ✅ | Pistas graduales; reintentar no borra lo completado. |
 | REQ-006 Guardar y retomar progreso | 🟡 | Las misiones guardan y retoman el estado a medias. Los minijuegos guardan el resultado, no el estado a medias. |
-| REQ-007 Consultar avance | 🟡 | Avance de misiones correcto. Los resultados de minijuegos solo se reflejan en el ranking; ninguna pantalla los muestra. |
+| REQ-007 Consultar avance | ✅ | Avance de misiones y, en el perfil, nivel, mejor tiempo y puntos de cada minijuego completado; el ranking suma esos puntos. |
 | REQ-008 Ranking con control de identidad | ✅ | Ordenado por puntaje, con alias y exclusión desde el perfil. |
 | REQ-009 Comunidad demostrativa | ✅ | Solo lectura, con publicaciones marcadas como ejemplo. |
 | REQ-010 Registro y acceso | ✅ | Registro, inicio y cierre de sesión. Recuperación real por correo: enlace de un solo uso (hash SHA-256 en base, vigencia 60 min), misma respuesta exista o no la cuenta y envío con Resend. Requiere `RESEND_API_KEY`, `APP_URL` y la migración `20261111010000_recuperacion_password`. Sin dominio verificado, Resend solo entrega al correo del dueño de su cuenta. Las sesiones ya abiertas siguen válidas hasta expirar (cookie sin estado en el servidor). |

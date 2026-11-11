@@ -10,6 +10,8 @@ import CommandZone from "@/components/robot-programmer/command-zone"
 import LevelSelector from "@/components/robot-programmer/level-selector"
 import { getLevels, runProgram, explainFailure } from "@/lib/robot-programmer"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 import Image from "next/image"
 import RobotSVG from "@/components/robot-programmer/robot-svg"
@@ -86,6 +88,21 @@ export default function RobotProgrammerPage() {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("robot")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta: Record<string, number> = {}
+    resultadosCuenta.forEach((r) => {
+      const i = levels.findIndex((l) => String(l.id) === r.actividad)
+      if (i >= 0) deCuenta[String(i)] = r.tiempo
+    })
+    setBestTimes((prev) => {
+      const fusion = fusionarTiempos(Object.fromEntries(Object.entries(prev)), deCuenta)
+      return Object.fromEntries(Object.entries(fusion).map(([k, v]) => [Number(k), v]))
+    })
+  }, [resultadosCuenta, levels])
 
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {

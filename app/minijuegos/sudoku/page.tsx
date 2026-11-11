@@ -11,6 +11,8 @@ import LevelSelector from "@/components/sudoku/level-selector"
 import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
 import { generateSudoku, checkSolution } from "@/lib/sudoku"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
 import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 
 export default function SudokuPage() {
@@ -92,6 +94,14 @@ export default function SudokuPage() {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("sudoku")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta = Object.fromEntries(resultadosCuenta.map((r) => [r.actividad, r.tiempo]))
+    setBestTimes((prev) => fusionarTiempos(prev as Record<string, number>, deCuenta))
+  }, [resultadosCuenta])
 
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {
