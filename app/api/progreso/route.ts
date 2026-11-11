@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { forbidden, getSession, unauthorized } from '@/lib/auth'
+import { SECCION_MINIJUEGOS, puntosMinijuego } from '@/lib/minijuegos-puntos'
 
 // POST: Guardar progreso
 export async function POST(req: NextRequest) {
@@ -8,10 +9,19 @@ export async function POST(req: NextRequest) {
     const session = await getSession(req)
     if (!session) return unauthorized()
     const body = await req.json()
-    const { seccion, nivel, actividad, completado, score, tiempo } = body
+    const { seccion, nivel, actividad, completado, tiempo } = body
+    let score: number = body.score
     const userId = session.uid // el progreso se guarda siempre en la cuenta de la sesión
     if (!userId || !seccion || !nivel || !actividad) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
+    }
+    if (seccion === SECCION_MINIJUEGOS) {
+      // Los minijuegos puntúan por nivel en el servidor: el cliente no decide los puntos y repetir no suma más.
+      const puntos = puntosMinijuego(String(nivel), String(actividad))
+      if (puntos === null) return NextResponse.json({ error: 'Minijuego o nivel desconocido' }, { status: 400 })
+      if (!completado) return NextResponse.json({ error: 'Solo se guardan niveles completados' }, { status: 400 })
+      if (!Number.isFinite(tiempo) || tiempo < 0) return NextResponse.json({ error: 'Tiempo no válido' }, { status: 400 })
+      score = puntos
     }
     // Reintentar nunca deshace lo ya logrado: una actividad completada sigue completada y se conserva la mejor puntuación.
     const previo = await prisma.progreso.findUnique({
@@ -30,7 +40,7 @@ export async function POST(req: NextRequest) {
       update: {
         completado: Boolean(completado) || Boolean(mejor),
         score: mejor ? Math.max(mejor.score, score) : score,
-        tiempo: mejor && mejor.score >= score ? mejor.tiempo : tiempo,
+        tiempo: mejor && mejor.score >= score ? (mejor.score === score ? Math.min(mejor.tiempo, tiempo) : mejor.tiempo) : tiempo,
         fecha: new Date(),
       },
       create: {

@@ -11,6 +11,7 @@ import LevelSelector from "@/components/sudoku/level-selector"
 import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
 import { generateSudoku, checkSolution } from "@/lib/sudoku"
 import { formatTime } from "@/lib/utils"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 
 export default function SudokuPage() {
   const router = useRouter()
@@ -343,6 +344,7 @@ export default function SudokuPage() {
                       <p className="text-lg text-center text-green-600">¡Nuevo mejor tiempo para {difficulty}!</p>
                     )}
                     <p className="text-gray-600 text-center">Tiempo: {formatTime(time)}</p>
+                    <GuardadoResultado juego="sudoku" actividad={difficulty} tiempo={time} />
                     <Button className="w-full mt-4" onClick={handleBackToLevels}>
                       Volver a niveles
                     </Button>

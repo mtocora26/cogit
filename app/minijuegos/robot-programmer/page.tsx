@@ -10,6 +10,7 @@ import CommandZone from "@/components/robot-programmer/command-zone"
 import LevelSelector from "@/components/robot-programmer/level-selector"
 import { getLevels, runProgram, explainFailure } from "@/lib/robot-programmer"
 import { formatTime } from "@/lib/utils"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 import Image from "next/image"
 import RobotSVG from "@/components/robot-programmer/robot-svg"
 import { useIsMobile } from "@/components/ui/use-mobile"
@@ -350,6 +351,9 @@ export default function RobotProgrammerPage() {
                   </div>
                 )}
               </div>
+              {isComplete && isSuccess && (
+                <GuardadoResultado juego="robot" actividad={String(levels[currentLevel].id)} tiempo={time} />
+              )}
               {/* Botón para avanzar al siguiente nivel */}
               {isComplete && isSuccess && currentLevel < levels.length - 1 && (
                 <Button

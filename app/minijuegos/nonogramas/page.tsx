@@ -12,6 +12,7 @@ import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
 import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
 import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
 import { formatTime } from "@/lib/utils"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -399,7 +400,9 @@ export default function NonogramasPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-4">
+                  {isCorrect && <GuardadoResultado juego="nonogramas" actividad={String(levels[currentLevel].id)} tiempo={time} />}
+
+                  <div className="flex gap-4 mt-4">
                     {isCorrect && currentLevel < levels.length - 1 ? (
                       <Button className="bg-green-600 hover:bg-green-700" onClick={goToNextLevel}>
                         Siguiente Nivel
