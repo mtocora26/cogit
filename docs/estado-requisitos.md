@@ -13,7 +13,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ sin implementar.
 | REQ-003 Instrucciones y ejemplos | ✅ | Reglas y ejemplo en Sudoku, nonogramas, Robot y nivel 1, consultables durante la partida. |
 | REQ-004 Retroalimentación de errores | ✅ | Mensajes que explican el error, sin completar la actividad. |
 | REQ-005 Pistas y reintentos | ✅ | Pistas graduales; reintentar no borra lo completado. |
-| REQ-006 Guardar y retomar progreso | 🟡 | Las misiones guardan y retoman el estado a medias. Los minijuegos guardan el resultado, no el estado a medias. |
+| REQ-006 Guardar y retomar progreso | ✅ | Misiones y minijuegos guardan el estado a medias en la cuenta (tablero, programa, notas, pistas y tiempo) y lo retoman al volver a entrar, con aviso y opción de empezar de nuevo. Se descarta al reiniciar, al perder o al completar. |
 | REQ-007 Consultar avance | ✅ | Avance de misiones y, en el perfil, nivel, mejor tiempo y puntos de cada minijuego completado; el ranking suma esos puntos. |
 | REQ-008 Ranking con control de identidad | ✅ | Ordenado por puntaje, con alias y exclusión desde el perfil. |
 | REQ-009 Comunidad demostrativa | ✅ | Solo lectura, con publicaciones marcadas como ejemplo. |
