@@ -88,9 +88,17 @@ export default function LoginPage() {
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium mb-2" htmlFor="password">
-                  Contraseña
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <label className="block text-sm font-medium" htmlFor="password">
+                    Contraseña
+                  </label>
+                  <Link
+                    href="/recuperar-password"
+                    className="inline-flex min-h-11 items-center text-sm text-purple-400 hover:text-purple-300"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <PasswordInput
                   id="password"
                   autoComplete="current-password"
