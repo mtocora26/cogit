@@ -29,8 +29,8 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ sin implementar.
 | REQ-013 Diseño adaptable | ⬜ | Sin verificar en 360, 768 y 1366 px. |
 | REQ-014 Accesibilidad | ⬜ | Sin verificar con teclado, zoom ni contraste. |
 | REQ-015 Tiempo de respuesta | ⬜ | Sin medir. |
-| REQ-016 Privacidad | 🟡 | El ranking no expone correo ni nombre real; el aviso de finalidad de datos está en `/terminos`. Sin revisar a fondo (#16). |
-| REQ-017 Seguridad de acceso | 🟡 | Contraseñas con scrypt y autorización en el servidor. Sin revisión completa (#17). |
-| REQ-018 Integridad del progreso | 🟡 | Los guardados de minijuegos avisan el error y permiten reintentar; repetir no suma puntos. Sin prueba de interrupción real (#18). |
+| REQ-016 Privacidad | ✅ | Verificado con pruebas y contra producción: una cuenta no consulta datos de otra, el ranking no expone correo ni contraseña y el aviso de finalidad está en `/terminos`. Detalle en [verificacion-rnf.md](verificacion-rnf.md). |
+| REQ-017 Seguridad de acceso | 🟡 | Rutas privadas rechazan sin sesión (probado en producción), HTTPS con HSTS, cookie firmada y `httpOnly`. Pendiente: una cuenta antigua con contraseña aún sin cifrar, sin límite de intentos de login y las sesiones abiertas no se cierran al cambiar la contraseña. Ver [verificacion-rnf.md](verificacion-rnf.md). |
+| REQ-018 Integridad del progreso | ✅ | Los guardados fallidos se avisan y se pueden reintentar (minijuegos y misiones); enviar dos veces la misma finalización no duplica puntos ni baja logros (pruebas). Sin probar la interrupción de red real en navegador. Ver [verificacion-rnf.md](verificacion-rnf.md). |
 | REQ-019 Capacidad del piloto | ⬜ | Sin pruebas de carga (#19). |
 | REQ-020 Recuperación ante incidentes | ⬜ | Sin respaldo ni restauración documentados (#20). |
