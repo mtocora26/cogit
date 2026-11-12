@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import NavBar from "@/components/nav-bar"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import CambiarPassword from "@/components/perfil/cambiar-password"
 import ResultadosPerfil from "@/components/minijuegos/resultados-perfil"
 
 interface Cuenta {
@@ -109,6 +110,8 @@ export default function PerfilPage() {
                 <p aria-live="polite" className="mt-3 min-h-5 text-sm text-neuron">{aviso}</p>
               </section>
             )}
+
+            <CambiarPassword />
 
             <Button variant="outline" className="min-h-11" onClick={cerrarSesion}>
               Cerrar sesión
