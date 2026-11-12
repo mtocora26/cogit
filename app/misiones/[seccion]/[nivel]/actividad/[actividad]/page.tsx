@@ -81,6 +81,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   // Avance a medias guardado en la cuenta (REQ-006): undefined = cargando, null = no hay.
   const [parcial, setParcial] = useState<{ estado: EstadoJuego; vidas: number } | null | undefined>(undefined)
   const [errorGuardado, setErrorGuardado] = useState(false)
+  // REQ-018: resultado final que no se pudo guardar; se conserva para reintentar sin repetir la actividad.
+  const [resultadoPendiente, setResultadoPendiente] = useState<Record<string, unknown> | null>(null)
+  const [guardandoFinal, setGuardandoFinal] = useState(false)
   const catalogo = useCatalogo()
   const ultimoEstado = useRef<EstadoJuego | null>(null)
   const terminado = useRef(false)
@@ -218,22 +221,31 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     setFeedbackFinal(feedback)
 
     // Guardar el avance en la cuenta (REQ-006/007): alimenta Misiones, el ranking y las estadísticas.
+    await guardarResultadoFinal({
+      seccion,
+      nivel,
+      actividad,
+      completado: success,
+      score: puntosGuardados,
+      tiempo: Math.max(0, Math.round(time || 0)),
+    })
+  }
+
+  // Si falla, el resultado queda pendiente y se puede reintentar sin repetir la actividad (REQ-018).
+  async function guardarResultadoFinal(payload: Record<string, unknown>) {
+    setGuardandoFinal(true)
     try {
       const res = await fetch("/api/progreso", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seccion,
-          nivel,
-          actividad,
-          completado: success,
-          score: puntosGuardados,
-          tiempo: Math.max(0, Math.round(time || 0)),
-        }),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("no guardado")
+      setResultadoPendiente(null)
     } catch {
-      setFeedbackFinal((f) => f + "\nNo pudimos guardar tu progreso. Revisa tu conexión y vuelve a intentarlo.")
+      setResultadoPendiente(payload)
+    } finally {
+      setGuardandoFinal(false)
     }
   }
 
@@ -282,6 +294,14 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
           <div className="bg-card rounded-lg p-8 text-center border border-gray-800 max-w-md mx-auto">
             <h2 className="text-2xl font-bold mb-2 text-blue-300">¡Actividad completada!</h2>
             <p className="text-lg text-gray-200 mb-4 whitespace-pre-line">{feedbackFinal}</p>
+            {resultadoPendiente && (
+              <div role="alert" className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                <p className="mb-2">No pudimos guardar tu progreso. Todavía no cuenta en tu avance ni en el ranking.</p>
+                <Button size="sm" variant="outline" className="min-h-11" disabled={guardandoFinal} onClick={() => guardarResultadoFinal(resultadoPendiente)}>
+                  {guardandoFinal ? "Guardando..." : "Reintentar guardado"}
+                </Button>
+              </div>
+            )}
             {erroresDetalle.length > 0 && (
               <div className="mb-4 text-left">
                 <h3 className="text-lg font-bold text-red-400 mb-2">Rondas con error:</h3>
