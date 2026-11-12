@@ -14,7 +14,6 @@ interface Level {
   solution: number[][]
   rowClues: number[][]
   colClues: number[][]
-  imagePreview: string
 }
 
 interface LevelSelectorProps {
@@ -22,6 +21,21 @@ interface LevelSelectorProps {
   onSelectLevel: (levelIndex: number) => void
   completedLevels: number[]
   bestTimes: { [key: number]: number }
+}
+
+/** Silueta del tablero (solo la rejilla, sin revelar la solución) para el selector. */
+function GridSilhouette({ rows, cols, label }: { rows: number; cols: number; label: string }) {
+  return (
+    <svg role="img" aria-label={label} viewBox={`0 0 ${cols} ${rows}`} className="h-full max-h-24 w-auto text-muted-foreground opacity-60 group-hover:opacity-90 transition-opacity" preserveAspectRatio="xMidYMid meet">
+      <rect x="0.03" y="0.03" width={cols - 0.06} height={rows - 0.06} rx="0.15" fill="none" stroke="currentColor" strokeWidth="0.08" />
+      {Array.from({ length: cols - 1 }, (_, i) => (
+        <line key={`c${i}`} x1={i + 1} y1="0" x2={i + 1} y2={rows} stroke="currentColor" strokeWidth="0.04" />
+      ))}
+      {Array.from({ length: rows - 1 }, (_, i) => (
+        <line key={`r${i}`} x1="0" y1={i + 1} x2={cols} y2={i + 1} stroke="currentColor" strokeWidth="0.04" />
+      ))}
+    </svg>
+  )
 }
 
 export default function LevelSelector({ levels, onSelectLevel, completedLevels, bestTimes }: LevelSelectorProps) {
@@ -100,11 +114,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
                       />
                     </div>
                   ) : (
-                    <img
-                      src={level.imagePreview || "/placeholder.svg"}
-                      alt={level.name}
-                      className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
-                    />
+                    <GridSilhouette rows={level.solution.length} cols={level.solution[0].length} label={`Tablero vacío de ${level.solution.length}x${level.solution[0].length}`} />
                   )}
                 </div>
               </div>

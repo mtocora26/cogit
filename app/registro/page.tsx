@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MENSAJE_ACEPTAR_TERMINOS } from "@/lib/terminos"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
@@ -58,7 +59,7 @@ export default function RegistroPage() {
     }
 
     if (!formData.aceptarTerminos) {
-      setError("Debes aceptar los términos y condiciones")
+      setError(MENSAJE_ACEPTAR_TERMINOS)
       return
     }
 
@@ -73,6 +74,7 @@ export default function RegistroPage() {
           username: formData.username,
           email: formData.email,
           password: formData.password,
+          aceptaTerminos: formData.aceptarTerminos,
         }),
       })
       const data = await res.json()
@@ -213,7 +215,7 @@ export default function RegistroPage() {
                   className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Acepto los{" "}
-                  <Link href="/terminos" className="text-purple-400 hover:text-purple-300">
+                  <Link href="/terminos" target="_blank" rel="noopener" className="text-purple-400 hover:text-purple-300">
                     términos y condiciones
                   </Link>
                 </label>

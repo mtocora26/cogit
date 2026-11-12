@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Heart, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,15 @@ import NonogramBoard from "@/components/nonogram/nonogram-board"
 import NonogramControls from "@/components/nonogram/nonogram-controls"
 import LevelSelector from "@/components/nonogram/level-selector"
 import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
+import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
+import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoNonograma, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -26,16 +34,33 @@ export default function NonogramasPage() {
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [pista, setPista] = useState<{ mensaje: string; sugerencia: SugerenciaNonograma | null } | null>(null)
   const [levels] = useState(getNonogramLevels())
   const [errors, setErrors] = useState<{ row: number; col: number }[]>([])
   const [showTutorial, setShowTutorial] = useState(false)
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [completedImages, setCompletedImages] = useState<{ [key: number]: boolean }>({})
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false)
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
+  tiempoRef.current = time
+
+  // REQ-006: el tablero en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(() => (showLevelSelector ? null : { board }), [showLevelSelector, board])
+  const { errorGuardado } = useAutoguardado(
+    "nonogramas",
+    showLevelSelector ? null : String(levels[currentLevel].id),
+    estadoPartida,
+    isActive && !isComplete,
+    { extra: () => ({ time: tiempoRef.current }) },
+  )
 
   // Iniciar el juego con un nivel seleccionado
-  const startLevel = (levelIndex: number) => {
+  const startLevel = async (levelIndex: number) => {
     const level = levels[levelIndex]
+    const guardada = await leerPartida("nonogramas", String(level.id))
+    const lado = level.solution.length
+    const retoma = guardada && esEstadoNonograma(guardada.estado, lado, level.solution[0].length) ? guardada.estado : null
     setCurrentLevel(levelIndex)
     setSolution(level.solution)
 
@@ -44,16 +69,18 @@ export default function NonogramasPage() {
       .fill(0)
       .map(() => Array(level.solution[0].length).fill(0))
 
-    setBoard(emptyBoard)
+    setBoard(retoma ? retoma.board : emptyBoard)
+    setRetomada(Boolean(retoma))
     setRowClues(level.rowClues)
     setColClues(level.colClues)
     setIsComplete(false)
     setIsCorrect(false)
-    setTime(0)
+    setTime(retoma ? retoma.time : 0)
     setIsActive(true)
     setShowLevelSelector(false)
     setErrors([])
     setShowHint(false)
+    setPista(null)
     setShowCompletionAnimation(false)
 
     // Mostrar tutorial solo para el primer nivel y solo la primera vez
@@ -90,6 +117,22 @@ export default function NonogramasPage() {
     }
   }, [])
 
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("nonogramas")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta: Record<string, number> = {}
+    resultadosCuenta.forEach((r) => {
+      const i = levels.findIndex((l) => String(l.id) === r.actividad)
+      if (i >= 0) deCuenta[String(i)] = r.tiempo
+    })
+    setBestTimes((prev) => {
+      const fusion = fusionarTiempos(Object.fromEntries(Object.entries(prev)), deCuenta)
+      return Object.fromEntries(Object.entries(fusion).map(([k, v]) => [Number(k), v]))
+    })
+    setCompletedImages((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(deCuenta).map((k) => [Number(k), true])) }))
+  }, [resultadosCuenta, levels])
+
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {
     if (isComplete && isCorrect) {
@@ -107,6 +150,11 @@ export default function NonogramasPage() {
     }
   }, [isComplete, isCorrect, currentLevel, time, bestTimes, completedImages])
 
+  // Si se pierde el nivel no queda nada que retomar
+  useEffect(() => {
+    if (isComplete && !isCorrect && !showLevelSelector) descartarPartida("nonogramas", String(levels[currentLevel].id))
+  }, [isComplete, isCorrect, showLevelSelector, currentLevel, levels])
+
   // Marcar tutorial como visto
   useEffect(() => {
     if (!showTutorial && currentLevel === 0) {
@@ -117,6 +165,7 @@ export default function NonogramasPage() {
   // Manejar clic en una celda
   const handleCellClick = (row: number, col: number, rightClick = false) => {
     if (isComplete) return
+    setShowHint(false)
 
     const newBoard = [...board.map((row) => [...row])]
 
@@ -170,6 +219,8 @@ export default function NonogramasPage() {
 
   // Reiniciar el nivel actual
   const resetLevel = () => {
+    setRetomada(false)
+    descartarPartida("nonogramas", String(levels[currentLevel].id))
     const emptyBoard = Array(solution.length)
       .fill(0)
       .map(() => Array(solution[0].length).fill(0))
@@ -181,6 +232,7 @@ export default function NonogramasPage() {
     setIsActive(true)
     setErrors([])
     setShowHint(false)
+    setPista(null)
     setShowCompletionAnimation(false)
   }
 
@@ -199,10 +251,17 @@ export default function NonogramasPage() {
 
   // Mostrar pista
   const handleShowHint = () => {
+    const sugerencia = sugerirPista(board, rowClues, colClues)
+    setPista({
+      sugerencia,
+      mensaje:
+        sugerencia?.mensaje ??
+        "No encuentro ninguna jugada segura ahora. Revisa que tus celdas rellenas coincidan con las pistas de su fila y su columna.",
+    })
     setShowHint(true)
     setTimeout(() => {
       setShowHint(false)
-    }, 3000)
+    }, 10000)
   }
 
   return (
@@ -348,6 +407,9 @@ export default function NonogramasPage() {
 
             {/* Center Column - Game Board */}
             <div className="md:col-span-2">
+              <div className="mb-3">
+                <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
+              </div>
               {isComplete ? (
                 <div className="bg-card rounded-lg p-8 text-center border border-gray-800 h-full flex flex-col items-center justify-center">
                   <div
@@ -386,7 +448,9 @@ export default function NonogramasPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-4">
+                  {isCorrect && <GuardadoResultado juego="nonogramas" actividad={String(levels[currentLevel].id)} tiempo={time} />}
+
+                  <div className="flex gap-4 mt-4">
                     {isCorrect && currentLevel < levels.length - 1 ? (
                       <Button className="bg-green-600 hover:bg-green-700" onClick={goToNextLevel}>
                         Siguiente Nivel
@@ -441,7 +505,15 @@ export default function NonogramasPage() {
                     showHint={showHint}
                     solution={solution}
                     isPreview={false}
+                    hintCells={pista?.sugerencia?.celdas}
+                    hintLine={pista?.sugerencia ? { tipo: pista.sugerencia.tipo, indice: pista.sugerencia.indice } : null}
                   />
+
+                  {showHint && pista && (
+                    <p role="status" className="mt-4 rounded-md border border-green-500/40 bg-green-500/10 p-3 text-sm">
+                      {pista.mensaje}
+                    </p>
+                  )}
 
                   <NonogramControls />
                 </div>
@@ -451,81 +523,7 @@ export default function NonogramasPage() {
         )}
       </div>
 
-      {/* Tutorial Modal */}
-      {showTutorial && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-700">
-            <h2 className="text-2xl font-bold mb-4">Cómo jugar a Nonogramas</h2>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">¿Qué son los nonogramas?</h3>
-                <p className="text-gray-300">
-                  Los nonogramas son puzzles lógicos donde debes rellenar celdas en una cuadrícula para revelar una
-                  imagen oculta. Las pistas numéricas en cada fila y columna te indican cómo rellenar las celdas.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Reglas básicas</h3>
-                <ul className="space-y-2 text-gray-300 list-disc pl-5">
-                  <li>Los números al lado de cada fila indican bloques consecutivos de celdas que deben rellenarse.</li>
-                  <li>
-                    Por ejemplo, "3 1" significa que hay un bloque de 3 celdas seguido de al menos una celda vacía y
-                    luego un bloque de 1 celda.
-                  </li>
-                  <li>Lo mismo aplica para las columnas con los números en la parte superior.</li>
-                  <li>
-                    Usa el clic izquierdo para rellenar una celda y el clic derecho para marcarla con una X (indicando
-                    que debe quedar vacía).
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Ejemplo</h3>
-                <div className="bg-background p-4 rounded-lg">
-                  <p className="text-gray-300 mb-2">
-                    En una fila con la pista "3 1" y 5 celdas, la solución podría ser:
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right w-10">3 1</div>
-                    <div className="flex">
-                      {["■", "■", "■", "□", "■"].map((cell, i) => (
-                        <div key={i} className="w-6 h-6 border border-gray-600 flex items-center justify-center">
-                          {cell}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-purple-400">Consejos</h3>
-                <ul className="space-y-2 text-gray-300 list-disc pl-5">
-                  <li>
-                    Comienza con las filas y columnas que tienen números grandes o muchos bloques, ya que tienen menos
-                    posibilidades.
-                  </li>
-                  <li>Usa las X para marcar celdas que sabes que deben estar vacías.</li>
-                  <li>
-                    Busca superposiciones: si un bloque solo puede estar en cierta posición, puedes rellenar esas
-                    celdas.
-                  </li>
-                  <li>
-                    Revisa constantemente las filas y columnas para asegurarte de que tus marcas son consistentes.
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <Button onClick={() => setShowTutorial(false)}>Entendido</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <NonogramaTutorial open={showTutorial} onClose={() => setShowTutorial(false)} />
     </div>
   )
 }

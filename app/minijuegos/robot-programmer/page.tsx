@@ -1,15 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Play, RotateCcw, Info } from "lucide-react"
+import { ArrowLeft, Play, RotateCcw, Info, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import GameBoard from "@/components/robot-programmer/game-board"
 import CommandZone from "@/components/robot-programmer/command-zone"
 import LevelSelector from "@/components/robot-programmer/level-selector"
-import { getLevels, validateSolution } from "@/lib/robot-programmer"
+import { getLevels, runProgram, explainFailure } from "@/lib/robot-programmer"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoRobot, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 import Image from "next/image"
 import RobotSVG from "@/components/robot-programmer/robot-svg"
 import { useIsMobile } from "@/components/ui/use-mobile"
@@ -36,24 +42,35 @@ export default function RobotProgrammerPage() {
   const [lives, setLives] = useState(3)
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [robot3D, setRobot3D] = useState(false)
+  const [hintsShown, setHintsShown] = useState(0) // pistas reveladas del nivel actual
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
+  const [introClosed, setIntroClosed] = useState<number[]>([]) // niveles cuya explicación se cerró
+  const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
-  // Iniciar el juego con un nivel seleccionado
-  const startLevel = (levelIndex: number) => {
+  // Iniciar el juego con un nivel seleccionado (retomando la partida guardada de la cuenta si existe)
+  const startLevel = async (levelIndex: number) => {
     const level = levels[levelIndex]
+    const guardada = await leerPartida("robot", String(level.id))
+    const retoma =
+      guardada && esEstadoRobot(guardada.estado, level.commandLimit || 10, level.hints.length) ? guardada : null
     setCurrentLevel(levelIndex)
-    setCommands([])
+    setCommands(retoma ? (retoma.estado as { commands: string[] }).commands : [])
     setIsExecuting(false)
     setIsComplete(false)
     setIsSuccess(false)
     setRobotPosition({ ...level.startPosition })
     setLitCells([])
-    setTime(0)
+    setTime(retoma ? (retoma.estado as { time: number }).time : 0)
     setIsActive(true)
     setShowLevelSelector(false)
     setCommandLimit(level.commandLimit || 10)
     setSteps(0)
-    setLives(3)
+    setLives(retoma && Number.isInteger(retoma.vidas) && retoma.vidas >= 1 && retoma.vidas <= 3 ? retoma.vidas : 3)
+    setHintsShown(retoma ? (retoma.estado as { hintsShown: number }).hintsShown : 0)
+    setRetomada(Boolean(retoma))
+    setFailureMessage(null)
   }
 
   // Manejar el temporizador
@@ -80,6 +97,39 @@ export default function RobotProgrammerPage() {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  tiempoRef.current = time
+  // REQ-006: el programa en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(
+    () => (showLevelSelector ? null : { commands, hintsShown }),
+    [showLevelSelector, commands, hintsShown],
+  )
+  const { errorGuardado } = useAutoguardado(
+    "robot",
+    showLevelSelector ? null : String(levels[currentLevel].id),
+    estadoPartida,
+    isActive && !isComplete,
+    { vidas: lives, extra: () => ({ time: tiempoRef.current }) },
+  )
+  // Si se pierde el nivel no queda nada que retomar
+  useEffect(() => {
+    if (isComplete && !isSuccess && !showLevelSelector) descartarPartida("robot", String(levels[currentLevel].id))
+  }, [isComplete, isSuccess, showLevelSelector, currentLevel, levels])
+
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("robot")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta: Record<string, number> = {}
+    resultadosCuenta.forEach((r) => {
+      const i = levels.findIndex((l) => String(l.id) === r.actividad)
+      if (i >= 0) deCuenta[String(i)] = r.tiempo
+    })
+    setBestTimes((prev) => {
+      const fusion = fusionarTiempos(Object.fromEntries(Object.entries(prev)), deCuenta)
+      return Object.fromEntries(Object.entries(fusion).map(([k, v]) => [Number(k), v]))
+    })
+  }, [resultadosCuenta, levels])
 
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {
@@ -120,117 +170,64 @@ export default function RobotProgrammerPage() {
 
   // Ejecutar los comandos
   const executeCommands = async () => {
-    if (isExecuting || commands.length === 0) return;
+    if (isExecuting || commands.length === 0) return
 
-    setIsExecuting(true);
-    setSteps(0);
+    setIsExecuting(true)
+    setSteps(0)
+    setFailureMessage(null)
 
     // Reiniciar el estado del robot
-    const level = levels[currentLevel];
-    setRobotPosition({ ...level.startPosition });
-    setLitCells([]);
+    const level = levels[currentLevel]
+    setRobotPosition({ ...level.startPosition })
+    setLitCells([])
 
-    // Ejecutar cada comando secuencialmente
-    let currentPosition = { ...level.startPosition };
-    let currentLitCells: { x: number; y: number }[] = [];
-
-    for (let i = 0; i < commands.length; i++) {
-      const command = commands[i];
-      setSteps(i + 1);
-      const result = executeCommand(command, currentPosition, currentLitCells, level.board);
-      currentPosition = result.position;
-      currentLitCells = result.litCells;
-      setRobotPosition({ ...currentPosition });
-      setLitCells([...currentLitCells]);
-      await new Promise((resolve) => setTimeout(resolve, executionSpeed));
+    // Simular el programa completo y animar cada paso
+    const run = runProgram(commands, level)
+    if (run.error) {
+      // Bucle mal formado: no se ejecuta ni resta vidas
+      setFailureMessage(run.error)
+      setIsExecuting(false)
+      return
+    }
+    for (let i = 0; i < run.frames.length; i++) {
+      setSteps(run.frames[i].source + 1)
+      setRobotPosition({ ...run.frames[i].position })
+      setLitCells([...run.frames[i].litCells])
+      await new Promise((resolve) => setTimeout(resolve, executionSpeed))
     }
 
-    // Verificar si se completó el nivel
-    const success = validateSolution(currentLitCells, level.targetCells);
-
-    if (success) {
-      setIsSuccess(true);
-      setIsComplete(true);
-      setIsActive(false);
+    if (run.success) {
+      setIsSuccess(true)
+      setIsComplete(true)
+      setIsActive(false)
     } else {
-      // Si no se completó correctamente, reducir vidas de forma segura
+      // Explicar en qué paso y por qué falló, y restar una vida
+      setFailureMessage(explainFailure(run))
       setLives((prev) => {
-        const newLives = Math.max(0, prev - 1);
+        const newLives = Math.max(0, prev - 1)
         if (newLives <= 0) {
-          setIsComplete(true);
-          setIsSuccess(false);
-          setIsActive(false);
+          setIsComplete(true)
+          setIsSuccess(false)
+          setIsActive(false)
         }
-        return newLives;
-      });
+        return newLives
+      })
     }
 
-    setIsExecuting(false);
-  };
+    setIsExecuting(false)
+  }
 
-  // Ejecutar un comando individual
-  const executeCommand = (
-    command: string,
-    position: { x: number; y: number; direction: number },
-    litCells: { x: number; y: number }[],
-    board: number[][],
-  ) => {
-    const newPosition = { ...position }
-    const newLitCells = [...litCells]
-
-    switch (command) {
-      case "forward":
-        // Calcular nueva posición basada en la dirección
-        const directionVectors = [
-          { x: 0, y: -1 }, // Norte
-          { x: 1, y: 0 }, // Este
-          { x: 0, y: 1 }, // Sur
-          { x: -1, y: 0 }, // Oeste
-        ]
-
-        const vector = directionVectors[position.direction]
-        const newX = position.x + vector.x
-        const newY = position.y + vector.y
-
-        // Verificar si la nueva posición está dentro del tablero y no es un obstáculo
-        if (
-          newX >= 0 &&
-          newX < board[0].length &&
-          newY >= 0 &&
-          newY < board.length &&
-          board[newY][newX] !== 1 // 1 representa un obstáculo
-        ) {
-          newPosition.x = newX
-          newPosition.y = newY
-        }
-        break
-
-      case "turnRight":
-        newPosition.direction = (position.direction + 1) % 4
-        break
-
-      case "turnLeft":
-        newPosition.direction = (position.direction + 3) % 4 // +3 es equivalente a -1 en módulo 4
-        break
-
-      case "light":
-        // Verificar si la celda ya está encendida
-        const alreadyLit = newLitCells.some((cell) => cell.x === position.x && cell.y === position.y)
-
-        if (!alreadyLit) {
-          newLitCells.push({ x: position.x, y: position.y })
-        }
-        break
-
-      // Aquí se pueden añadir más comandos como bucles o funciones
-    }
-
-    return { position: newPosition, litCells: newLitCells }
+  // Revelar la siguiente pista (no completa el nivel ni resta vidas)
+  const showNextHint = () => {
+    const total = levels[currentLevel].hints.length
+    setHintsShown((n) => Math.min(n + 1, total))
   }
 
   // Reiniciar el nivel actual
   const resetLevel = () => {
     const level = levels[currentLevel]
+    setRetomada(false)
+    descartarPartida("robot", String(level.id))
     setCommands([])
     setIsExecuting(false)
     setIsComplete(false)
@@ -241,6 +238,8 @@ export default function RobotProgrammerPage() {
     setLives(3)
     setTime(0)
     setIsActive(true)
+    setHintsShown(0)
+    setFailureMessage(null)
   }
 
   // Volver al selector de niveles
@@ -398,6 +397,9 @@ export default function RobotProgrammerPage() {
                   </div>
                 )}
               </div>
+              {isComplete && isSuccess && (
+                <GuardadoResultado juego="robot" actividad={String(levels[currentLevel].id)} tiempo={time} />
+              )}
               {/* Botón para avanzar al siguiente nivel */}
               {isComplete && isSuccess && currentLevel < levels.length - 1 && (
                 <Button
@@ -419,6 +421,36 @@ export default function RobotProgrammerPage() {
                   vertical
                 />
               </div>
+              {/* Reglas y ejemplo antes de usar un concepto nuevo */}
+              {levels[currentLevel].intro && !introClosed.includes(currentLevel) && (
+                <div className="rounded-lg border border-blue-400/40 bg-blue-400/10 p-3 text-sm text-blue-100 space-y-2">
+                  <div className="font-bold">{levels[currentLevel].intro!.title}</div>
+                  <ul className="list-disc list-inside space-y-1">
+                    {levels[currentLevel].intro!.rules.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                  <p className="italic">{levels[currentLevel].intro!.example}</p>
+                  <Button size="sm" variant="outline" onClick={() => setIntroClosed((c) => [...c, currentLevel])}>
+                    Entendido
+                  </Button>
+                </div>
+              )}
+              <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
+              {/* Por qué falló el último programa */}
+              {failureMessage && (
+                <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                  {failureMessage}
+                </div>
+              )}
+              {/* Pistas graduales */}
+              {hintsShown > 0 && (
+                <ol aria-live="polite" className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-100 space-y-2 list-decimal list-inside">
+                  {levels[currentLevel].hints.slice(0, hintsShown).map((hint, i) => (
+                    <li key={i}>{hint}</li>
+                  ))}
+                </ol>
+              )}
               {/* Botones principales debajo de comandos */}
               <div className="flex flex-col gap-2 w-full mt-2">
                 <Button
@@ -428,6 +460,19 @@ export default function RobotProgrammerPage() {
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Ejecutar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-amber-400/50 text-amber-200 hover:bg-amber-400/10 w-full text-base py-3"
+                  onClick={showNextHint}
+                  disabled={isExecuting || isComplete || hintsShown >= levels[currentLevel].hints.length}
+                >
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  {hintsShown === 0
+                    ? "Pedir pista"
+                    : hintsShown >= levels[currentLevel].hints.length
+                      ? "Sin más pistas"
+                      : `Otra pista (${hintsShown}/${levels[currentLevel].hints.length})`}
                 </Button>
                 <Button
                   variant="outline"

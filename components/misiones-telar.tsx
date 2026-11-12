@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ArrowRight } from "lucide-react"
-import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
+import { minutosNivel } from "@/lib/misiones-catalogo"
+import { useCatalogo } from "@/components/misiones/use-catalogo"
 
 /**
  * Los niveles de la sección como una columna de tarjetas perforadas unidas por un hilo.
@@ -11,10 +12,25 @@ import { NIVELES, SECCION } from "@/lib/misiones-catalogo"
  */
 const CELLS = 10
 
+/** Enlace si el nivel está disponible; si no, una tarjeta sin acción. */
+const TARJETA = "grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-6"
+function Tarjeta({ href, children }: { href: string | null; children: React.ReactNode }) {
+  if (!href) return <div className={`${TARJETA} opacity-80`}>{children}</div>
+  return (
+    <Link
+      href={href}
+      className={`group ${TARJETA} transition-[border-color,transform] duration-200 ease-out-strong hover:-translate-y-0.5 hover:border-neuron/60`}
+    >
+      {children}
+    </Link>
+  )
+}
+
 const thread = (t: number) => `hsl(${Math.round(186 + 91 * t)} 100% calc(var(--tl0) - var(--tld) * ${t}))`
 
 export default function MisionesTelar() {
   const [done, setDone] = useState<Record<string, number> | null>(null)
+  const catalogo = useCatalogo()
 
   useEffect(() => {
     let cancel = false
@@ -26,7 +42,7 @@ export default function MisionesTelar() {
         .then((rows: { seccion: string; nivel: string; completado: boolean }[]) => {
           if (cancel || !Array.isArray(rows)) return
           const acc: Record<string, number> = {}
-          for (const row of rows) if (row.completado && String(row.seccion) === SECCION.id) acc[String(row.nivel)] = (acc[String(row.nivel)] ?? 0) + 1
+          for (const row of rows) if (row.completado) acc[`${row.seccion}:${row.nivel}`] = (acc[`${row.seccion}:${row.nivel}`] ?? 0) + 1
           setDone(acc)
         })
         .catch(() => {})
@@ -37,6 +53,10 @@ export default function MisionesTelar() {
       cancel = true
     }
   }, [])
+
+  if (!catalogo) return <p role="status" className="text-muted-foreground">Cargando misiones…</p>
+  const { seccion: SECCION, niveles: NIVELES } = catalogo
+  const hechas = (nivelId: string) => done?.[`${SECCION.id}:${nivelId}`] ?? 0
 
   return (
     <section aria-labelledby="seccion-titulo">
@@ -49,10 +69,11 @@ export default function MisionesTelar() {
 
       <ol className="relative flex flex-col gap-4 pl-8 sm:pl-12">
         {NIVELES.map((n, i) => {
-          const count = done?.[n.id] ?? 0
+          const count = hechas(n.id)
           const started = count > 0
           // Solo el primer nivel sin completar es la acción principal; los demás quedan en segundo plano.
-          const primero = NIVELES.findIndex((x) => !(done?.[x.id])) === i || (done === null && i === 0)
+          const disponible = n.actividades.length > 0
+          const primero = disponible && (NIVELES.findIndex((x) => x.actividades.length > 0 && !hechas(x.id)) === i || (done === null && i === 0))
           return (
             <li key={n.id} className="relative">
               {i < NIVELES.length - 1 && (
@@ -71,13 +92,18 @@ export default function MisionesTelar() {
               >
                 {n.id}
               </span>
-              <Link
-                href={`/misiones/${SECCION.id}/${n.id}`}
-                className="group grid gap-4 rounded-xl border border-border bg-card p-5 transition-[border-color,transform] duration-200 ease-out-strong hover:-translate-y-0.5 hover:border-neuron/60 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-6"
-              >
+              <Tarjeta href={disponible ? `/misiones/${SECCION.id}/${n.id}` : null}>
                 <div>
                   <h3 className="font-display text-xl font-semibold">{n.title}</h3>
                   <p className="mt-1 max-w-xl text-muted-foreground">{n.text}</p>
+                  <p className="mt-2 max-w-xl text-sm">
+                    <span className="font-medium">Objetivo:</span> {n.objetivo}
+                  </p>
+                  {disponible && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      ≈ {minutosNivel(n)} min · {n.actividades.length} actividades
+                    </p>
+                  )}
                   <div aria-hidden className="mt-4 flex max-w-sm gap-1.5">
                     {Array.from({ length: CELLS }, (_, k) => (
                       <span
@@ -88,18 +114,30 @@ export default function MisionesTelar() {
                     ))}
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {started ? `${count} ${count === 1 ? "actividad completada" : "actividades completadas"}` : i === 0 ? "Aquí empiezas" : "Sin empezar"}
+                    {!disponible
+                      ? "Aún sin actividades"
+                      : started
+                        ? `${count} ${count === 1 ? "actividad completada" : "actividades completadas"}`
+                        : i === 0
+                          ? "Aquí empiezas"
+                          : "Sin empezar"}
                   </p>
                 </div>
-                <span
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 font-medium ${
-                    primero ? "bg-primary text-primary-foreground" : "border border-border text-foreground"
-                  }`}
-                >
-                  {started ? "Continuar" : "Empezar"}
-                  <ArrowRight aria-hidden className="h-4 w-4 transition-transform duration-200 ease-out-strong group-hover:translate-x-1" />
-                </span>
-              </Link>
+                {disponible ? (
+                  <span
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 font-medium ${
+                      primero ? "bg-primary text-primary-foreground" : "border border-border text-foreground"
+                    }`}
+                  >
+                    {started ? "Continuar" : "Empezar"}
+                    <ArrowRight aria-hidden className="h-4 w-4 transition-transform duration-200 ease-out-strong group-hover:translate-x-1" />
+                  </span>
+                ) : (
+                  <span className="inline-flex min-h-11 items-center rounded-md border border-dashed border-border px-5 font-medium text-muted-foreground">
+                    Próximamente
+                  </span>
+                )}
+              </Tarjeta>
             </li>
           )
         })}

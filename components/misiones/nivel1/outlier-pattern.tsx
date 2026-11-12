@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Heart, Lightbulb } from "lucide-react"
+import { CheckCircle, XCircle, Heart } from "lucide-react"
 import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
+import Pistas from "@/components/misiones/pistas"
+import type { EstadoJuego } from "@/lib/patrones"
+import { dificultadDeRonda, explicarRegla, generarIntruso, type RondaIntruso, type TipoPatron } from "@/lib/generador-patrones"
 
 interface OutlierPatternProps {
   onComplete: (
@@ -17,69 +20,42 @@ interface OutlierPatternProps {
     erroresRepetidos?: number[]
   ) => void
   onRondaError?: () => void // NUEVO: callback para error de ronda
-}
-
-type PatternType = "color" | "shape" | "number" | "direction"
-
-const patternElements = {
-  color: ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤"],
-  shape: ["⭐", "🔶", "🔷", "⬛", "⬜", "🔺", "🔻", "⭕", "🔘"],
-  number: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"],
-  direction: ["⬆️", "➡️", "⬇️", "⬅️", "↗️", "↘️", "↙️", "↖️", "↔️"],
+  estadoInicial?: EstadoJuego | null
+  onEstado?: (estado: EstadoJuego) => void
 }
 
 const maxRounds = 5
 const initialLives = 3
 
-function generateOutlierPattern(type: PatternType, length: number) {
-  const elements = patternElements[type]
-  // Elegir un subconjunto de 3 elementos para el patrón base
-  const base = [] as string[]
-  while (base.length < 3) {
-    const e = elements[Math.floor(Math.random() * elements.length)]
-    if (!base.includes(e)) base.push(e)
-  }
-  // Generar el patrón base repetido
-  const pattern = Array.from({ length }, (_, i) => base[i % base.length])
-  // Elegir una posición aleatoria para el intruso
-  const outlierIdx = Math.floor(Math.random() * length)
-  // Elegir un elemento que no esté en el patrón base
-  const outlier = elements.filter(e => !base.includes(e))[Math.floor(Math.random() * (elements.length - 3))]
-  pattern[outlierIdx] = outlier
-  return { pattern, outlierIdx, outlier, base }
-}
-
-export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatternProps) {
-  const [patternType, setPatternType] = useState<PatternType>("color")
+export default function OutlierPattern({ onComplete, onRondaError, estadoInicial, onEstado }: OutlierPatternProps) {
+  const ini = (estadoInicial ?? {}) as Record<string, any>
+  const [patternType, setPatternType] = useState<TipoPatron>("color")
+  const [ronda, setRonda] = useState<RondaIntruso | null>(null)
   const [pattern, setPattern] = useState<string[]>([])
   const [outlierIdx, setOutlierIdx] = useState<number>(-1)
   const [outlier, setOutlier] = useState<string>("")
   const [base, setBase] = useState<string[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
-  const [score, setScore] = useState(0)
-  const [round, setRound] = useState(1)
-  const [lives, setLives] = useState(initialLives)
+  const [score, setScore] = useState<number>(ini.score ?? 0)
+  const [round, setRound] = useState<number>(ini.round ?? 1)
+  const [lives, setLives] = useState<number>(ini.lives ?? initialLives)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [showExplanation, setShowExplanation] = useState(false)
   const [explanation, setExplanation] = useState("")
-  const [incorrectRounds, setIncorrectRounds] = useState<any[]>([])
-  const [reviewMode, setReviewMode] = useState(false)
-  const [reviewIndex, setReviewIndex] = useState(0)
+  const [incorrectRounds, setIncorrectRounds] = useState<any[]>(ini.incorrectRounds ?? [])
+  const [reviewMode, setReviewMode] = useState<boolean>(ini.reviewMode ?? false)
+  const [reviewIndex, setReviewIndex] = useState<number>(ini.reviewIndex ?? 0)
   const [mounted, setMounted] = useState(false)
-  const [hint, setHint] = useState<string | null>(null)
-  const [hintUsed, setHintUsed] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [hintsLeft, setHintsLeft] = useState(3)
-  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>([])
-  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>([])
+  const [erroresDetalle, setErroresDetalle] = useState<{ ronda: number; explicacion: string }[]>(ini.erroresDetalle ?? [])
+  const [erroresRepetidos, setErroresRepetidos] = useState<number[]>(ini.erroresRepetidos ?? [])
 
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     if (mounted) {
-      setStartTime(Date.now())
-      startNewRound()
+      setStartTime(Date.now() - (Number(ini.tiempo) || 0) * 1000)
+      startNewRound(Boolean(ini.reviewMode), round)
     }
     // eslint-disable-next-line
   }, [mounted])
@@ -90,31 +66,38 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     }, 1000)
     return () => clearInterval(timer)
   }, [startTime])
+  // Foto del estado al cambiar de ronda (no en la primera, para no guardar algo sin avance).
+  useEffect(() => {
+    if (!mounted || !onEstado) return
+    if (round === 1 && !reviewMode && score === 0 && erroresDetalle.length === 0) return
+    onEstado({ round, score, lives, incorrectRounds, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo: timeElapsed })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, round, reviewMode, reviewIndex, score])
+
   if (!mounted) return null
 
-  const startNewRound = (isReview = false) => {
-    let type: PatternType
+  const startNewRound = (isReview = false, numRonda = round) => {
     let pat: string[]
     let idx: number
     let out: string
     let basePat: string[]
+    let r: RondaIntruso
     if (isReview && incorrectRounds.length > 0) {
       const review = incorrectRounds[reviewIndex]
-      type = review.type
+      r = review.ronda
       pat = review.pattern
       idx = review.outlierIdx
       out = review.outlier
       basePat = review.base
     } else {
-      const types: PatternType[] = ["color", "shape", "number", "direction"]
-      type = types[Math.floor(Math.random() * types.length)]
-      const { pattern, outlierIdx, outlier, base } = generateOutlierPattern(type, 7)
-      pat = pattern
-      idx = outlierIdx
-      out = outlier
-      basePat = base
-      setPatternType(type)
+      r = generarIntruso(dificultadDeRonda(numRonda, maxRounds))
+      pat = r.pattern
+      idx = r.outlierIdx
+      out = r.outlier
+      basePat = r.fichasRegla
+      setPatternType(r.tipo)
     }
+    setRonda(r)
     setPattern(pat)
     setOutlierIdx(idx)
     setOutlier(out)
@@ -123,9 +106,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     setIsCorrect(null)
     setShowExplanation(false)
     setExplanation("")
-    setHint(null)
-    setHintUsed(false)
-    setShowPaywall(false)
   }
 
   const handleOptionSelect = (idx: number) => {
@@ -134,19 +114,19 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     const correct = idx === outlierIdx
     setIsCorrect(correct)
     setShowExplanation(true)
-    setExplanation(
-      correct
-        ? "¡Correcto! Has encontrado el elemento que no pertenece al patrón."
-        : `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`
-    )
+    const regla = ronda ? explicarRegla(ronda, glyphName) : ""
+    const explicacion = correct
+      ? `¡Correcto! Esa ficha rompe la regla. ${regla}`
+      : `${glyphName(pattern[idx])} sí sigue el patrón: no es el intruso. ${regla} Busca la ficha que no encaja en esa repetición.`
+    setExplanation(explicacion)
     if (correct) {
       setScore(score + 1)
       setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 } }), 500)
       setTimeout(() => handleContinue(), 1200)
     } else {
       if (!reviewMode) {
-        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: round - 1, explicacion: `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`}])
-        setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion: `El elemento correcto era: ${glyphName(pattern[outlierIdx])}. El patrón base era: ${base.map(glyphName).join(", ")}.`}])
+        setIncorrectRounds([...incorrectRounds, { pattern, type: patternType, outlierIdx, outlier, base, ronda: ronda, rondaNum: round - 1, explicacion }])
+        setErroresDetalle(prev => [...prev, { ronda: round - 1, explicacion }])
       } else {
         setErroresRepetidos(prev => [...prev, reviewIndex])
       }
@@ -159,16 +139,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
     setLives(l => l - 1)
   }
 
-  const handleShowHint = () => {
-    if (!hintUsed) {
-      setHint(`El patrón base es: ${base.map(glyphName).join(", ")}`)
-      setHintUsed(true)
-      setHintsLeft(hintsLeft - 1)
-    } else {
-      setShowPaywall(true)
-    }
-  }
-
   const handleContinue = () => {
     setShowExplanation(false)
     if (!reviewMode) {
@@ -178,7 +148,7 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
       }
       if (round < maxRounds) {
         setRound(round + 1)
-        startNewRound()
+        startNewRound(false, round + 1)
       } else if (incorrectRounds.length > 0 && lives > 0) {
         setReviewMode(true)
         setReviewIndex(0)
@@ -225,14 +195,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Pistas</span>
-          <div className="flex gap-1">
-            {[...Array(hintsLeft)].map((_, i) => (
-              <Lightbulb key={i} className="h-5 w-5 text-yellow-400" />
-            ))}
-          </div>
-        </div>
       </div>
       {/* Secuencia y opciones */}
       <div className="flex flex-col items-center gap-6 md:gap-8 flex-1 justify-center">
@@ -243,39 +205,6 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
             </div>
           ))}
         </div>
-        {/* Mensaje de pista */}
-        <AnimatePresence>
-          {hint && (
-            <motion.div
-              className="bg-yellow-500/10 text-yellow-400 p-4 rounded-lg mb-4 text-center font-semibold shadow animate-fade-in"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-            >
-              <Lightbulb className="inline h-5 w-5 mr-1" /> {hint}
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {/* Paywall simulado */}
-        <AnimatePresence>
-          {showPaywall && (
-            <motion.div
-              className="bg-purple-900/90 border-2 border-yellow-400 text-yellow-200 p-6 rounded-xl mb-4 text-center shadow-xl max-w-xs animate-fade-in z-20"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <div className="mb-2">
-                <Lightbulb className="inline h-6 w-6 mr-2 text-yellow-400" />
-                <span className="font-bold">¡Pista extra!</span>
-              </div>
-              <div className="mb-3 text-sm text-yellow-100">Solo puedes usar una pista por ronda.<br />Se renuevan en cada ronda.</div>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold mt-2" onClick={() => setShowPaywall(false)}>
-                Cerrar
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 w-full max-w-md">
           {pattern.map((option, index) => (
             <Button
@@ -326,17 +255,19 @@ export default function OutlierPattern({ onComplete, onRondaError }: OutlierPatt
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Botón de pista animado */}
       <div className="flex justify-center mt-8">
-        <Button
-          variant="outline"
-          className="border-yellow-400 text-yellow-400 hover:bg-yellow-500/10"
-          onClick={handleShowHint}
-          disabled={hintsLeft === 0}
-        >
-          <Lightbulb className="h-5 w-5 mr-2" />
-          {hintsLeft > 0 ? "Usar pista" : "Sin pistas"}
-        </Button>
+        <Pistas
+          key={`${reviewMode ? "r" : "n"}-${reviewMode ? reviewIndex : round}-${pattern.join("")}`}
+          pistas={
+            ronda
+              ? [
+                  { texto: "Casi todas las fichas siguen una misma regla. Busca la que no la cumple." },
+                  { texto: explicarRegla(ronda, glyphName) },
+                  { texto: `El intruso es la ficha número ${outlierIdx + 1}, contando desde la izquierda:`, fichas: pattern[outlierIdx] ? [pattern[outlierIdx]] : [] },
+                ]
+              : []
+          }
+        />
       </div>
     </motion.div>
   )

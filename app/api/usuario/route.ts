@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { MENSAJE_ACEPTAR_TERMINOS, TERMINOS_VERSION } from "@/lib/terminos"
 import { EMAIL_RE, USERNAME_RE, hashPassword, normalizeUsername } from "@/lib/auth"
 
 // POST: crear una cuenta. El rol NO viene del cliente: toda cuenta nueva es de estudiante.
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const password = typeof body.password === "string" ? body.password : ""
 
+    if (body.aceptaTerminos !== true) {
+      return NextResponse.json({ error: MENSAJE_ACEPTAR_TERMINOS }, { status: 400 })
+    }
     if (!USERNAME_RE.test(username)) {
       return NextResponse.json(
         { error: "El usuario debe tener entre 3 y 20 caracteres: letras minúsculas, números o guion bajo" },
@@ -37,6 +41,8 @@ export async function POST(req: NextRequest) {
         email,
         password: await hashPassword(password),
         rol: "estudiante",
+        terminosVersion: TERMINOS_VERSION,
+        terminosAceptadosEn: new Date(),
         neuronas: 5,
         maxNeuronas: 5,
         ultimaRecarga: new Date(),

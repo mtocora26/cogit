@@ -1,59 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, PartyPopper, XCircle } from "lucide-react"
-import { Glyph } from "@/components/misiones/glyph"
+import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { motion, AnimatePresence } from "framer-motion"
+import Pistas from "@/components/misiones/pistas"
+import type { EstadoJuego } from "@/lib/patrones"
+import { dificultadDeRonda, explicarRegla, generarHuecos, type RondaHuecos } from "@/lib/generador-patrones"
 
-const SEQUENCES = [
-  {
-    pattern: ["🟦", "🟩", "🟦", "🟩", "", "🟦", "🟩"],
-    options: ["🟦", "🟩", "🟥"],
-    answer: [4],
-    solution: ["🟦"],
-  },
-  {
-    pattern: ["🔴", "🟡", "🔴", "", "🔴", "🟡", "🔴"],
-    options: ["🟡", "🔴", "🟢"],
-    answer: [3],
-    solution: ["🟡"],
-  },
-  {
-    pattern: ["⬛", "⬜", "⬛", "", "⬛", "⬜", ""],
-    options: ["⬛", "⬜"],
-    answer: [3, 6],
-    solution: ["⬜", "⬛"],
-  },
-  // Patrón 4: alternancia clara entre estrella y rombo
-  {
-    pattern: ["⭐", "🔷", "⭐", "", "🔷", "⭐", "", "🔷"],
-    options: ["⭐", "🔷", "🔶"],
-    answer: [3, 6],
-    solution: ["🔷", "⭐"],
-  },
-  // Patrón 5: dificultad mayor, tres espacios, secuencia mixta
-  {
-    pattern: ["⬆️", "➡️", "⬇️", "", "⬆️", "", "⬇️", "", "⬆️"],
-    options: ["⬆️", "➡️", "⬇️", "⬅️"],
-    answer: [3, 5, 7],
-    solution: ["➡️", "⬆️", "➡️"],
-  },
-]
+const TOTAL = 5 // patrones por actividad; la dificultad sube de forma gradual
 
 interface CompletaPatronProps {
   onComplete: (success: boolean, time: number, score?: number) => void
+  estadoInicial?: EstadoJuego | null
+  onEstado?: (estado: EstadoJuego) => void
 }
 
-export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
-  const [current, setCurrent] = useState(0)
+export default function CompletaPatron({ onComplete, estadoInicial, onEstado }: CompletaPatronProps) {
+  const [current, setCurrent] = useState<number>(Math.min(Math.max(Number(estadoInicial?.current) || 0, 0), TOTAL - 1))
   const [userInput, setUserInput] = useState<string[]>([])
   const [feedback, setFeedback] = useState<null | boolean>(null)
   const [completed, setCompleted] = useState(false)
   const [showNext, setShowNext] = useState(false)
   const [startTime] = useState(Date.now())
+  // Los patrones se generan en el cliente (con respuesta única comprobada); no al renderizar en el servidor.
+  const [rondas, setRondas] = useState<RondaHuecos[] | null>(null)
+  useEffect(() => {
+    setRondas(Array.from({ length: TOTAL }, (_, i) => generarHuecos(dificultadDeRonda(i + 1, TOTAL))))
+  }, [])
+  const [mensajeError, setMensajeError] = useState<string | null>(null)
 
-  const seq = SEQUENCES[current]
+  // Foto del estado al pasar de patrón (no en el primero, para no guardar algo sin avance).
+  useEffect(() => {
+    if (onEstado && current > 0) onEstado({ current })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current])
+
+  if (!rondas) return null
+  const ronda = rondas[current]
+  const seq = { pattern: ronda.celdas.map((c) => c ?? ""), options: ronda.opciones, answer: ronda.huecos, solution: ronda.solucion }
   const patternWithInput = seq.pattern.map((el, i) =>
     el === "" ? (userInput[seq.answer.indexOf(i)] || "❔") : el
   )
@@ -69,12 +55,23 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     const isCorrect = userInput.every((v, i) => v === seq.solution[i])
     setFeedback(isCorrect)
     setShowNext(isCorrect)
-    if (isCorrect && current === SEQUENCES.length - 1) {
+    if (isCorrect) setMensajeError(null)
+    else {
+      // Distingue cuántos huecos están bien y nombra la regla, sin dar por completada la actividad ni revelar la solución.
+      const bien = userInput.filter((v, i) => v === seq.solution[i]).length
+      const total = seq.answer.length
+      const estado =
+        bien === 0
+          ? "Ningún hueco coincide con la regla."
+          : `${bien} de ${total} huecos coinciden con la regla; revisa los demás.`
+      setMensajeError(`${estado} ${explicarRegla(ronda, glyphName)}`)
+    }
+    if (isCorrect && current === TOTAL - 1) {
       setTimeout(() => {
         setCompleted(true)
         if (onComplete) {
           const time = Math.round((Date.now() - startTime) / 1000)
-          onComplete(true, time, SEQUENCES.length)
+          onComplete(true, time, TOTAL)
         }
       }, 1200)
     }
@@ -84,12 +81,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     setCurrent(current + 1)
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
   }
 
   function handleReset() {
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
   }
 
@@ -97,12 +96,13 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     setCurrent(0)
     setUserInput([])
     setFeedback(null)
+    setMensajeError(null)
     setShowNext(false)
     setCompleted(false)
   }
 
   // Barra de progreso
-  const progress = Math.round(((current) / SEQUENCES.length) * 100)
+  const progress = Math.round(((current) / TOTAL) * 100)
 
   if (completed) {
     return (
@@ -118,7 +118,8 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto p-6 bg-card border border-border rounded-2xl flex flex-col items-center gap-6">
       <div className="w-full flex flex-col gap-2">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold">Patrón {current + 1} de {SEQUENCES.length}</h2>
+          <h2 className="text-xl font-bold">Patrón {current + 1} de {TOTAL}</h2>
+          <span className="text-sm text-muted-foreground">Dificultad: {ronda.dificultad}</span>
           <div className="text-xs text-gray-400">Progreso</div>
         </div>
         <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden mb-2">
@@ -147,6 +148,14 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
           </Button>
         ))}
       </div>
+      <Pistas
+        key={current}
+        pistas={[
+          { texto: "Mira las fichas que ya están colocadas: busca el grupo que se repite una y otra vez." },
+          { texto: explicarRegla(ronda, glyphName) },
+          { texto: "Los huecos, de izquierda a derecha, llevan:", fichas: seq.solution },
+        ]}
+      />
       <div className="flex gap-2">
         <Button onClick={handleCheck} disabled={userInput.length !== seq.answer.length || feedback !== null} className="bg-blue-600 hover:bg-blue-700 text-white">
           Comprobar
@@ -160,7 +169,7 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2 text-green-400 font-bold mt-2">
             <Check aria-hidden className="h-6 w-6" />
             ¡Correcto!
-            {showNext && current < SEQUENCES.length - 1 && (
+            {showNext && current < TOTAL - 1 && (
               <Button onClick={handleNext} className="bg-green-600 hover:bg-green-700 mt-2">Siguiente patrón</Button>
             )}
           </motion.div>
@@ -168,7 +177,8 @@ export default function CompletaPatron({ onComplete }: CompletaPatronProps) {
         {feedback === false && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2 text-red-400 font-bold mt-2">
             <XCircle className="h-6 w-6 animate-shake" />
-            Intenta de nuevo
+            Aún no es correcto. Puedes intentarlo de nuevo.
+            {mensajeError && <p role="status" className="max-w-md text-center text-sm font-normal text-red-200">{mensajeError}</p>}
           </motion.div>
         )}
       </AnimatePresence>

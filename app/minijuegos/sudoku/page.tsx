@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Lightbulb, RotateCcw, CheckCircle, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,15 @@ import NavBar from "@/components/nav-bar"
 import SudokuBoard from "@/components/sudoku/sudoku-board"
 import SudokuControls from "@/components/sudoku/sudoku-controls"
 import LevelSelector from "@/components/sudoku/level-selector"
+import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
 import { generateSudoku, checkSolution } from "@/lib/sudoku"
 import { formatTime } from "@/lib/utils"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
+import GuardadoResultado from "@/components/minijuegos/guardado-resultado"
+import AvisoPartida from "@/components/minijuegos/aviso-partida"
+import { descartarPartida, esEstadoSudoku, leerPartida } from "@/lib/estado-partida"
+import { useAutoguardado } from "@/lib/use-autoguardado"
 
 export default function SudokuPage() {
   const router = useRouter()
@@ -29,6 +36,18 @@ export default function SudokuPage() {
   const [solution, setSolution] = useState<number[][]>([])
   const [gameStarted, setGameStarted] = useState(false)
   const [bestTimes, setBestTimes] = useState<{ [key in "facil" | "medio" | "dificil"]?: number }>({})
+  const [retomada, setRetomada] = useState(false)
+  const tiempoRef = useRef(0)
+  tiempoRef.current = time
+
+  // REQ-006: la partida en curso se guarda en la cuenta (sin el cronómetro, que se agrega al guardar)
+  const estadoPartida = useMemo(
+    () => (gameStarted ? { board, initialBoard, solution, notes, hintsUsed } : null),
+    [gameStarted, board, initialBoard, solution, notes, hintsUsed],
+  )
+  const { errorGuardado } = useAutoguardado("sudoku", gameStarted ? difficulty : null, estadoPartida, isActive && !isComplete, {
+    extra: () => ({ time: tiempoRef.current }),
+  })
 
   // Cargar datos de usuario al montar
   useEffect(() => {
@@ -46,8 +65,30 @@ export default function SudokuPage() {
   }, [])
 
   // Iniciar el juego con un nivel seleccionado
-  const startGame = (level: "facil" | "medio" | "dificil") => {
+  const startGame = async (level: "facil" | "medio" | "dificil") => {
     setDifficulty(level)
+    // ¿Hay una partida guardada de este nivel en la cuenta? Se retoma tal cual.
+    const guardada = await leerPartida("sudoku", level)
+    if (guardada && esEstadoSudoku(guardada.estado)) {
+      const g = guardada.estado
+      setBoard(g.board)
+      setInitialBoard(g.initialBoard)
+      setSolution(g.solution)
+      setNotes(g.notes)
+      setHintsUsed(g.hintsUsed)
+      setTime(g.time)
+      setSelectedCell(null)
+      setIsComplete(false)
+      setIsCorrect(false)
+      setErrors([])
+      setIsNotesMode(false)
+      setIsActive(true)
+      setShowLevelSelector(false)
+      setGameStarted(true)
+      setRetomada(true)
+      return
+    }
+    setRetomada(false)
     const emptyCells = level === "facil" ? 30 : level === "medio" ? 45 : 55
     const { puzzle, solution: solvedPuzzle } = generateSudoku(emptyCells)
     setBoard(JSON.parse(JSON.stringify(puzzle)))
@@ -90,6 +131,14 @@ export default function SudokuPage() {
       setBestTimes(JSON.parse(savedTimes))
     }
   }, [])
+
+  // Los logros de la cuenta se suman a lo guardado en este navegador (REQ-002)
+  const resultadosCuenta = useResultadosCuenta("sudoku")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta = Object.fromEntries(resultadosCuenta.map((r) => [r.actividad, r.tiempo]))
+    setBestTimes((prev) => fusionarTiempos(prev as Record<string, number>, deCuenta))
+  }, [resultadosCuenta])
 
   // Guardar mejor tiempo cuando se completa un nivel
   useEffect(() => {
@@ -227,6 +276,8 @@ export default function SudokuPage() {
 
   // Reiniciar el juego actual
   const handleReset = () => {
+    setRetomada(false)
+    descartarPartida("sudoku", difficulty)
     setBoard(JSON.parse(JSON.stringify(initialBoard)))
     setSelectedCell(null)
     setIsComplete(false)
@@ -288,6 +339,10 @@ export default function SudokuPage() {
             <ArrowLeft className="h-6 w-6" />
           </Button>
 
+          <div className="mx-auto mb-4 max-w-xl">
+            <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={handleReset} />
+          </div>
+
           <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <div className="order-2 md:order-1">
               <SudokuBoard
@@ -314,6 +369,7 @@ export default function SudokuPage() {
                 isNotesMode={isNotesMode}
               />
               <div className="flex flex-col gap-2">
+                <SudokuReglas />
                 <Button variant="outline" onClick={handleHint} disabled={hintsUsed >= 3 || !selectedCell}>
                   <Lightbulb className="mr-2 h-4 w-4" />
                   Pista ({3 - hintsUsed} restantes)
@@ -341,6 +397,7 @@ export default function SudokuPage() {
                       <p className="text-lg text-center text-green-600">¡Nuevo mejor tiempo para {difficulty}!</p>
                     )}
                     <p className="text-gray-600 text-center">Tiempo: {formatTime(time)}</p>
+                    <GuardadoResultado juego="sudoku" actividad={difficulty} tiempo={time} />
                     <Button className="w-full mt-4" onClick={handleBackToLevels}>
                       Volver a niveles
                     </Button>

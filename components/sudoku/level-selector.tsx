@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { formatTime } from "@/lib/utils"
 import { DifficultyCard } from "@/components/brand/difficulty-card"
+import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
+import { useResultadosCuenta } from "@/lib/use-resultados"
+import { fusionarTiempos } from "@/lib/resultados-cuenta"
 
 interface LevelSelectorProps {
   onStartGame: (level: "facil" | "medio" | "dificil") => void
@@ -13,24 +16,24 @@ const LEVELS = [
     id: "facil" as const,
     title: "Fácil",
     level: 1,
-    description: "Perfecto para principiantes. Aprende las reglas básicas y desarrolla estrategias iniciales.",
-    facts: ["30 celdas vacías", "Estrategias básicas", "Tiempo estimado: 5-10 min"],
+    description: "Para empezar. Practicas el único candidato: la celda en la que solo cabe un número.",
+    facts: ["30 celdas vacías", "Técnica: único candidato", "Tiempo estimado: 5-10 min"],
     cta: "Comenzar nivel fácil",
   },
   {
     id: "medio" as const,
     title: "Medio",
     level: 2,
-    description: "Para jugadores con experiencia. Requiere análisis más profundo y técnicas intermedias.",
-    facts: ["45 celdas vacías", "Técnicas intermedias", "Tiempo estimado: 10-20 min"],
+    description: "Practicas el candidato oculto: el número que en una fila, columna o región solo cabe en un sitio.",
+    facts: ["45 celdas vacías", "Técnica: candidato oculto", "Tiempo estimado: 10-20 min"],
     cta: "Comenzar nivel medio",
   },
   {
     id: "dificil" as const,
     title: "Difícil",
     level: 3,
-    description: "Un verdadero desafío para expertos. Requiere técnicas avanzadas y pensamiento profundo.",
-    facts: ["55 celdas vacías", "Técnicas avanzadas", "Tiempo estimado: 20-30 min"],
+    description: "Practicas las notas y los pares: anotar candidatos y descartar los que otra celda ya ocupa.",
+    facts: ["55 celdas vacías", "Técnica: notas y pares", "Tiempo estimado: 20-30 min"],
     cta: "Comenzar nivel difícil",
   },
 ]
@@ -46,6 +49,14 @@ export default function LevelSelector({ onStartGame }: LevelSelectorProps) {
     }
   }, [])
 
+  // Mejores tiempos guardados en la cuenta (REQ-002): se suman a los del navegador
+  const resultadosCuenta = useResultadosCuenta("sudoku")
+  useEffect(() => {
+    if (!resultadosCuenta) return
+    const deCuenta = Object.fromEntries(resultadosCuenta.map((r) => [r.actividad, r.tiempo]))
+    setBestTimes((prev) => fusionarTiempos(prev as Record<string, number>, deCuenta))
+  }, [resultadosCuenta])
+
   return (
     <div className="w-full overflow-y-auto px-4 py-8">
       <div className="mb-10 text-center">
@@ -54,6 +65,7 @@ export default function LevelSelector({ onStartGame }: LevelSelectorProps) {
           Selecciona el nivel que mejor se adapte a tu experiencia. Cada nivel ofrece un desafío diferente para
           ejercitar tu pensamiento lógico.
         </p>
+        <SudokuReglas className="mt-4" />
       </div>
 
       <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
