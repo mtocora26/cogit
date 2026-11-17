@@ -92,15 +92,15 @@ export default function NonogramBoard({
   }
 
   return (
-    <div ref={boardRef} className="flex flex-col items-center justify-center">
-      <div className="relative">
+    <div ref={boardRef} className="max-w-full overflow-x-auto">
+      <div className="relative mx-auto w-max">
         {/* Columnas de pistas */}
         <div
           className="grid"
           style={{
             // La celda se encoge en pantallas estrechas para que el tablero nunca desborde en horizontal.
-            ["--celda" as string]: `min(2.5rem, calc((100vw - 4rem - ${maxRowClueLength * 1.75}rem) / ${board[0].length}))`,
-            gridTemplateColumns: `${maxRowClueLength * 1.75}rem repeat(${board[0].length}, var(--celda))`,
+            ["--celda" as string]: `min(2.5rem, max(1.5rem, calc((100vw - 3rem - ${maxRowClueLength * 1.25}rem) / ${board[0].length})))`,
+            gridTemplateColumns: `repeat(${maxRowClueLength}, 1.25rem) repeat(${board[0].length}, var(--celda))`,
             gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, var(--celda))`,
           }}
         >
@@ -117,7 +117,7 @@ export default function NonogramBoard({
               {clues.map((clue, i) => (
                 <div
                   key={`col-${colIndex}-clue-${i}`}
-                  className="text-sm font-medium text-gray-300 h-6 flex items-center justify-center"
+                  className="text-xs sm:text-sm font-medium text-gray-300 h-6 flex items-center justify-center"
                 >
                   {clue}
                 </div>
@@ -129,11 +129,11 @@ export default function NonogramBoard({
           {rowClues.map((clues, rowIndex) => (
             <div
               key={`row-${rowIndex}`}
-              className={cn("flex items-center justify-end pr-2 rounded-l", lineaResaltada("fila", rowIndex) && "bg-green-500/30")}
+              className={cn("flex items-center justify-end pr-1 sm:pr-2 rounded-l", lineaResaltada("fila", rowIndex) && "bg-green-500/30")}
               style={{ gridColumn: `1 / span ${maxRowClueLength}`, gridRow: maxColClueLength + rowIndex + 1 }}
             >
               {clues.map((clue, i) => (
-                <div key={`row-${rowIndex}-clue-${i}`} className="text-sm font-medium text-gray-300 px-1">
+                <div key={`row-${rowIndex}-clue-${i}`} className="text-xs sm:text-sm font-medium text-gray-300 px-0.5 sm:px-1">
                   {clue}
                 </div>
               ))}

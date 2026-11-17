@@ -88,7 +88,7 @@ export default function NavBar({ activePage }: NavBarProps) {
   return (
     <header className="border-b border-gray-800 bg-background/90 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-2">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex min-h-11 items-center gap-2">
           <Logo className="h-8 w-auto" />
         </Link>
 
