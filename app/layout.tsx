@@ -2,7 +2,7 @@ import type React from "react"
 import "@/app/globals.css"
 import { Inter, Poppins } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { LivesProvider } from "@/components/misiones/lives-context"
+import { NeuronasProvider } from "@/components/misiones/neuronas-context"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
 const poppins = Poppins({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display", display: "swap" })
@@ -23,9 +23,9 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} ${poppins.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <LivesProvider>
+          <NeuronasProvider>
             {children}
-          </LivesProvider>
+          </NeuronasProvider>
         </ThemeProvider>
       </body>
     </html>

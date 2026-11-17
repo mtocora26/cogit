@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Heart, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
+import { ArrowLeft, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import NonogramBoard from "@/components/nonogram/nonogram-board"
 import NonogramControls from "@/components/nonogram/nonogram-controls"
 import LevelSelector from "@/components/nonogram/level-selector"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
 import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
 import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
@@ -23,6 +25,7 @@ import { cn } from "@/lib/utils"
 
 export default function NonogramasPage() {
   const router = useRouter()
+  const { neuronas, perderNeurona } = useNeuronas()
   const [showLevelSelector, setShowLevelSelector] = useState(true)
   const [currentLevel, setCurrentLevel] = useState(0)
   const [board, setBoard] = useState<number[][]>([])
@@ -54,6 +57,8 @@ export default function NonogramasPage() {
     isActive && !isComplete,
     { extra: () => ({ time: tiempoRef.current }) },
   )
+  // Las cuentas de pruebas ven todos los nonogramas como desbloqueados/completados.
+  const { modoPruebas } = useSinBloqueos()
 
   // Iniciar el juego con un nivel seleccionado
   const startLevel = async (levelIndex: number) => {
@@ -199,11 +204,12 @@ export default function NonogramasPage() {
           setShowCompletionAnimation(false)
         }, 3000) // Mostrar la animación por 3 segundos
       } else if (result.errors.length > 0) {
-        // Si hay errores, reducir vidas
+        // Cada error cuesta una neurona de la cuenta
         setErrors(result.errors)
+        perderNeurona()
 
-        // Si se quedan sin vidas, mostrar la solución
-        if (errors.length <= 1) {
+        // Si se queda sin neuronas, termina el intento
+        if (!modoPruebas && neuronas <= 1) {
           setIsComplete(true)
           setIsCorrect(false)
           setIsActive(false)
@@ -293,7 +299,7 @@ export default function NonogramasPage() {
               <LevelSelector
                 levels={levels}
                 onSelectLevel={startLevel}
-                completedLevels={Object.keys(completedImages).map(Number)}
+                completedLevels={modoPruebas ? levels.map((_, i) => i) : Object.keys(completedImages).map(Number)}
                 bestTimes={bestTimes}
               />
             </div>
@@ -392,7 +398,7 @@ export default function NonogramasPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="min-w-4 text-purple-400">•</div>
-                    <div>Tienes 3 vidas. Pierdes una vida por cada error.</div>
+                    <div>Cada error te cuesta una neurona. Se recuperan una cada 30 minutos.</div>
                   </li>
                 </ul>
                 <Button
@@ -418,7 +424,7 @@ export default function NonogramasPage() {
                     {isCorrect ? <CheckCircle className="h-10 w-10" /> : <AlertCircle className="h-10 w-10" />}
                   </div>
 
-                  <h2 className="text-3xl font-bold mb-4">{isCorrect ? "¡Felicidades!" : "¡Se acabaron las vidas!"}</h2>
+                  <h2 className="text-3xl font-bold mb-4">{isCorrect ? "¡Felicidades!" : "¡Se acabaron las neuronas!"}</h2>
 
                   <p className="text-xl text-gray-300 mb-6">
                     {isCorrect

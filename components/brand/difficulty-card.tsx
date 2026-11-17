@@ -24,12 +24,13 @@ interface DifficultyCardProps {
   level: number
   facts: string[]
   bestTime?: string
+  completed?: boolean
   cta: string
   onStart: () => void
   preview?: React.ReactNode
 }
 
-export function DifficultyCard({ title, description, level, facts, bestTime, cta, onStart, preview }: DifficultyCardProps) {
+export function DifficultyCard({ title, description, level, facts, bestTime, completed, cta, onStart, preview }: DifficultyCardProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-[border-color,transform] duration-200 ease-out-strong hover:-translate-y-0.5 hover:border-neuron/60">
       {preview && <div aria-hidden className="grid h-36 place-items-center bg-loom bg-muted/40">{preview}</div>}
@@ -45,6 +46,12 @@ export function DifficultyCard({ title, description, level, facts, bestTime, cta
             </li>
           ))}
         </ul>
+        {completed && !bestTime && (
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-neuron/15 px-3 py-1 text-sm text-neuron">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-neuron" />
+            <span>Completado</span>
+          </div>
+        )}
         {bestTime && (
           <div className="mb-4 flex items-center justify-between rounded-md bg-neuron/15 px-3 py-1 text-sm text-neuron">
             <span>Mejor tiempo:</span>

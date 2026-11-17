@@ -7,7 +7,7 @@ import type { ActividadCatalogo } from "@/lib/misiones-catalogo"
 /** Las fichas de patrones son símbolos de 1 a 3 caracteres; todo lo más largo es una frase (o una etiqueta como «Grupo A»). */
 const esFrase = (t: string) => t.length > 4
 
-/** Reglas y ejemplo resuelto de una actividad. Es solo lectura: no toca rondas, vidas ni progreso. */
+/** Reglas y ejemplo resuelto de una actividad. Es solo lectura: no toca rondas, neuronas ni progreso. */
 export default function ReglasActividad({ actividad }: { actividad: ActividadCatalogo }) {
   const { reglas, ejemplo } = actividad
   // Las fichas de patrones son símbolos cortos; los pasos de una tarea son frases.

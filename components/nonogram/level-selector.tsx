@@ -4,7 +4,7 @@ import { Star, Brain, Zap, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatTime } from "@/lib/utils"
 import NonogramBoard from "@/components/nonogram/nonogram-board"
-import { useState, useEffect } from "react"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
 
 interface Level {
   id: number
@@ -39,21 +39,8 @@ function GridSilhouette({ rows, cols, label }: { rows: number; cols: number; lab
 }
 
 export default function LevelSelector({ levels, onSelectLevel, completedLevels, bestTimes }: LevelSelectorProps) {
-  // Estado para verificar si el usuario es admin
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  // Efecto para leer el rol del usuario desde localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const usuario = localStorage.getItem("usuario")
-      if (usuario) {
-        try {
-          const user = JSON.parse(usuario)
-          setIsAdmin(user.rol === "admin")
-        } catch {}
-      }
-    }
-  }, [])
+  // Admin y cuentas de pruebas ven todos los niveles desbloqueados.
+  const { sinBloqueos } = useSinBloqueos()
 
   // Función para obtener el icono según la dificultad
   const getDifficultyIcon = (difficulty: string) => {
@@ -82,7 +69,7 @@ export default function LevelSelector({ levels, onSelectLevel, completedLevels, 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {levels.map((level, index) => {
           const isCompleted = completedLevels.includes(index)
-          const isLocked = isAdmin ? false : index > 0 && !completedLevels.includes(index - 1) && !isCompleted
+          const isLocked = sinBloqueos ? false : index > 0 && !completedLevels.includes(index - 1) && !isCompleted
 
           return (
             <div

@@ -1,5 +1,6 @@
 "use client"
 
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Play, RotateCcw, Info, Lightbulb } from "lucide-react"
@@ -21,10 +22,12 @@ import RobotSVG from "@/components/robot-programmer/robot-svg"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import InstructionPanel from "@/components/robot-programmer/instruction-panel"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
 import * as React from "react"
 
 export default function RobotProgrammerPage() {
   const router = useRouter()
+  const { neuronas, perderNeurona } = useNeuronas()
   const [showLevelSelector, setShowLevelSelector] = useState(true)
   const [currentLevel, setCurrentLevel] = useState(0)
   const [commands, setCommands] = useState<string[]>([])
@@ -39,7 +42,6 @@ export default function RobotProgrammerPage() {
   const [levels] = useState(getLevels())
   const [commandLimit, setCommandLimit] = useState(10)
   const [steps, setSteps] = useState(0)
-  const [lives, setLives] = useState(3)
   const [bestTimes, setBestTimes] = useState<{ [key: number]: number }>({})
   const [robot3D, setRobot3D] = useState(false)
   const [hintsShown, setHintsShown] = useState(0) // pistas reveladas del nivel actual
@@ -48,6 +50,8 @@ export default function RobotProgrammerPage() {
   const [introClosed, setIntroClosed] = useState<number[]>([]) // niveles cuya explicación se cerró
   const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const isMobile = useIsMobile()
+  // Las cuentas de pruebas ven todos los niveles como completados.
+  const { modoPruebas } = useSinBloqueos()
 
   // Iniciar el juego con un nivel seleccionado (retomando la partida guardada de la cuenta si existe)
   const startLevel = async (levelIndex: number) => {
@@ -67,7 +71,6 @@ export default function RobotProgrammerPage() {
     setShowLevelSelector(false)
     setCommandLimit(level.commandLimit || 10)
     setSteps(0)
-    setLives(retoma && Number.isInteger(retoma.vidas) && retoma.vidas >= 1 && retoma.vidas <= 3 ? retoma.vidas : 3)
     setHintsShown(retoma ? (retoma.estado as { hintsShown: number }).hintsShown : 0)
     setRetomada(Boolean(retoma))
     setFailureMessage(null)
@@ -109,7 +112,7 @@ export default function RobotProgrammerPage() {
     showLevelSelector ? null : String(levels[currentLevel].id),
     estadoPartida,
     isActive && !isComplete,
-    { vidas: lives, extra: () => ({ time: tiempoRef.current }) },
+    { extra: () => ({ time: tiempoRef.current }) },
   )
   // Si se pierde el nivel no queda nada que retomar
   useEffect(() => {
@@ -184,7 +187,7 @@ export default function RobotProgrammerPage() {
     // Simular el programa completo y animar cada paso
     const run = runProgram(commands, level)
     if (run.error) {
-      // Bucle mal formado: no se ejecuta ni resta vidas
+      // Bucle mal formado: no se ejecuta ni resta neuronas
       setFailureMessage(run.error)
       setIsExecuting(false)
       return
@@ -201,23 +204,21 @@ export default function RobotProgrammerPage() {
       setIsComplete(true)
       setIsActive(false)
     } else {
-      // Explicar en qué paso y por qué falló, y restar una vida
+      // Explicar en qué paso y por qué falló, y restar una neurona
       setFailureMessage(explainFailure(run))
-      setLives((prev) => {
-        const newLives = Math.max(0, prev - 1)
-        if (newLives <= 0) {
-          setIsComplete(true)
-          setIsSuccess(false)
-          setIsActive(false)
-        }
-        return newLives
-      })
+      // Cada intento incorrecto cuesta una neurona de la cuenta; sin neuronas termina el intento.
+      perderNeurona()
+      if (!modoPruebas && neuronas <= 1) {
+        setIsComplete(true)
+        setIsSuccess(false)
+        setIsActive(false)
+      }
     }
 
     setIsExecuting(false)
   }
 
-  // Revelar la siguiente pista (no completa el nivel ni resta vidas)
+  // Revelar la siguiente pista (no completa el nivel ni resta neuronas)
   const showNextHint = () => {
     const total = levels[currentLevel].hints.length
     setHintsShown((n) => Math.min(n + 1, total))
@@ -235,7 +236,6 @@ export default function RobotProgrammerPage() {
     setRobotPosition({ ...level.startPosition })
     setLitCells([])
     setSteps(0)
-    setLives(3)
     setTime(0)
     setIsActive(true)
     setHintsShown(0)
@@ -318,7 +318,7 @@ export default function RobotProgrammerPage() {
               <LevelSelector
                 levels={levels}
                 onSelectLevel={startLevel}
-                completedLevels={Object.keys(bestTimes).map(Number)}
+                completedLevels={modoPruebas ? levels.map((_, i) => i) : Object.keys(bestTimes).map(Number)}
                 bestTimes={bestTimes}
               />
             </div>
@@ -347,7 +347,7 @@ export default function RobotProgrammerPage() {
                       <li>Arrastra comandos desde el panel de instrucciones a la zona de comandos.</li>
                       <li>Haz clic en "Ejecutar" para ver cómo el robot sigue tus instrucciones.</li>
                       <li>El objetivo es encender todas las casillas marcadas.</li>
-                      <li>Tienes 3 vidas. Pierdes una vida si tu solución no es correcta.</li>
+                      <li>Cada intento incorrecto te cuesta una neurona.</li>
                     </ul>
                   </PopoverContent>
                 </Popover>

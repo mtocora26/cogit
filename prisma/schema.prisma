@@ -29,6 +29,8 @@ model Usuario {
   /// Hash scrypt ("scrypt$..."); nunca la contraseña en texto.
   password  String
   rol       Rol       @default(estudiante)
+  /// Cuenta de pruebas: ve todo el contenido desbloqueado sin ser admin. No da acceso al panel de administración.
+  modoPruebas Boolean @default(false)
   /// REQ-008: el estudiante puede excluirse del ranking. Por defecto aparece, con su alias.
   visibleEnRanking Boolean @default(true)
   progreso  Progreso[]
