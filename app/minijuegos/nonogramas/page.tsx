@@ -37,6 +37,8 @@ export default function NonogramasPage() {
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  // Sin clic derecho (táctil o teclado) se marca con X activando este modo.
+  const [modoX, setModoX] = useState(false)
   const [pista, setPista] = useState<{ mensaje: string; sugerencia: SugerenciaNonograma | null } | null>(null)
   const [levels] = useState(getNonogramLevels())
   const [errors, setErrors] = useState<{ row: number; col: number }[]>([])
@@ -502,11 +504,16 @@ export default function NonogramasPage() {
                     </div>
                   )}
 
+                  <div className="mb-3 flex justify-center">
+                    <Button type="button" variant="outline" aria-pressed={modoX} onClick={() => setModoX((v) => !v)} className={modoX ? "border-purple-500 bg-purple-500/20 text-purple-300" : ""}>
+                      Marcar con X {modoX ? "(activado)" : "(desactivado)"}
+                    </Button>
+                  </div>
                   <NonogramBoard
                     board={board}
                     rowClues={rowClues}
                     colClues={colClues}
-                    onCellClick={handleCellClick}
+                    onCellClick={(r, c, derecho) => handleCellClick(r, c, derecho || modoX)}
                     errors={errors}
                     showHint={showHint}
                     solution={solution}

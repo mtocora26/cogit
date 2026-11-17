@@ -27,7 +27,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ sin implementar.
 |---|---|---|
 | REQ-012 Facilidad de uso | ⬜ | Requiere prueba con estudiantes reales (#51). |
 | REQ-013 Diseño adaptable | ⬜ | Sin verificar en 360, 768 y 1366 px. |
-| REQ-014 Accesibilidad | ⬜ | Sin verificar con teclado, zoom ni contraste. |
+| REQ-014 Accesibilidad | 🟡 | Contraste verificado con prueba automática (4.5:1, ambos temas); nonogramas y sudoku operables con teclado y con etiquetas; error y pista no dependen solo del color. Pendiente: recorrido manual con teclado y zoom al 200%. Ver [verificacion-rnf.md](verificacion-rnf.md). |
 | REQ-015 Tiempo de respuesta | ⬜ | Sin medir. |
 | REQ-016 Privacidad | ✅ | Verificado con pruebas y contra producción: una cuenta no consulta datos de otra, el ranking no expone correo ni contraseña y el aviso de finalidad está en `/terminos`. Detalle en [verificacion-rnf.md](verificacion-rnf.md). |
 | REQ-017 Seguridad de acceso | 🟡 | Rutas privadas rechazan sin sesión (probado en producción), HTTPS con HSTS, cookie firmada y `httpOnly`. Pendiente: una cuenta antigua con contraseña aún sin cifrar, sin límite de intentos de login y las sesiones abiertas no se cierran al cambiar la contraseña. Ver [verificacion-rnf.md](verificacion-rnf.md). |

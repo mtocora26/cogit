@@ -43,3 +43,18 @@ Hallazgos pendientes:
 | Los puntos de minijuegos no los decide el cliente | El servidor los fija por nivel (`lib/minijuegos-puntos.ts`). Para misiones el puntaje sí lo envía el cliente: un usuario podría inflar su propio puntaje. Mitigación pendiente si el ranking importa. |
 
 Lo que no se probó: interrumpir la red a mitad de un guardado en un navegador real. Las pruebas cubren el comportamiento con respuestas simuladas.
+
+## REQ-014. Accesibilidad: 🟡
+
+Fecha: 2026-11-17. Método: prueba automática de contraste sobre los tokens de color y revisión del código. No es una certificación WCAG completa.
+
+| Criterio | Evidencia |
+|---|---|
+| Contraste de texto normal ≥ 4.5:1 | `lib/contraste.test.ts` mide 20 combinaciones texto/fondo en el tema claro y en el oscuro (texto, tarjetas, paneles, botones, neuronas, grises secundarios). Falló una: el blanco sobre el rojo de error del tema oscuro (4.05:1). Se cambió el texto de ese botón a azul noche y ahora todas pasan. |
+| Teclado y etiquetas | Sudoku: las celdas son botones con etiqueta («Fila 3, columna 5: vacía, error»). Nonogramas: las celdas eran `div` con clic, **inaccesibles con teclado**; ahora son botones con etiqueta, flechas para moverse, Enter/espacio para rellenar y la tecla X (o Mayús+Enter) para marcar. Robot Programmer: las instrucciones se añaden con botones (arrastrar es opcional). Misiones: opciones como botones/radios reales. |
+| Marcar con X sin clic derecho | Solo se podía con clic derecho (imposible en táctil). Ahora hay un botón «Marcar con X» que activa el modo. |
+| Información no dependiente solo del color | Error y pista en nonogramas llevan símbolo («!» y «•»); error en sudoku lleva «!» y etiqueta; los estados de las actividades del nivel 4 llevan icono y texto («Correcto», «Incorrecto»). |
+| Foco visible | No hay `outline-none` sin un anillo de foco alternativo (búsqueda en `app/` y `components/`); los botones comparten `focus-visible:ring`. |
+| Ampliación al 200% | No se bloquea el zoom (no hay `maximum-scale` ni `user-scalable`). **Sin probar visualmente** al 200%. |
+
+Pendiente para dar el requisito por cumplido: recorrer a mano los flujos de inicio y los tres juegos solo con teclado y con zoom al 200% (equivale a un ancho útil de 640 px en una pantalla de 1280 px), y revisar los colores que no son tokens (por ejemplo `text-gray-400` sobre fondos de color).
