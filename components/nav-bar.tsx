@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Menu, X, User, ChevronDown, LogOut, Settings, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-import LivesIndicator from "@/components/misiones/lives-indicator"
+import NeuronasIndicator from "@/components/misiones/neuronas-indicator"
 import { Logo } from "@/components/brand/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -19,8 +19,6 @@ export default function NavBar({ activePage }: NavBarProps) {
   // Obtener datos de usuario
   const [userName, setUserName] = useState("");
   const [userRol, setUserRol] = useState("");
-  const [userNeuronas, setUserNeuronas] = useState(5);
-  const [userMaxNeuronas, setUserMaxNeuronas] = useState(5);
   const [showMenu, setShowMenu] = useState(true); // Estado para forzar cierre visual del menú
 
   // Ensure client-side check for localStorage
@@ -31,8 +29,6 @@ export default function NavBar({ activePage }: NavBarProps) {
       setIsAuthenticated(true);
       setUserName(u.username || u.nombre || u.name || "Usuario");
       setUserRol(u.rol || "estudiante");
-      setUserNeuronas(u.neuronas ?? 5);
-      setUserMaxNeuronas(u.maxNeuronas ?? 5);
     };
     const usuario = localStorage.getItem("usuario");
     if (usuario) {
@@ -112,7 +108,7 @@ export default function NavBar({ activePage }: NavBarProps) {
             <Link href="/comunidad" className={getNavLinkClass("comunidad")}>Comunidad</Link>
             <div className="flex items-center gap-4 ml-4">
               {/* Solo LivesIndicator visual y funcional */}
-              <LivesIndicator className="ml-2" />
+              <NeuronasIndicator className="ml-2" />
             </div>
           </nav>
         )}

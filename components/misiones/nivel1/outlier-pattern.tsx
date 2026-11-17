@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Heart } from "lucide-react"
+import { CheckCircle, XCircle, Brain } from "lucide-react"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { Glyph, glyphName } from "@/components/misiones/glyph"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -25,7 +26,6 @@ interface OutlierPatternProps {
 }
 
 const maxRounds = 5
-const initialLives = 3
 
 export default function OutlierPattern({ onComplete, onRondaError, estadoInicial, onEstado }: OutlierPatternProps) {
   const ini = (estadoInicial ?? {}) as Record<string, any>
@@ -37,9 +37,9 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
   const [base, setBase] = useState<string[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
+  const { neuronas, maxNeuronas, sinNeuronas } = useNeuronas()
   const [score, setScore] = useState<number>(ini.score ?? 0)
   const [round, setRound] = useState<number>(ini.round ?? 1)
-  const [lives, setLives] = useState<number>(ini.lives ?? initialLives)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [showExplanation, setShowExplanation] = useState(false)
@@ -70,7 +70,7 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
   useEffect(() => {
     if (!mounted || !onEstado) return
     if (round === 1 && !reviewMode && score === 0 && erroresDetalle.length === 0) return
-    onEstado({ round, score, lives, incorrectRounds, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo: timeElapsed })
+    onEstado({ round, score, incorrectRounds, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo: timeElapsed })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, round, reviewMode, reviewIndex, score])
 
@@ -136,20 +136,19 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
 
   const handleErrorRonda = () => {
     if (onRondaError) onRondaError()
-    setLives(l => l - 1)
   }
 
   const handleContinue = () => {
     setShowExplanation(false)
     if (!reviewMode) {
-      if (lives <= 0) {
+      if (sinNeuronas) {
         onComplete(score >= 3, timeElapsed, score, erroresDetalle, erroresRepetidos)
         return
       }
       if (round < maxRounds) {
         setRound(round + 1)
         startNewRound(false, round + 1)
-      } else if (incorrectRounds.length > 0 && lives > 0) {
+      } else if (incorrectRounds.length > 0 && !sinNeuronas) {
         setReviewMode(true)
         setReviewIndex(0)
         setTimeout(() => startNewRound(true), 300)
@@ -188,10 +187,10 @@ export default function OutlierPattern({ onComplete, onRondaError, estadoInicial
           <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-bold shadow">{score}/{maxRounds}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Vidas</span>
+          <span className="text-sm text-gray-400">Neuronas</span>
           <div className="flex gap-1">
-            {[...Array(3)].map((_, i) => (
-              <Heart key={i} className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-gray-500"}`} />
+            {[...Array(maxNeuronas)].map((_, i) => (
+              <Brain key={i} aria-hidden className={`h-5 w-5 ${i < neuronas ? "text-neuron" : "text-gray-500"}`} />
             ))}
           </div>
         </div>

@@ -26,7 +26,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Observa la secuencia: se repite siguiendo una regla.",
             "Elige, entre las opciones, la ficha que continúa la secuencia.",
-            "Si te equivocas pierdes una vida; al final repasas las rondas falladas.",
+            "Si te equivocas pierdes una neurona; al final repasas las rondas falladas.",
             "Puedes pedir hasta 3 pistas por ronda; las pistas no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -45,7 +45,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Casi todas las fichas siguen la misma regla; una no encaja.",
             "Toca la ficha que no pertenece al patrón.",
-            "Si te equivocas pierdes una vida; al final repasas las rondas falladas.",
+            "Si te equivocas pierdes una neurona; al final repasas las rondas falladas.",
             "Puedes pedir hasta 3 pistas por ronda; las pistas no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -92,7 +92,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás los pasos de una tarea cotidiana en desorden.",
             "Usa las flechas de cada paso para subirlo o bajarlo hasta dejar el orden correcto.",
-            "Pulsa «Comprobar el orden». Si te equivocas pierdes una vida y se te explica qué paso depende de cuál.",
+            "Pulsa «Comprobar el orden». Si te equivocas pierdes una neurona y se te explica qué paso depende de cuál.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -111,7 +111,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás las instrucciones de una tarea con un hueco en el medio.",
             "Elige, entre las opciones, el paso que va en el hueco; ojo, no todas pertenecen a la tarea.",
-            "Pulsa «Comprobar». Si te equivocas pierdes una vida y se te explica por qué ese paso no encaja.",
+            "Pulsa «Comprobar». Si te equivocas pierdes una neurona y se te explica por qué ese paso no encaja.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -131,7 +131,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Empiezas con un número y una lista de instrucciones.",
             "Aplícalas de arriba hacia abajo, una a la vez, y fíjate en el valor después de cada una.",
-            "Elige con qué número terminas y pulsa «Comprobar». Si te equivocas pierdes una vida y se te dice qué error parece haber pasado.",
+            "Elige con qué número terminas y pulsa «Comprobar». Si te equivocas pierdes una neurona y se te dice qué error parece haber pasado.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -158,7 +158,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás dos grupos, A y B, con fichas ya clasificadas por una regla que no se muestra.",
             "Compara las fichas de cada grupo para descubrir qué las separa.",
-            "Elige a qué grupo va la ficha nueva y pulsa «Comprobar». Si te equivocas pierdes una vida y se te explica la regla.",
+            "Elige a qué grupo va la ficha nueva y pulsa «Comprobar». Si te equivocas pierdes una neurona y se te explica la regla.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -178,7 +178,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás varias palabras; todas son de la misma categoría menos una.",
             "Piensa qué nombre de grupo describe a la mayoría y toca la palabra que sobra.",
-            "Pulsa «Comprobar». Si te equivocas pierdes una vida y se te dice cuál es la categoría.",
+            "Pulsa «Comprobar». Si te equivocas pierdes una neurona y se te dice cuál es la categoría.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -198,7 +198,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás una pregunta y una lista de datos, algunos necesarios y otros de relleno.",
             "Por cada dato pregúntate: si lo borro, ¿todavía puedo responder?",
-            "Marca solo los esenciales y pulsa «Comprobar». Si te equivocas pierdes una vida y se te dice qué sobra o qué falta.",
+            "Marca solo los esenciales y pulsa «Comprobar». Si te equivocas pierdes una neurona y se te dice qué sobra o qué falta.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -226,7 +226,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás una tarea grande, sus partes y los pasos mezclados.",
             "Para cada paso, elige la parte a la que ayuda.",
-            "Pulsa «Comprobar». Si te equivocas pierdes una vida y se te explica a qué parte no pertenece ese paso.",
+            "Pulsa «Comprobar». Si te equivocas pierdes una neurona y se te explica a qué parte no pertenece ese paso.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -245,7 +245,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás los pasos de una tarea con un error: un paso ajeno o un paso en el momento equivocado.",
             "Léelos en orden y pregúntate si lo que cada paso necesita ya se hizo.",
-            "Toca el paso con error y pulsa «Este es el error». Si te equivocas pierdes una vida y se te explica por qué.",
+            "Toca el paso con error y pulsa «Este es el error». Si te equivocas pierdes una neurona y se te explica por qué.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {
@@ -265,7 +265,7 @@ export const CATALOGO_INICIAL: Catalogo = {
           reglas: [
             "Verás un programa con el valor antes y después de cada línea; el resultado final no es el esperado.",
             "Comprueba cada línea por separado: toma el valor anterior, aplica la instrucción y compara.",
-            "Elige la línea con la cuenta mal hecha y pulsa «Esta línea tiene el error». Si te equivocas pierdes una vida y se te explica por qué esa línea sí estaba bien.",
+            "Elige la línea con la cuenta mal hecha y pulsa «Esta línea tiene el error». Si te equivocas pierdes una neurona y se te explica por qué esa línea sí estaba bien.",
             "Puedes pedir hasta 3 pistas por ronda; no cuentan como error ni dan puntos.",
           ],
           ejemplo: {

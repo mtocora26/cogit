@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { Heart } from "lucide-react"
+import { Brain } from "lucide-react"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { Button } from "@/components/ui/button"
 import Pistas from "@/components/misiones/pistas"
 import type { EstadoJuego } from "@/lib/patrones"
 
 /**
- * Armazón común de las actividades por rondas de los niveles 2 en adelante: rondas, vidas, puntuación, pistas
+ * Armazón común de las actividades por rondas de los niveles 2 en adelante: rondas, neuronas, puntuación, pistas
  * graduales, explicación tras cada respuesta, repaso de las rondas falladas y foto del estado para retomarla (REQ-006).
  * Cada actividad solo aporta cómo se genera una ronda y cómo se responde; todo lo demás es igual en todas.
  *
@@ -38,7 +39,6 @@ interface Props<R> extends PropsActividad {
   titulo: string
   instruccion: string
   rondas?: number
-  vidas?: number
   /** Crea la ronda `n` (1…). Debe ser serializable: las falladas se guardan para el repaso. */
   generar: (n: number) => R
   /** Pistas graduales de la ronda: orientar, acotar y, solo al final, la respuesta. */
@@ -55,7 +55,6 @@ export default function RondasJuego<R>({
   titulo,
   instruccion,
   rondas = 5,
-  vidas: vidasIniciales = 3,
   generar,
   pistas,
   render,
@@ -65,9 +64,9 @@ export default function RondasJuego<R>({
   onEstado,
 }: Props<R>) {
   const ini = (estadoInicial ?? {}) as Record<string, any>
+  const { neuronas, maxNeuronas, sinNeuronas } = useNeuronas()
   const [round, setRound] = useState<number>(ini.round ?? 1)
   const [score, setScore] = useState<number>(ini.score ?? 0)
-  const [lives, setLives] = useState<number>(ini.lives ?? vidasIniciales)
   const [fallidas, setFallidas] = useState<Fallida<R>[]>(ini.fallidas ?? [])
   const [reviewMode, setReviewMode] = useState<boolean>(ini.reviewMode ?? false)
   const [reviewIndex, setReviewIndex] = useState<number>(ini.reviewIndex ?? 0)
@@ -93,7 +92,7 @@ export default function RondasJuego<R>({
   useEffect(() => {
     if (!montado.current || !onEstado) return
     if (round === 1 && !reviewMode && score === 0 && erroresDetalle.length === 0) return
-    onEstado({ round, score, lives, fallidas, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo })
+    onEstado({ round, score, fallidas, reviewMode, reviewIndex, erroresDetalle, erroresRepetidos, tiempo })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round, reviewMode, reviewIndex, score])
 
@@ -113,7 +112,6 @@ export default function RondasJuego<R>({
       setErroresRepetidos((e) => [...e, reviewIndex])
     }
     onRondaError?.()
-    setLives((l) => l - 1)
   }
 
   const terminar = () => onComplete(score >= 3, tiempo, score, erroresDetalle, erroresRepetidos)
@@ -121,7 +119,7 @@ export default function RondasJuego<R>({
   const continuar = () => {
     setResultado(null)
     if (!reviewMode) {
-      if (lives <= 0) return terminar()
+      if (sinNeuronas) return terminar()
       if (round < rondas) {
         setRound(round + 1)
         setActual(generar(round + 1))
@@ -158,11 +156,11 @@ export default function RondasJuego<R>({
             {score}/{rondas}
           </span>
         </div>
-        <div className="flex items-center gap-2" role="img" aria-label={`Vidas: ${Math.max(lives, 0)} de ${vidasIniciales}`}>
-          <span className="text-sm text-gray-400">Vidas</span>
+        <div className="flex items-center gap-2" role="img" aria-label={`Neuronas: ${neuronas} de ${maxNeuronas}`}>
+          <span className="text-sm text-gray-400">Neuronas</span>
           <div className="flex gap-1">
-            {Array.from({ length: vidasIniciales }, (_, i) => (
-              <Heart key={i} aria-hidden className={`h-5 w-5 ${i < lives ? "fill-red-500 text-red-500" : "text-gray-500"}`} />
+            {Array.from({ length: maxNeuronas }, (_, i) => (
+              <Brain key={i} aria-hidden className={`h-5 w-5 ${i < neuronas ? "text-neuron" : "text-gray-500"}`} />
             ))}
           </div>
         </div>

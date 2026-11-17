@@ -9,6 +9,7 @@ import SudokuBoard from "@/components/sudoku/sudoku-board"
 import SudokuControls from "@/components/sudoku/sudoku-controls"
 import LevelSelector from "@/components/sudoku/level-selector"
 import { SudokuReglas } from "@/components/sudoku/sudoku-reglas"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
 import { generateSudoku, checkSolution } from "@/lib/sudoku"
 import { formatTime } from "@/lib/utils"
 import { useResultadosCuenta } from "@/lib/use-resultados"
@@ -48,6 +49,8 @@ export default function SudokuPage() {
   const { errorGuardado } = useAutoguardado("sudoku", gameStarted ? difficulty : null, estadoPartida, isActive && !isComplete, {
     extra: () => ({ time: tiempoRef.current }),
   })
+  // Las cuentas de pruebas ven todas las dificultades como completadas.
+  const { modoPruebas } = useSinBloqueos()
 
   // Cargar datos de usuario al montar
   useEffect(() => {
@@ -325,7 +328,7 @@ export default function SudokuPage() {
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="max-h-[calc(100vh-120px)] overflow-y-auto">
-            <LevelSelector onStartGame={startGame} />
+            <LevelSelector onStartGame={startGame} completed={modoPruebas} />
           </div>
         </div>
       ) : (

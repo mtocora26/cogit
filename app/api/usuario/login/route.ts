@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sincronizarNeuronas } from "@/lib/neuronas"
 import { hashPassword, normalizeUsername, setSessionCookie, signSession, verifyPassword } from "@/lib/auth"
 
 // POST: inicio de sesión con nombre de usuario. Las credenciales viajan en el cuerpo, no en la URL.
@@ -19,23 +20,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Cuentas antiguas con la contraseña en texto plano: se guarda el hash al entrar.
-    const data: { password?: string; neuronas?: number; ultimaRecarga?: Date } = {}
+    const data: { password?: string } = {}
     if (check.needsRehash) data.password = await hashPassword(password)
+    if (Object.keys(data).length) await prisma.usuario.update({ where: { id: usuario.id }, data })
 
-    // Recarga automática de neuronas: una cada 30 minutos.
-    let neuronas = usuario.neuronas
-    let ultimaRecarga = usuario.ultimaRecarga || new Date()
-    const maxNeuronas = usuario.maxNeuronas || 5
-    if (neuronas < maxNeuronas) {
-      const recargas = Math.floor((Date.now() - new Date(ultimaRecarga).getTime()) / (30 * 60 * 1000))
-      if (recargas > 0) {
-        neuronas = Math.min(maxNeuronas, neuronas + recargas)
-        ultimaRecarga = new Date(new Date(ultimaRecarga).getTime() + recargas * 30 * 60 * 1000)
-        data.neuronas = neuronas
-        data.ultimaRecarga = ultimaRecarga
-      }
-    }
-    const actual = Object.keys(data).length ? await prisma.usuario.update({ where: { id: usuario.id }, data }) : usuario
+    // La recarga de neuronas es única y vive en el servidor (lib/neuronas).
+    await sincronizarNeuronas(usuario.id)
+    const actual = (await prisma.usuario.findUnique({ where: { id: usuario.id } })) ?? usuario
 
     const res = NextResponse.json({
       id: actual.id,
@@ -43,6 +34,7 @@ export async function POST(req: NextRequest) {
       nombre: actual.username,
       email: actual.email,
       rol: actual.rol,
+      modoPruebas: actual.modoPruebas,
       neuronas: actual.neuronas,
       maxNeuronas: actual.maxNeuronas,
       ultimaRecarga: actual.ultimaRecarga,
