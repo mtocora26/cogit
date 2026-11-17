@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       nombre: u.username,
       email: u.email,
       rol: u.rol,
+      modoPruebas: u.modoPruebas,
       neuronas: u.neuronas,
       maxNeuronas: u.maxNeuronas,
       ultimaRecarga: u.ultimaRecarga,

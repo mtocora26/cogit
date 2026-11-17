@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Heart, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
+import { ArrowLeft, Clock, Trophy, RotateCcw, HelpCircle, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import NavBar from "@/components/nav-bar"
 import NonogramBoard from "@/components/nonogram/nonogram-board"
 import NonogramControls from "@/components/nonogram/nonogram-controls"
 import LevelSelector from "@/components/nonogram/level-selector"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { getNonogramLevels, checkNonogramSolution } from "@/lib/nonogram"
 import NonogramaTutorial from "@/components/nonogram/nonograma-tutorial"
 import { sugerirPista, type SugerenciaNonograma } from "@/lib/nonogram-ayuda"
@@ -23,6 +25,7 @@ import { cn } from "@/lib/utils"
 
 export default function NonogramasPage() {
   const router = useRouter()
+  const { neuronas, perderNeurona } = useNeuronas()
   const [showLevelSelector, setShowLevelSelector] = useState(true)
   const [currentLevel, setCurrentLevel] = useState(0)
   const [board, setBoard] = useState<number[][]>([])
@@ -34,6 +37,8 @@ export default function NonogramasPage() {
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  // Sin clic derecho (táctil o teclado) se marca con X activando este modo.
+  const [modoX, setModoX] = useState(false)
   const [pista, setPista] = useState<{ mensaje: string; sugerencia: SugerenciaNonograma | null } | null>(null)
   const [levels] = useState(getNonogramLevels())
   const [errors, setErrors] = useState<{ row: number; col: number }[]>([])
@@ -54,6 +59,8 @@ export default function NonogramasPage() {
     isActive && !isComplete,
     { extra: () => ({ time: tiempoRef.current }) },
   )
+  // Las cuentas de pruebas ven todos los nonogramas como desbloqueados/completados.
+  const { modoPruebas } = useSinBloqueos()
 
   // Iniciar el juego con un nivel seleccionado
   const startLevel = async (levelIndex: number) => {
@@ -199,11 +206,12 @@ export default function NonogramasPage() {
           setShowCompletionAnimation(false)
         }, 3000) // Mostrar la animación por 3 segundos
       } else if (result.errors.length > 0) {
-        // Si hay errores, reducir vidas
+        // Cada error cuesta una neurona de la cuenta
         setErrors(result.errors)
+        perderNeurona()
 
-        // Si se quedan sin vidas, mostrar la solución
-        if (errors.length <= 1) {
+        // Si se queda sin neuronas, termina el intento
+        if (!modoPruebas && neuronas <= 1) {
           setIsComplete(true)
           setIsCorrect(false)
           setIsActive(false)
@@ -271,7 +279,7 @@ export default function NonogramasPage() {
 
       {/* Header */}
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Button
             variant="ghost"
             size="sm"
@@ -293,7 +301,7 @@ export default function NonogramasPage() {
               <LevelSelector
                 levels={levels}
                 onSelectLevel={startLevel}
-                completedLevels={Object.keys(completedImages).map(Number)}
+                completedLevels={modoPruebas ? levels.map((_, i) => i) : Object.keys(completedImages).map(Number)}
                 bestTimes={bestTimes}
               />
             </div>
@@ -392,12 +400,12 @@ export default function NonogramasPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="min-w-4 text-purple-400">•</div>
-                    <div>Tienes 3 vidas. Pierdes una vida por cada error.</div>
+                    <div>Cada error te cuesta una neurona. Se recuperan una cada 30 minutos.</div>
                   </li>
                 </ul>
                 <Button
                   variant="link"
-                  className="text-purple-400 p-0 h-auto mt-4"
+                  className="text-purple-400 px-0 min-h-11 mt-2"
                   onClick={() => setShowTutorial(true)}
                 >
                   Ver tutorial completo
@@ -406,7 +414,7 @@ export default function NonogramasPage() {
             </div>
 
             {/* Center Column - Game Board */}
-            <div className="md:col-span-2">
+            <div className="min-w-0 md:col-span-2">
               <div className="mb-3">
                 <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
               </div>
@@ -418,7 +426,7 @@ export default function NonogramasPage() {
                     {isCorrect ? <CheckCircle className="h-10 w-10" /> : <AlertCircle className="h-10 w-10" />}
                   </div>
 
-                  <h2 className="text-3xl font-bold mb-4">{isCorrect ? "¡Felicidades!" : "¡Se acabaron las vidas!"}</h2>
+                  <h2 className="text-3xl font-bold mb-4">{isCorrect ? "¡Felicidades!" : "¡Se acabaron las neuronas!"}</h2>
 
                   <p className="text-xl text-gray-300 mb-6">
                     {isCorrect
@@ -472,7 +480,7 @@ export default function NonogramasPage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-card rounded-lg p-6 border border-gray-800">
+                <div className="bg-card rounded-lg p-3 sm:p-6 border border-gray-800">
                   {/* Animación de completado */}
                   {showCompletionAnimation && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 rounded-lg animate-fade-in">
@@ -496,11 +504,16 @@ export default function NonogramasPage() {
                     </div>
                   )}
 
+                  <div className="mb-3 flex justify-center">
+                    <Button type="button" variant="outline" aria-pressed={modoX} onClick={() => setModoX((v) => !v)} className={modoX ? "border-purple-500 bg-purple-500/20 text-purple-300" : ""}>
+                      Marcar con X {modoX ? "(activado)" : "(desactivado)"}
+                    </Button>
+                  </div>
                   <NonogramBoard
                     board={board}
                     rowClues={rowClues}
                     colClues={colClues}
-                    onCellClick={handleCellClick}
+                    onCellClick={(r, c, derecho) => handleCellClick(r, c, derecho || modoX)}
                     errors={errors}
                     showHint={showHint}
                     solution={solution}

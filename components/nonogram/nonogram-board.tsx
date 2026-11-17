@@ -92,14 +92,16 @@ export default function NonogramBoard({
   }
 
   return (
-    <div ref={boardRef} className="flex flex-col items-center justify-center">
-      <div className="relative">
+    <div ref={boardRef} className="max-w-full overflow-x-auto">
+      <div className="relative mx-auto w-max">
         {/* Columnas de pistas */}
         <div
           className="grid"
           style={{
-            gridTemplateColumns: `${maxRowClueLength * 2}rem repeat(${board[0].length}, 2.5rem)`,
-            gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, 2.5rem)`,
+            // La celda se encoge en pantallas estrechas para que el tablero nunca desborde en horizontal.
+            ["--celda" as string]: `min(2.5rem, max(1.5rem, calc((100vw - 3rem - ${maxRowClueLength * 1.25}rem) / ${board[0].length})))`,
+            gridTemplateColumns: `repeat(${maxRowClueLength}, 1.25rem) repeat(${board[0].length}, var(--celda))`,
+            gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, var(--celda))`,
           }}
         >
           {/* Esquina superior izquierda vacía */}
@@ -115,7 +117,7 @@ export default function NonogramBoard({
               {clues.map((clue, i) => (
                 <div
                   key={`col-${colIndex}-clue-${i}`}
-                  className="text-sm font-medium text-gray-300 h-6 flex items-center justify-center"
+                  className="text-xs sm:text-sm font-medium text-gray-300 h-6 flex items-center justify-center"
                 >
                   {clue}
                 </div>
@@ -127,11 +129,11 @@ export default function NonogramBoard({
           {rowClues.map((clues, rowIndex) => (
             <div
               key={`row-${rowIndex}`}
-              className={cn("flex items-center justify-end pr-2 rounded-l", lineaResaltada("fila", rowIndex) && "bg-green-500/30")}
+              className={cn("flex items-center justify-end pr-1 sm:pr-2 rounded-l", lineaResaltada("fila", rowIndex) && "bg-green-500/30")}
               style={{ gridColumn: `1 / span ${maxRowClueLength}`, gridRow: maxColClueLength + rowIndex + 1 }}
             >
               {clues.map((clue, i) => (
-                <div key={`row-${rowIndex}-clue-${i}`} className="text-sm font-medium text-gray-300 px-1">
+                <div key={`row-${rowIndex}-clue-${i}`} className="text-xs sm:text-sm font-medium text-gray-300 px-0.5 sm:px-1">
                   {clue}
                 </div>
               ))}
@@ -141,11 +143,16 @@ export default function NonogramBoard({
           {/* Celdas del tablero */}
           {board.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
-              <div
+              <button
+                type="button"
                 key={`cell-${rowIndex}-${colIndex}`}
+                aria-label={`Fila ${rowIndex + 1}, columna ${colIndex + 1}: ${
+                  hasError(rowIndex, colIndex) ? "error" : cell === 1 ? "rellena" : cell === 2 ? "marcada con X" : "vacía"
+                }${shouldShowHint(rowIndex, colIndex) ? ", sugerida por la pista" : ""}`}
                 className={cn(
                   "border border-gray-700 cursor-pointer transition-all",
-                  "w-10 h-10 flex items-center justify-center",
+                  "h-full w-full flex items-center justify-center p-0",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:z-10",
                   cell === 1 ? "bg-purple-600" : "bg-background",
                   hasError(rowIndex, colIndex) && "bg-red-500",
                   shouldShowHint(rowIndex, colIndex) && "bg-green-500",
@@ -159,9 +166,27 @@ export default function NonogramBoard({
                   e.preventDefault()
                   onCellClick(rowIndex, colIndex, true)
                 }}
+                onKeyDown={(e) => {
+                  // Teclado: Enter o espacio rellenan; la tecla X (o Mayús+Enter) marca con X; flechas mueven el foco.
+                  if (e.key === "x" || e.key === "X" || (e.key === "Enter" && e.shiftKey)) {
+                    e.preventDefault()
+                    onCellClick(rowIndex, colIndex, true)
+                    return
+                  }
+                  const d: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }
+                  const mov = d[e.key]
+                  if (!mov) return
+                  e.preventDefault()
+                  const sig = boardRef.current?.querySelector<HTMLElement>(`[data-celda="${rowIndex + mov[0]}-${colIndex + mov[1]}"]`)
+                  sig?.focus()
+                }}
+                data-celda={`${rowIndex}-${colIndex}`}
               >
-                {cell === 2 && <span className="text-gray-400 font-bold">X</span>}
-              </div>
+                {cell === 2 && <span aria-hidden className="text-gray-400 font-bold">X</span>}
+                {/* El error y la pista no dependen solo del color: llevan un símbolo. */}
+                {hasError(rowIndex, colIndex) && <span aria-hidden className="font-bold text-white">!</span>}
+                {!hasError(rowIndex, colIndex) && shouldShowHint(rowIndex, colIndex) && <span aria-hidden className="font-bold text-black">•</span>}
+              </button>
             )),
           )}
         </div>

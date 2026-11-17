@@ -72,3 +72,26 @@ describe("POST /api/progreso con minijuegos", () => {
     expect(h.upsert).not.toHaveBeenCalled()
   })
 })
+
+describe("POST /api/progreso: misiones (REQ-018)", () => {
+  const mision = (extra: Record<string, unknown> = {}) => ({
+    seccion: "pensamiento", nivel: "1", actividad: "patrones", completado: true, score: 80, tiempo: 60, ...extra,
+  })
+
+  it("enviar dos veces la misma finalización no duplica el puntaje", async () => {
+    h.findUnique.mockResolvedValue({ completado: true, score: 80, tiempo: 60 })
+    await POST(post(mision()))
+    expect(h.upsert.mock.calls[0][0].update).toMatchObject({ completado: true, score: 80 })
+  })
+
+  it("un reintento peor no baja el puntaje ni quita lo completado", async () => {
+    h.findUnique.mockResolvedValue({ completado: true, score: 80, tiempo: 60 })
+    await POST(post(mision({ completado: false, score: 10, tiempo: 200 })))
+    expect(h.upsert.mock.calls[0][0].update).toMatchObject({ completado: true, score: 80, tiempo: 60 })
+  })
+
+  it("una clave única por cuenta+actividad impide filas duplicadas", async () => {
+    await POST(post(mision()))
+    expect(Object.keys(h.upsert.mock.calls[0][0].where)).toEqual(["userId_seccion_nivel_actividad"])
+  })
+})

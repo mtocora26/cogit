@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sincronizarNeuronas } from "@/lib/neuronas"
 import { clearSessionCookie, getSession, unauthorized } from "@/lib/auth"
 
 // GET: la cuenta de la sesión actual. Sirve para saber si hay sesión válida sin confiar en el navegador.
 export async function GET(req: NextRequest) {
   const session = await getSession(req)
   if (!session) return unauthorized()
+  await sincronizarNeuronas(session.uid)
   const u = await prisma.usuario.findUnique({ where: { id: session.uid } })
   if (!u) {
     const res = unauthorized()
@@ -18,6 +20,7 @@ export async function GET(req: NextRequest) {
     nombre: u.username,
     email: u.email,
     rol: u.rol,
+    modoPruebas: u.modoPruebas,
     neuronas: u.neuronas,
     maxNeuronas: u.maxNeuronas,
     ultimaRecarga: u.ultimaRecarga,

@@ -27,7 +27,7 @@ export default function SudokuBoard({
   }
 
   return (
-    <div className="bg-card rounded-lg p-4 border border-gray-800">
+    <div className="bg-card rounded-lg p-2 sm:p-4 border border-gray-800">
       <div className="grid grid-cols-9 gap-0 border-2 border-gray-600">
         {board.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
@@ -47,8 +47,11 @@ export default function SudokuBoard({
             return (
               <button
                 key={`${rowIndex}-${colIndex}`}
+                aria-label={`Fila ${rowIndex + 1}, columna ${colIndex + 1}: ${cell !== 0 ? cell : "vacía"}${isInitial ? ", dato inicial" : ""}${isInvalid ? ", error" : ""}`}
+                aria-pressed={Boolean(isSelected)}
+                aria-invalid={isInvalid || undefined}
                 className={cn(
-                  "w-14 h-14 flex items-center justify-center text-2xl font-medium transition-colors",
+                  "aspect-square w-full min-w-0 md:h-14 md:w-14 md:aspect-auto flex items-center justify-center text-lg sm:text-2xl font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isInitial ? "text-foreground font-bold" : "text-neuron",
                   isSelected && "bg-blue-500/20",
@@ -63,13 +66,14 @@ export default function SudokuBoard({
                 disabled={isInitial}
               >
                 {cell !== 0 ? cell : null}
+                {isInvalid && <span aria-hidden className="absolute right-0.5 top-0 text-[10px] font-bold text-red-400">!</span>}
                 {cell === 0 && cellNotes.length > 0 && (
                   <div className="absolute top-1 left-1 grid grid-cols-3 gap-0.5 w-full h-full pointer-events-none">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                       <span
                         key={num}
                         className={cn(
-                          "text-xs text-gray-400 flex items-center justify-center",
+                          "text-[8px] sm:text-xs text-gray-400 flex items-center justify-center",
                           cellNotes.includes(num) ? "" : "opacity-0",
                         )}
                       >

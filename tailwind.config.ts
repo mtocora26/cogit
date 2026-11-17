@@ -2,6 +2,9 @@ import type { Config } from "tailwindcss"
 
 const config = {
   darkMode: ["class"],
+  // Sin esto, en pantallas táctiles el hover queda "pegado" en el último punto tocado
+  // y la opción que cae ahí en la siguiente actividad parece marcada.
+  future: { hoverOnlyWhenSupported: true },
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",

@@ -7,8 +7,9 @@ import { Progress } from "@/components/ui/progress"
 import NavBar from "@/components/nav-bar"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useLives } from "@/components/misiones/lives-context"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { useCatalogo } from "@/components/misiones/use-catalogo"
+import { useSinBloqueos } from "@/hooks/use-sin-bloqueos"
 import { buscarNivel, minutosNivel, siguienteNivel, type ActividadCatalogo } from "@/lib/misiones-catalogo"
 
 type ActivityStatus = "completed" | "current" | "locked"
@@ -21,22 +22,11 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   const [activeTab, setActiveTab] = useState<"actividades" | "progreso">("actividades")
   const [activities, setActivities] = useState<Activity[]>([])
   const [progress, setProgress] = useState(0)
-  const { lives, isRecharging, rechargeTime } = useLives()
+  const { sinNeuronas, recargando: isRecharging, segundosRecarga: rechargeTime } = useNeuronas()
   const [showNoLives, setShowNoLives] = useState(false)
 
-  // Detectar si el usuario es admin
-  const [isAdmin, setIsAdmin] = useState(false)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const usuario = localStorage.getItem("usuario")
-      if (usuario) {
-        try {
-          const user = JSON.parse(usuario)
-          setIsAdmin(user.rol === "admin")
-        } catch {}
-      }
-    }
-  }, [])
+  // Admin y cuentas de pruebas ven todas las actividades desbloqueadas.
+  const { sinBloqueos } = useSinBloqueos()
 
   const seccionId = decodeURIComponent(seccion)
   const nivelId = decodeURIComponent(nivel)
@@ -69,24 +59,24 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   useEffect(() => {
     const base = nivelCat?.actividades ?? []
     const hechas = base.map((a) => completadas.has(`${seccionId}-${nivelId}-${a.id}`))
-    // Un estudiante desbloquea cada actividad al completar la anterior; el administrador accede a todas.
+    // Un estudiante desbloquea cada actividad al completar la anterior; admin y modo pruebas acceden a todas.
     const updated: Activity[] = base.map((a, i) => ({
       ...a,
-      status: hechas[i] ? "completed" : isAdmin || i === 0 || hechas[i - 1] ? "current" : "locked",
+      status: hechas[i] ? "completed" : sinBloqueos || i === 0 || hechas[i - 1] ? "current" : "locked",
     }))
     setActivities(updated)
     setProgress(updated.length > 0 ? Math.round((hechas.filter(Boolean).length / updated.length) * 100) : 0)
-  }, [nivelCat, seccionId, nivelId, isAdmin, completadas])
+  }, [nivelCat, seccionId, nivelId, sinBloqueos, completadas])
 
-  // Mostrar el panel si no hay vidas y actualizarlo cuando se recarga una vida y luego vuelve a 0
+  // Mostrar el panel si no hay neuronas y ocultarlo cuando se recarga una
   useEffect(() => {
-    setShowNoLives(lives === 0)
-  }, [lives, isRecharging, rechargeTime])
+    setShowNoLives(sinNeuronas)
+  }, [sinNeuronas, isRecharging, rechargeTime])
 
   const handleBack = () => router.push("/misiones")
 
   const handleGoToActivity = (activityId: string, status: ActivityStatus) => {
-    if (lives === 0) {
+    if (sinNeuronas) {
       setShowNoLives(true)
       return
     }
@@ -174,16 +164,16 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
   return (
     <div className="min-h-screen bg-background text-foreground">
       <NavBar activePage="misiones" />
-      {/* Panel de bloqueo si no hay vidas */}
+      {/* Panel de bloqueo si no hay neuronas */}
       {showNoLives && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="bg-card rounded-2xl p-8 shadow-lg flex flex-col items-center max-w-xs w-full border border-border">
-            <h2 className="text-2xl font-bold text-purple-400 mb-2">¡Sin vidas!</h2>
-            <p className="text-gray-200 mb-4 text-center">No tienes vidas para seguir jugando misiones.<br />
-              {isRecharging ? `Recuperarás una vida en ${formatTimeMMSS(rechargeTime)}.` : "Debes esperar la recarga automática."}
+            <h2 className="text-2xl font-bold text-purple-400 mb-2">¡Sin neuronas!</h2>
+            <p className="text-gray-200 mb-4 text-center">No tienes neuronas para seguir jugando.<br />
+              {isRecharging ? `Recuperarás una neurona en ${formatTimeMMSS(rechargeTime)}.` : "Debes esperar la recarga automática."}
             </p>
             <div className="flex flex-col gap-2 w-full">
-              <Button className="font-semibold" onClick={() => { window.location.href = "/minijuegos" }}>Ir a Minijuegos</Button>
+              <Button className="font-semibold" onClick={() => { window.location.href = "/misiones" }}>Volver a Misiones</Button>
               <Button variant="outline" className="border-gray-500 text-gray-300 mt-2" disabled>
                 Esperar recarga automática
               </Button>
@@ -241,7 +231,7 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {activeTab === "actividades" && (
-          <div className={`space-y-6 ${lives === 0 ? "pointer-events-none opacity-50 select-none" : ""}`}>
+          <div className={`space-y-6 ${sinNeuronas ? "pointer-events-none opacity-50 select-none" : ""}`}>
             <div className="bg-card rounded-lg border border-gray-800 p-6">
               <h2 className="text-xl font-bold mb-4">Actividades del nivel</h2>
               <p className="text-gray-300 mb-6">Completa las actividades en orden: cada una se desbloquea al terminar la anterior.</p>
@@ -260,12 +250,12 @@ export default function NivelPage({ params }: { params: Promise<{ seccion: strin
                   <Button
                     variant="outline"
                     className="border-gray-700 text-gray-400"
-                    disabled={!isAdmin}
+                    disabled={!sinBloqueos}
                     onClick={() => {
-                      if (isAdmin) router.push(`/misiones/${seccionId}/${siguiente.id}`)
+                      if (sinBloqueos) router.push(`/misiones/${seccionId}/${siguiente.id}`)
                     }}
                   >
-                    {isAdmin ? "Ir al siguiente nivel" : "Desbloquea completando este nivel"}
+                    {sinBloqueos ? "Ir al siguiente nivel" : "Desbloquea completando este nivel"}
                   </Button>
                 </div>
               </div>

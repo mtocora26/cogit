@@ -8,7 +8,8 @@
     "vercel-build": "prisma generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then prisma migrate deploy; fi && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "precargar:pruebas": "node --env-file=.env scripts/precargar-pruebas.mjs"
   },
   "dependencies": {
     "@dnd-kit/accessibility": "^3.1.1",

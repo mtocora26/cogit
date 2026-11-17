@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Menu, X, User, ChevronDown, LogOut, Settings, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-import LivesIndicator from "@/components/misiones/lives-indicator"
+import NeuronasIndicator from "@/components/misiones/neuronas-indicator"
 import { Logo } from "@/components/brand/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -19,8 +19,6 @@ export default function NavBar({ activePage }: NavBarProps) {
   // Obtener datos de usuario
   const [userName, setUserName] = useState("");
   const [userRol, setUserRol] = useState("");
-  const [userNeuronas, setUserNeuronas] = useState(5);
-  const [userMaxNeuronas, setUserMaxNeuronas] = useState(5);
   const [showMenu, setShowMenu] = useState(true); // Estado para forzar cierre visual del menú
 
   // Ensure client-side check for localStorage
@@ -31,8 +29,6 @@ export default function NavBar({ activePage }: NavBarProps) {
       setIsAuthenticated(true);
       setUserName(u.username || u.nombre || u.name || "Usuario");
       setUserRol(u.rol || "estudiante");
-      setUserNeuronas(u.neuronas ?? 5);
-      setUserMaxNeuronas(u.maxNeuronas ?? 5);
     };
     const usuario = localStorage.getItem("usuario");
     if (usuario) {
@@ -69,8 +65,8 @@ export default function NavBar({ activePage }: NavBarProps) {
 
   const getMobileNavLinkClass = (page: string) => {
     return activePage === page
-      ? "py-2 text-sm font-medium text-neuron"
-      : "py-2 text-sm font-medium hover:text-neuron transition-colors"
+      ? "flex min-h-11 items-center text-base font-medium text-neuron"
+      : "flex min-h-11 items-center text-base font-medium hover:text-neuron transition-colors"
   }
 
   // Logout handler
@@ -91,16 +87,25 @@ export default function NavBar({ activePage }: NavBarProps) {
 
   return (
     <header className="border-b border-gray-800 bg-background/90 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-2">
+        <Link href="/" className="flex min-h-11 items-center gap-2">
           <Logo className="h-8 w-auto" />
         </Link>
 
         {/* Mobile menu button: only show if authenticated */}
         {isAuthenticated && (
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="flex items-center gap-1 md:hidden">
+            <NeuronasIndicator />
+            <button
+              type="button"
+              className="grid h-11 w-11 place-items-center rounded-md hover:bg-accent"
+              aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         )}
 
         {/* Desktop Navigation */}
@@ -112,7 +117,7 @@ export default function NavBar({ activePage }: NavBarProps) {
             <Link href="/comunidad" className={getNavLinkClass("comunidad")}>Comunidad</Link>
             <div className="flex items-center gap-4 ml-4">
               {/* Solo LivesIndicator visual y funcional */}
-              <LivesIndicator className="ml-2" />
+              <NeuronasIndicator className="ml-2" />
             </div>
           </nav>
         )}
@@ -193,7 +198,19 @@ export default function NavBar({ activePage }: NavBarProps) {
             <Link href="/comunidad" className={getMobileNavLinkClass("comunidad")} onClick={() => setIsMenuOpen(false)}>
               Comunidad
             </Link>
-            <Button variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10 mt-4 w-full" onClick={handleLogout}>
+            <Link href="/perfil" className={getMobileNavLinkClass("perfil")} onClick={() => setIsMenuOpen(false)}>
+              Configuración de perfil
+            </Link>
+            {userRol === "admin" && (
+              <Link href="/admin" className={getMobileNavLinkClass("admin")} onClick={() => setIsMenuOpen(false)}>
+                Dashboard Admin
+              </Link>
+            )}
+            <div className="flex min-h-11 items-center justify-between">
+              <span className="text-base font-medium">Tema</span>
+              <ThemeToggle />
+            </div>
+            <Button variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10 mt-4 min-h-11 w-full" onClick={handleLogout}>
               Cerrar sesión
             </Button>
           </nav>

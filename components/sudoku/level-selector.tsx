@@ -9,6 +9,8 @@ import { fusionarTiempos } from "@/lib/resultados-cuenta"
 
 interface LevelSelectorProps {
   onStartGame: (level: "facil" | "medio" | "dificil") => void
+  /** En modo pruebas se muestra cada dificultad como completada. */
+  completed?: boolean
 }
 
 const LEVELS = [
@@ -38,7 +40,7 @@ const LEVELS = [
   },
 ]
 
-export default function LevelSelector({ onStartGame }: LevelSelectorProps) {
+export default function LevelSelector({ onStartGame, completed }: LevelSelectorProps) {
   const [bestTimes, setBestTimes] = useState<{ facil?: number; medio?: number; dificil?: number }>({})
 
   // Cargar mejores tiempos desde localStorage
@@ -77,6 +79,7 @@ export default function LevelSelector({ onStartGame }: LevelSelectorProps) {
             level={l.level}
             facts={l.facts}
             bestTime={bestTimes[l.id] ? formatTime(bestTimes[l.id]!) : undefined}
+            completed={completed}
             cta={l.cta}
             onStart={() => onStartGame(l.id)}
           />

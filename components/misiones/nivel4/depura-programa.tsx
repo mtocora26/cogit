@@ -1,13 +1,23 @@
 "use client"
 
 import { useState } from "react"
+import { ArrowRight, Bug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import RondasJuego, { type PropsActividad } from "@/components/misiones/rondas-juego"
 import { cn } from "@/lib/utils"
+import { MarcaEstado, type EstadoVisual } from "@/components/misiones/nivel4/estado-visual"
 import { textoOperacion } from "@/lib/algoritmos"
 import { dificultadDeRonda, generarDepurar, pistasDepurar, revisarDepurar, valorPrevio, type RondaDepurar } from "@/lib/descomposicion"
 
 const RONDAS = 5
+
+// La línea se marca con una banda de color a la izquierda, como en un editor de código.
+const BORDE_LINEA: Record<EstadoVisual, string> = {
+  neutro: "border-l-transparent hover:bg-accent/60",
+  elegido: "border-l-blue-400 bg-blue-500/10",
+  correcto: "border-l-green-500 bg-green-500/10 animate-in fade-in duration-300",
+  incorrecto: "border-l-red-500 bg-red-500/10 sacudir",
+}
 
 function Depurar({ ronda, responder, respondida }: { ronda: RondaDepurar; responder: (ok: boolean, e: string) => void; respondida: boolean }) {
   const [elegida, setElegida] = useState<number | null>(null)
@@ -16,34 +26,60 @@ function Depurar({ ronda, responder, respondida }: { ronda: RondaDepurar; respon
 
   return (
     <div className="space-y-4">
-      <p className="text-center">
-        El programa empieza con <strong className="text-xl text-neuron">{ronda.inicio}</strong>. Debería terminar en <strong>{esperado}</strong>, pero terminó en{" "}
-        <strong className="text-red-400">{ultimo}</strong>. Una línea hizo mal su cuenta.
-      </p>
-      <ol role="group" aria-label="Líneas del programa" className="space-y-2">
-        {ronda.operaciones.map((o, i) => (
-          <li key={i}>
-            <button
-              type="button"
-              aria-pressed={elegida === i}
-              disabled={respondida}
-              onClick={() => setElegida(i)}
-              className={cn(
-                "flex min-h-11 w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border-2 bg-secondary p-3 text-left transition-colors",
-                elegida === i ? "border-blue-400 bg-blue-500/10" : "border-blue-700/30 hover:border-blue-400/60",
-              )}
-            >
-              <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-500/20 font-bold text-blue-300">{i + 1}</span>
-              <span className="sr-only">Línea {i + 1}: </span>
-              <span className="flex-1">{textoOperacion(o)}</span>
-              <span className="text-sm text-muted-foreground">
-                valor antes: <strong className="text-foreground">{valorPrevio(ronda, i)}</strong> → valor después: <strong className="text-foreground">{ronda.mostrado[i]}</strong>
-              </span>
-              {elegida === i && <span className="text-sm font-semibold text-blue-300">Elegida</span>}
-            </button>
-          </li>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        {[
+          { etiqueta: "Empieza con", valor: ronda.inicio, color: "text-neuron" },
+          { etiqueta: "Debería terminar", valor: esperado, color: "text-green-400" },
+          { etiqueta: "Terminó en", valor: ultimo, color: "text-red-400" },
+        ].map((d) => (
+          <div key={d.etiqueta} className="rounded-xl border border-border bg-secondary p-2 sm:p-3">
+            <p className="text-xs text-muted-foreground sm:text-sm">{d.etiqueta}</p>
+            <p className={cn("text-2xl font-bold sm:text-3xl", d.color)}>{d.valor}</p>
+          </div>
         ))}
+      </div>
+      <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+        <Bug aria-hidden className="h-4 w-4 text-red-400" /> Una línea hizo mal su cuenta. Tócala.
+      </p>
+
+      <ol role="group" aria-label="Líneas del programa" className="overflow-hidden rounded-xl border-2 border-border bg-background font-mono">
+        {ronda.operaciones.map((o, i) => {
+          const esError = i === ronda.error
+          const estado: EstadoVisual = respondida ? (esError ? "correcto" : elegida === i ? "incorrecto" : "neutro") : elegida === i ? "elegido" : "neutro"
+          return (
+            <li key={i} className="border-b border-border last:border-b-0">
+              <button
+                type="button"
+                aria-pressed={elegida === i}
+                disabled={respondida}
+                onClick={() => setElegida(i)}
+                className={cn(
+                  "flex min-h-14 w-full flex-wrap items-center gap-x-3 gap-y-1 border-l-4 px-3 py-2 text-left transition-colors motion-reduce:transition-none",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                  BORDE_LINEA[estado],
+                )}
+              >
+                <span aria-hidden className="w-6 shrink-0 select-none text-right text-sm text-muted-foreground">{i + 1}</span>
+                <span className="sr-only">Línea {i + 1}: </span>
+                <span className="flex-1 text-base font-semibold">{textoOperacion(o)}</span>
+                <span className="flex items-center gap-1 text-sm">
+                  <span className="rounded bg-secondary px-2 py-0.5">{valorPrevio(ronda, i)}</span>
+                  <ArrowRight aria-hidden className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className={cn("rounded px-2 py-0.5 font-bold", respondida && esError ? "bg-red-500/20 text-red-300 line-through" : "bg-secondary")}>
+                    {ronda.mostrado[i]}
+                  </span>
+                  {respondida && esError && <span className="rounded bg-green-500/20 px-2 py-0.5 font-bold text-green-300">{ronda.correcto[i]}</span>}
+                </span>
+                {estado === "elegido" && <span className="text-sm font-semibold text-blue-300">Elegida</span>}
+                {respondida && esError && <MarcaEstado estado="correcto" />}
+                {estado === "incorrecto" && <MarcaEstado estado="incorrecto" />}
+              </button>
+            </li>
+          )
+        })}
       </ol>
+      <p className="text-center text-xs text-muted-foreground">Cada línea muestra: valor antes → valor después.</p>
+
       <div className="flex justify-center">
         <Button
           type="button"

@@ -27,7 +27,9 @@ describe("contenido inicial", () => {
       .filter((d) => d.includes("contenido_"))
       .map((d) => readFileSync(join(dir, d, "migration.sql"), "utf8"))
       .join("\n")
-    const q = (s: string) => s.replace(/'/g, "''")
+      // La migración 20261117000000_contenido_neuronas renombra «vida» por «neurona» en las reglas ya cargadas.
+      .replaceAll("pierdes una vida", "pierdes una neurona")
+    const q =(s: string) => s.replace(/'/g, "''")
     for (const n of CATALOGO_INICIAL.niveles) {
       expect(sql).toContain(`'${q(n.title)}'`)
       expect(sql).toContain(`'${q(n.objetivo)}'`)

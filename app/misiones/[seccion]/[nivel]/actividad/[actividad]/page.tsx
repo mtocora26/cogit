@@ -17,7 +17,7 @@ import LoEsencial from "@/components/misiones/nivel3/lo-esencial"
 import DividirTarea from "@/components/misiones/nivel4/dividir-tarea"
 import EncuentraError from "@/components/misiones/nivel4/encuentra-error"
 import DepuraPrograma from "@/components/misiones/nivel4/depura-programa"
-import { useLives } from "@/components/misiones/lives-context"
+import { useNeuronas } from "@/components/misiones/neuronas-context"
 import { buscarActividad, buscarNivel } from "@/lib/misiones-catalogo"
 import { useCatalogo } from "@/components/misiones/use-catalogo"
 import type { Juego } from "@/lib/contenido-schema"
@@ -33,7 +33,7 @@ const nivelConfig: Record<string, { rondas: number; puntos: number; penalizacion
   "4": { rondas: 5, puntos: 15, penalizacion: 2, bonus: 25 },
 }
 
-// --- NUEVO: Función robusta para descontar vidas por error de ronda ---
+// --- NUEVO: Función robusta para descontar neuronas por error de ronda ---
 // Cada actividad del catálogo elige su juego por clave: agregar una actividad no exige tocar esta página.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
@@ -51,20 +51,14 @@ const JUEGOS_UI: Record<Juego, ComponentType<any>> = {
   depurar: DepuraPrograma,
 }
 
-function descontarVidaPorError(loseLife: () => void) {
-  if (typeof loseLife === "function") {
-    loseLife();
-  }
-}
-
 export default function ActividadPage({ params }: { params: Promise<{ seccion: string; nivel: string; actividad: string }> }) {
   const [routeParams, setRouteParams] = useState<{ seccion: string; nivel: string; actividad: string } | null>(null)
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
   const [activityScore, setActivityScore] = useState(0)
-  const { loseLife, lives, setLives } = useLives()
-  const livesRef = useRef(lives)
-  livesRef.current = lives
+  const { perderNeurona, neuronas, sinNeuronas } = useNeuronas()
+  const neuronasRef = useRef(neuronas)
+  neuronasRef.current = neuronas
   // Cada intento monta el juego desde cero (clave nueva); lo ya guardado en la cuenta no se toca.
   const [intento, setIntento] = useState(0)
   const [confirmarReinicio, setConfirmarReinicio] = useState(false)
@@ -81,6 +75,9 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   // Avance a medias guardado en la cuenta (REQ-006): undefined = cargando, null = no hay.
   const [parcial, setParcial] = useState<{ estado: EstadoJuego; vidas: number } | null | undefined>(undefined)
   const [errorGuardado, setErrorGuardado] = useState(false)
+  // REQ-018: resultado final que no se pudo guardar; se conserva para reintentar sin repetir la actividad.
+  const [resultadoPendiente, setResultadoPendiente] = useState<Record<string, unknown> | null>(null)
+  const [guardandoFinal, setGuardandoFinal] = useState(false)
   const catalogo = useCatalogo()
   const ultimoEstado = useRef<EstadoJuego | null>(null)
   const terminado = useRef(false)
@@ -95,8 +92,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
         if (cancel) return
         if (p && p.estado) {
           setParcial({ estado: p.estado, vidas: Number(p.vidas) })
-          // Retomar con las vidas guardadas, sin devolver las que ya se gastaron en este dispositivo.
-          if (Number.isInteger(p.vidas)) setLives(Math.min(p.vidas, livesRef.current))
           setIntroVista(true)
         } else setParcial(null)
       })
@@ -113,7 +108,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
       const res = await fetch("/api/progreso/parcial", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...routeParams, estado, vidas: livesRef.current }),
+        body: JSON.stringify({ ...routeParams, estado, vidas: neuronasRef.current }),
       })
       if (!res.ok) throw new Error("no guardado")
       setErrorGuardado(false)
@@ -140,7 +135,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
   const nivelCat = catalogo ? buscarNivel(catalogo, seccion, nivel) : undefined
   const datos = catalogo ? buscarActividad(catalogo, seccion, nivel, actividad.split("-").pop() ?? "") : undefined
   const actividadInfo = { nivelTitle: nivelCat?.title ?? "Nivel", title: datos?.title ?? "Actividad", description: datos?.descripcion ?? "" }
-  // Reinicia solo el intento actual. No cuesta vidas (las ya perdidas no se recuperan) y no borra lo completado.
+  // Reinicia solo el intento actual. No cuesta neuronas (las ya perdidas no se recuperan) y no borra lo completado.
   const reiniciar = () => {
     terminado.current = false
     ultimoEstado.current = null
@@ -162,7 +157,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
 
   // --- NUEVO: Lógica de control de errores por ronda ---
   function handleRondaError() {
-    descontarVidaPorError(loseLife);
+    perderNeurona();
   }
 
   // --- Sistema de puntos y repaso para juegos reales ---
@@ -218,22 +213,31 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
     setFeedbackFinal(feedback)
 
     // Guardar el avance en la cuenta (REQ-006/007): alimenta Misiones, el ranking y las estadísticas.
+    await guardarResultadoFinal({
+      seccion,
+      nivel,
+      actividad,
+      completado: success,
+      score: puntosGuardados,
+      tiempo: Math.max(0, Math.round(time || 0)),
+    })
+  }
+
+  // Si falla, el resultado queda pendiente y se puede reintentar sin repetir la actividad (REQ-018).
+  async function guardarResultadoFinal(payload: Record<string, unknown>) {
+    setGuardandoFinal(true)
     try {
       const res = await fetch("/api/progreso", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seccion,
-          nivel,
-          actividad,
-          completado: success,
-          score: puntosGuardados,
-          tiempo: Math.max(0, Math.round(time || 0)),
-        }),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("no guardado")
+      setResultadoPendiente(null)
     } catch {
-      setFeedbackFinal((f) => f + "\nNo pudimos guardar tu progreso. Revisa tu conexión y vuelve a intentarlo.")
+      setResultadoPendiente(payload)
+    } finally {
+      setGuardandoFinal(false)
     }
   }
 
@@ -282,6 +286,14 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
           <div className="bg-card rounded-lg p-8 text-center border border-gray-800 max-w-md mx-auto">
             <h2 className="text-2xl font-bold mb-2 text-blue-300">¡Actividad completada!</h2>
             <p className="text-lg text-gray-200 mb-4 whitespace-pre-line">{feedbackFinal}</p>
+            {resultadoPendiente && (
+              <div role="alert" className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                <p className="mb-2">No pudimos guardar tu progreso. Todavía no cuenta en tu avance ni en el ranking.</p>
+                <Button size="sm" variant="outline" className="min-h-11" disabled={guardandoFinal} onClick={() => guardarResultadoFinal(resultadoPendiente)}>
+                  {guardandoFinal ? "Guardando..." : "Reintentar guardado"}
+                </Button>
+              </div>
+            )}
             {erroresDetalle.length > 0 && (
               <div className="mb-4 text-left">
                 <h3 className="text-lg font-bold text-red-400 mb-2">Rondas con error:</h3>
@@ -294,15 +306,15 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             )}
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Button className="bg-blue-600 hover:bg-blue-700 min-h-11" onClick={handleBack}>Volver al nivel</Button>
-              <Button variant="outline" className="min-h-11" onClick={reiniciar} disabled={lives === 0}>
+              <Button variant="outline" className="min-h-11" onClick={reiniciar} disabled={sinNeuronas}>
                 <RotateCcw aria-hidden className="mr-2 h-4 w-4" />
                 Reintentar la actividad
               </Button>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              {lives === 0
-                ? "No tienes vidas para reintentar ahora. Se recargan solas."
-                : "Reintentar no cuesta vidas. Cada error durante el intento sí cuesta 1. Lo que ya completaste se conserva."}
+              {sinNeuronas
+                ? "No tienes neuronas para reintentar ahora. Se recargan solas."
+                : "Reintentar no cuesta neuronas. Cada error durante el intento sí cuesta 1. Lo que ya completaste se conserva."}
             </p>
           </div>
         ) : parcial === undefined || !catalogo ? (
@@ -313,7 +325,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             <ReglasActividad actividad={datos} />
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
               <Button className="min-h-11" autoFocus onClick={() => setIntroVista(true)}>Empezar la actividad</Button>
-              <Button variant="ghost" className="min-h-11" onClick={() => setIntroVista(true)}>Omitir</Button>
             </div>
           </div>
         ) : (
@@ -343,7 +354,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
                 </Button>
               </div>
             )}
-            <Fragment key={intento}>{renderJuego()}</Fragment>
+            <Fragment key={`${routeParams?.actividad}-${intento}`}>{renderJuego()}</Fragment>
           </>
         )}
         <Dialog open={confirmarReinicio} onOpenChange={setConfirmarReinicio}>
@@ -351,7 +362,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             <DialogHeader>
               <DialogTitle>¿Reiniciar la actividad?</DialogTitle>
               <DialogDescription>
-                Empiezas de nuevo desde la primera ronda. Reiniciar no cuesta vidas, pero las que ya perdiste no se recuperan. Lo que tienes completado se conserva.
+                Empiezas de nuevo desde la primera ronda. Reiniciar no cuesta neuronas, pero las que ya perdiste no se recuperan. Lo que tienes completado se conserva.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
