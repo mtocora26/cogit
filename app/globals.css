@@ -171,3 +171,13 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Retroalimentación de las actividades: un temblor corto al fallar. Con movimiento reducido no se anima. */
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sacudir { animation: sacudir 0.35s ease-in-out; }
+}
