@@ -354,7 +354,7 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
                 </Button>
               </div>
             )}
-            <Fragment key={intento}>{renderJuego()}</Fragment>
+            <Fragment key={`${routeParams?.actividad}-${intento}`}>{renderJuego()}</Fragment>
           </>
         )}
         <Dialog open={confirmarReinicio} onOpenChange={setConfirmarReinicio}>
