@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sincronizarNeuronas } from "@/lib/neuronas"
+import { claveIp, claveUsuario, ipDe, limpiarFallos, MAX_POR_IP, MAX_POR_USUARIO, registrarFallo, segundosBloqueado } from "@/lib/limite-login"
 import { hashPassword, normalizeUsername, setSessionCookie, signSession, verifyPassword } from "@/lib/auth"
 
 // POST: inicio de sesión con nombre de usuario. Las credenciales viajan en el cuerpo, no en la URL.
@@ -12,12 +13,25 @@ export async function POST(req: NextRequest) {
     if (!username || !password) {
       return NextResponse.json({ error: "Escribe tu usuario y tu contraseña" }, { status: 400 })
     }
+    // REQ-017: demasiados fallos seguidos bloquean el acceso un rato (antes de calcular el hash, que es costoso).
+    const ip = claveIp(ipDe(req))
+    const espera = Math.max(await segundosBloqueado(claveUsuario(username), MAX_POR_USUARIO), await segundosBloqueado(ip, MAX_POR_IP))
+    if (espera > 0) {
+      return NextResponse.json(
+        { error: `Demasiados intentos. Vuelve a intentarlo en ${Math.ceil(espera / 60)} min.` },
+        { status: 429, headers: { "Retry-After": String(espera) } },
+      )
+    }
     const usuario = await prisma.usuario.findUnique({ where: { username } })
     const check = usuario ? await verifyPassword(usuario.password, password) : { ok: false, needsRehash: false }
     // Mismo mensaje si falla el usuario o la contraseña: no revela qué cuentas existen.
     if (!usuario || !check.ok) {
+      await registrarFallo(claveUsuario(username))
+      await registrarFallo(ip)
       return NextResponse.json({ error: "Usuario o contraseña incorrectos" }, { status: 401 })
     }
+
+    await limpiarFallos(claveUsuario(username))
 
     // Cuentas antiguas con la contraseña en texto plano: se guarda el hash al entrar.
     const data: { password?: string } = {}
