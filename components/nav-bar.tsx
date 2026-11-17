@@ -65,8 +65,8 @@ export default function NavBar({ activePage }: NavBarProps) {
 
   const getMobileNavLinkClass = (page: string) => {
     return activePage === page
-      ? "py-2 text-sm font-medium text-neuron"
-      : "py-2 text-sm font-medium hover:text-neuron transition-colors"
+      ? "flex min-h-11 items-center text-base font-medium text-neuron"
+      : "flex min-h-11 items-center text-base font-medium hover:text-neuron transition-colors"
   }
 
   // Logout handler
@@ -87,16 +87,25 @@ export default function NavBar({ activePage }: NavBarProps) {
 
   return (
     <header className="border-b border-gray-800 bg-background/90 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2">
           <Logo className="h-8 w-auto" />
         </Link>
 
         {/* Mobile menu button: only show if authenticated */}
         {isAuthenticated && (
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="flex items-center gap-1 md:hidden">
+            <NeuronasIndicator />
+            <button
+              type="button"
+              className="grid h-11 w-11 place-items-center rounded-md hover:bg-accent"
+              aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         )}
 
         {/* Desktop Navigation */}
@@ -189,7 +198,19 @@ export default function NavBar({ activePage }: NavBarProps) {
             <Link href="/comunidad" className={getMobileNavLinkClass("comunidad")} onClick={() => setIsMenuOpen(false)}>
               Comunidad
             </Link>
-            <Button variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10 mt-4 w-full" onClick={handleLogout}>
+            <Link href="/perfil" className={getMobileNavLinkClass("perfil")} onClick={() => setIsMenuOpen(false)}>
+              Configuración de perfil
+            </Link>
+            {userRol === "admin" && (
+              <Link href="/admin" className={getMobileNavLinkClass("admin")} onClick={() => setIsMenuOpen(false)}>
+                Dashboard Admin
+              </Link>
+            )}
+            <div className="flex min-h-11 items-center justify-between">
+              <span className="text-base font-medium">Tema</span>
+              <ThemeToggle />
+            </div>
+            <Button variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10 mt-4 min-h-11 w-full" onClick={handleLogout}>
               Cerrar sesión
             </Button>
           </nav>

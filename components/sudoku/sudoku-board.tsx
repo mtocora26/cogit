@@ -27,7 +27,7 @@ export default function SudokuBoard({
   }
 
   return (
-    <div className="bg-card rounded-lg p-4 border border-gray-800">
+    <div className="bg-card rounded-lg p-2 sm:p-4 border border-gray-800">
       <div className="grid grid-cols-9 gap-0 border-2 border-gray-600">
         {board.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
@@ -48,7 +48,7 @@ export default function SudokuBoard({
               <button
                 key={`${rowIndex}-${colIndex}`}
                 className={cn(
-                  "w-14 h-14 flex items-center justify-center text-2xl font-medium transition-colors",
+                  "aspect-square w-full min-w-0 md:h-14 md:w-14 md:aspect-auto flex items-center justify-center text-lg sm:text-2xl font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isInitial ? "text-foreground font-bold" : "text-neuron",
                   isSelected && "bg-blue-500/20",
@@ -69,7 +69,7 @@ export default function SudokuBoard({
                       <span
                         key={num}
                         className={cn(
-                          "text-xs text-gray-400 flex items-center justify-center",
+                          "text-[8px] sm:text-xs text-gray-400 flex items-center justify-center",
                           cellNotes.includes(num) ? "" : "opacity-0",
                         )}
                       >

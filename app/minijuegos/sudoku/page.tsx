@@ -358,7 +358,7 @@ export default function SudokuPage() {
               />
             </div>
 
-            <div className="order-1 md:order-2 flex flex-col gap-4 min-w-[250px]">
+            <div className="order-1 md:order-2 flex flex-col gap-4 md:min-w-[250px]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="text-blue-500" />

@@ -98,8 +98,10 @@ export default function NonogramBoard({
         <div
           className="grid"
           style={{
-            gridTemplateColumns: `${maxRowClueLength * 2}rem repeat(${board[0].length}, 2.5rem)`,
-            gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, 2.5rem)`,
+            // La celda se encoge en pantallas estrechas para que el tablero nunca desborde en horizontal.
+            ["--celda" as string]: `min(2.5rem, calc((100vw - 4rem - ${maxRowClueLength * 1.75}rem) / ${board[0].length}))`,
+            gridTemplateColumns: `${maxRowClueLength * 1.75}rem repeat(${board[0].length}, var(--celda))`,
+            gridTemplateRows: `repeat(${maxColClueLength}, 1.8rem) repeat(${board.length}, var(--celda))`,
           }}
         >
           {/* Esquina superior izquierda vacía */}
@@ -145,7 +147,7 @@ export default function NonogramBoard({
                 key={`cell-${rowIndex}-${colIndex}`}
                 className={cn(
                   "border border-gray-700 cursor-pointer transition-all",
-                  "w-10 h-10 flex items-center justify-center",
+                  "h-full w-full flex items-center justify-center",
                   cell === 1 ? "bg-purple-600" : "bg-background",
                   hasError(rowIndex, colIndex) && "bg-red-500",
                   shouldShowHint(rowIndex, colIndex) && "bg-green-500",

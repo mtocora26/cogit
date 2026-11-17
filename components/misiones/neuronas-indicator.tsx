@@ -40,7 +40,7 @@ export default function NeuronasIndicator({ className = "" }: { className?: stri
     <div className={`relative ${className}`} ref={ref}>
       {/* Botón compacto */}
       <button
-        className="flex items-center gap-1 px-2 py-1 rounded-full bg-secondary border border-neuron/50 hover:bg-accent transition-colors"
+        className="flex min-h-11 min-w-11 items-center justify-center gap-1 px-3 rounded-full bg-secondary border border-neuron/50 hover:bg-accent transition-colors"
         onClick={() => setOpen((v) => !v)}
         aria-label="Mostrar detalles de neuronas"
         type="button"
@@ -54,7 +54,7 @@ export default function NeuronasIndicator({ className = "" }: { className?: stri
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
-          className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-xl p-5 shadow-lg z-50 flex flex-col items-center animate-fade-in"
+          className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-popover border border-border rounded-xl p-5 shadow-lg z-50 flex flex-col items-center animate-fade-in"
         >
           <div className="flex gap-2 mb-3">
             {[...Array(maxLives)].map((_, i) => (
