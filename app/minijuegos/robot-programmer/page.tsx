@@ -286,7 +286,7 @@ export default function RobotProgrammerPage() {
 
       {/* Header */}
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Button
             variant="outline"
             size="sm"

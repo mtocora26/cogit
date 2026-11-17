@@ -24,6 +24,7 @@ export default function SudokuControls({
           variant="outline"
           size="sm"
           className={cn(
+            "min-h-11",
             "border-gray-700 hover:bg-gray-800",
             isNotesMode && "bg-purple-500/20 border-purple-500 text-purple-400",
           )}
@@ -33,18 +34,18 @@ export default function SudokuControls({
           Modo notas
         </Button>
 
-        <Button variant="outline" size="sm" className="border-gray-700 hover:bg-gray-800" onClick={onClearCell}>
+        <Button variant="outline" size="sm" className="min-h-11 border-gray-700 hover:bg-gray-800" onClick={onClearCell}>
           <X className="h-4 w-4 mr-2" />
           Borrar
         </Button>
       </div>
 
-      <div className="grid grid-cols-9 gap-2">
+      <div className="grid grid-cols-5 gap-2 sm:grid-cols-9">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
           <Button
             key={num}
             variant="outline"
-            className="h-12 md:h-14 p-0 border-gray-700 hover:bg-gray-800 hover:text-foreground text-lg"
+            className="h-12 min-w-11 md:h-14 p-0 border-gray-700 hover:bg-gray-800 hover:text-foreground text-lg"
             onClick={() => onNumberInput(num)}
           >
             {num}
