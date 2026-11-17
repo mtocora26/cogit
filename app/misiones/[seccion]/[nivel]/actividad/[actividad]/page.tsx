@@ -325,7 +325,6 @@ export default function ActividadPage({ params }: { params: Promise<{ seccion: s
             <ReglasActividad actividad={datos} />
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
               <Button className="min-h-11" autoFocus onClick={() => setIntroVista(true)}>Empezar la actividad</Button>
-              <Button variant="ghost" className="min-h-11" onClick={() => setIntroVista(true)}>Omitir</Button>
             </div>
           </div>
         ) : (
