@@ -121,3 +121,10 @@ model RecuperacionPassword {
 
   @@index([userId])
 }
+
+/// REQ-017: intentos fallidos de inicio de sesión por usuario y por IP, para frenar la prueba de contraseñas.
+model LimiteLogin {
+  clave    String   @id
+  intentos Int      @default(0)
+  desde    DateTime @default(now())
+}

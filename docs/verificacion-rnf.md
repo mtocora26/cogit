@@ -29,7 +29,7 @@ Observación: `/api/ranking` es público (no exige sesión) y expone el alias y 
 Hallazgos pendientes:
 
 1. **Una cuenta de producción con contraseña sin cifrar.** El 2026-11-12 había 3 cuentas y solo 2 con hash scrypt. Es una cuenta antigua: el sistema la cifra sola la próxima vez que esa persona inicia sesión, pero hasta entonces sigue en texto plano. Este criterio no se puede dar por cumplido hasta que esa cuenta se migre (la persona inicia sesión, o se cifra directamente en la base).
-2. **No hay límite de intentos de inicio de sesión.** Alguien podría probar contraseñas sin freno. Mitigación recomendada: limitar intentos por usuario y por IP (requiere un almacén compartido, por ejemplo la base de datos o Redis).
+2. ~~No hay límite de intentos de inicio de sesión.~~ **Resuelto (2026-11-17):** 5 fallos seguidos por usuario o 30 por IP bloquean el acceso 15 minutos (429 con `Retry-After`); un acceso correcto reinicia el contador (`lib/limite-login.ts`, tabla `LimiteLogin`, pruebas en `app/api/usuario/login/route.test.ts`). Contrapartida: alguien podría bloquear a propósito a un usuario concreto durante 15 minutos; no revela si la cuenta existe. Requiere aplicar la migración `limite_login` en producción.
 3. **Cambiar la contraseña no cierra las sesiones ya abiertas**: la cookie es válida hasta 7 días. Mitigación recomendada: guardar una versión de contraseña en la sesión.
 4. **Cabeceras de seguridad**: faltaban `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`. Se agregan en `next.config.mjs` junto con este documento. No se añadió una política CSP: puede romper scripts de la aplicación y requiere pruebas visuales.
 

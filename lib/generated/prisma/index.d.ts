@@ -44,6 +44,11 @@ export type Actividad = $Result.DefaultSelection<Prisma.$ActividadPayload>
  * REQ-010: enlace de un solo uso para restablecer la contraseña. Se guarda el hash, no el enlace.
  */
 export type RecuperacionPassword = $Result.DefaultSelection<Prisma.$RecuperacionPasswordPayload>
+/**
+ * Model LimiteLogin
+ * REQ-017: intentos fallidos de inicio de sesión por usuario y por IP, para frenar la prueba de contraseñas.
+ */
+export type LimiteLogin = $Result.DefaultSelection<Prisma.$LimiteLoginPayload>
 
 /**
  * Enums
@@ -246,6 +251,16 @@ export class PrismaClient<
     * ```
     */
   get recuperacionPassword(): Prisma.RecuperacionPasswordDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.limiteLogin`: Exposes CRUD operations for the **LimiteLogin** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LimiteLogins
+    * const limiteLogins = await prisma.limiteLogin.findMany()
+    * ```
+    */
+  get limiteLogin(): Prisma.LimiteLoginDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -691,7 +706,8 @@ export namespace Prisma {
     ProgresoParcial: 'ProgresoParcial',
     Nivel: 'Nivel',
     Actividad: 'Actividad',
-    RecuperacionPassword: 'RecuperacionPassword'
+    RecuperacionPassword: 'RecuperacionPassword',
+    LimiteLogin: 'LimiteLogin'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -710,7 +726,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "usuario" | "progreso" | "progresoParcial" | "nivel" | "actividad" | "recuperacionPassword"
+      modelProps: "usuario" | "progreso" | "progresoParcial" | "nivel" | "actividad" | "recuperacionPassword" | "limiteLogin"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1158,6 +1174,80 @@ export namespace Prisma {
           }
         }
       }
+      LimiteLogin: {
+        payload: Prisma.$LimiteLoginPayload<ExtArgs>
+        fields: Prisma.LimiteLoginFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LimiteLoginFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LimiteLoginFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          findFirst: {
+            args: Prisma.LimiteLoginFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LimiteLoginFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          findMany: {
+            args: Prisma.LimiteLoginFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>[]
+          }
+          create: {
+            args: Prisma.LimiteLoginCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          createMany: {
+            args: Prisma.LimiteLoginCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LimiteLoginCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>[]
+          }
+          delete: {
+            args: Prisma.LimiteLoginDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          update: {
+            args: Prisma.LimiteLoginUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          deleteMany: {
+            args: Prisma.LimiteLoginDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LimiteLoginUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LimiteLoginUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>[]
+          }
+          upsert: {
+            args: Prisma.LimiteLoginUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LimiteLoginPayload>
+          }
+          aggregate: {
+            args: Prisma.LimiteLoginAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLimiteLogin>
+          }
+          groupBy: {
+            args: Prisma.LimiteLoginGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LimiteLoginGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LimiteLoginCountArgs<ExtArgs>
+            result: $Utils.Optional<LimiteLoginCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1248,6 +1338,7 @@ export namespace Prisma {
     nivel?: NivelOmit
     actividad?: ActividadOmit
     recuperacionPassword?: RecuperacionPasswordOmit
+    limiteLogin?: LimiteLoginOmit
   }
 
   /* Types for Logging */
@@ -8429,6 +8520,1009 @@ export namespace Prisma {
 
 
   /**
+   * Model LimiteLogin
+   */
+
+  export type AggregateLimiteLogin = {
+    _count: LimiteLoginCountAggregateOutputType | null
+    _avg: LimiteLoginAvgAggregateOutputType | null
+    _sum: LimiteLoginSumAggregateOutputType | null
+    _min: LimiteLoginMinAggregateOutputType | null
+    _max: LimiteLoginMaxAggregateOutputType | null
+  }
+
+  export type LimiteLoginAvgAggregateOutputType = {
+    intentos: number | null
+  }
+
+  export type LimiteLoginSumAggregateOutputType = {
+    intentos: number | null
+  }
+
+  export type LimiteLoginMinAggregateOutputType = {
+    clave: string | null
+    intentos: number | null
+    desde: Date | null
+  }
+
+  export type LimiteLoginMaxAggregateOutputType = {
+    clave: string | null
+    intentos: number | null
+    desde: Date | null
+  }
+
+  export type LimiteLoginCountAggregateOutputType = {
+    clave: number
+    intentos: number
+    desde: number
+    _all: number
+  }
+
+
+  export type LimiteLoginAvgAggregateInputType = {
+    intentos?: true
+  }
+
+  export type LimiteLoginSumAggregateInputType = {
+    intentos?: true
+  }
+
+  export type LimiteLoginMinAggregateInputType = {
+    clave?: true
+    intentos?: true
+    desde?: true
+  }
+
+  export type LimiteLoginMaxAggregateInputType = {
+    clave?: true
+    intentos?: true
+    desde?: true
+  }
+
+  export type LimiteLoginCountAggregateInputType = {
+    clave?: true
+    intentos?: true
+    desde?: true
+    _all?: true
+  }
+
+  export type LimiteLoginAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LimiteLogin to aggregate.
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LimiteLogins to fetch.
+     */
+    orderBy?: LimiteLoginOrderByWithRelationInput | LimiteLoginOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LimiteLoginWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LimiteLogins from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LimiteLogins.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LimiteLogins
+    **/
+    _count?: true | LimiteLoginCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LimiteLoginAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LimiteLoginSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LimiteLoginMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LimiteLoginMaxAggregateInputType
+  }
+
+  export type GetLimiteLoginAggregateType<T extends LimiteLoginAggregateArgs> = {
+        [P in keyof T & keyof AggregateLimiteLogin]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLimiteLogin[P]>
+      : GetScalarType<T[P], AggregateLimiteLogin[P]>
+  }
+
+
+
+
+  export type LimiteLoginGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LimiteLoginWhereInput
+    orderBy?: LimiteLoginOrderByWithAggregationInput | LimiteLoginOrderByWithAggregationInput[]
+    by: LimiteLoginScalarFieldEnum[] | LimiteLoginScalarFieldEnum
+    having?: LimiteLoginScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LimiteLoginCountAggregateInputType | true
+    _avg?: LimiteLoginAvgAggregateInputType
+    _sum?: LimiteLoginSumAggregateInputType
+    _min?: LimiteLoginMinAggregateInputType
+    _max?: LimiteLoginMaxAggregateInputType
+  }
+
+  export type LimiteLoginGroupByOutputType = {
+    clave: string
+    intentos: number
+    desde: Date
+    _count: LimiteLoginCountAggregateOutputType | null
+    _avg: LimiteLoginAvgAggregateOutputType | null
+    _sum: LimiteLoginSumAggregateOutputType | null
+    _min: LimiteLoginMinAggregateOutputType | null
+    _max: LimiteLoginMaxAggregateOutputType | null
+  }
+
+  type GetLimiteLoginGroupByPayload<T extends LimiteLoginGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LimiteLoginGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LimiteLoginGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LimiteLoginGroupByOutputType[P]>
+            : GetScalarType<T[P], LimiteLoginGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LimiteLoginSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    clave?: boolean
+    intentos?: boolean
+    desde?: boolean
+  }, ExtArgs["result"]["limiteLogin"]>
+
+  export type LimiteLoginSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    clave?: boolean
+    intentos?: boolean
+    desde?: boolean
+  }, ExtArgs["result"]["limiteLogin"]>
+
+  export type LimiteLoginSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    clave?: boolean
+    intentos?: boolean
+    desde?: boolean
+  }, ExtArgs["result"]["limiteLogin"]>
+
+  export type LimiteLoginSelectScalar = {
+    clave?: boolean
+    intentos?: boolean
+    desde?: boolean
+  }
+
+  export type LimiteLoginOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"clave" | "intentos" | "desde", ExtArgs["result"]["limiteLogin"]>
+
+  export type $LimiteLoginPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LimiteLogin"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      clave: string
+      intentos: number
+      desde: Date
+    }, ExtArgs["result"]["limiteLogin"]>
+    composites: {}
+  }
+
+  type LimiteLoginGetPayload<S extends boolean | null | undefined | LimiteLoginDefaultArgs> = $Result.GetResult<Prisma.$LimiteLoginPayload, S>
+
+  type LimiteLoginCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LimiteLoginFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LimiteLoginCountAggregateInputType | true
+    }
+
+  export interface LimiteLoginDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LimiteLogin'], meta: { name: 'LimiteLogin' } }
+    /**
+     * Find zero or one LimiteLogin that matches the filter.
+     * @param {LimiteLoginFindUniqueArgs} args - Arguments to find a LimiteLogin
+     * @example
+     * // Get one LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LimiteLoginFindUniqueArgs>(args: SelectSubset<T, LimiteLoginFindUniqueArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LimiteLogin that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LimiteLoginFindUniqueOrThrowArgs} args - Arguments to find a LimiteLogin
+     * @example
+     * // Get one LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LimiteLoginFindUniqueOrThrowArgs>(args: SelectSubset<T, LimiteLoginFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LimiteLogin that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginFindFirstArgs} args - Arguments to find a LimiteLogin
+     * @example
+     * // Get one LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LimiteLoginFindFirstArgs>(args?: SelectSubset<T, LimiteLoginFindFirstArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LimiteLogin that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginFindFirstOrThrowArgs} args - Arguments to find a LimiteLogin
+     * @example
+     * // Get one LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LimiteLoginFindFirstOrThrowArgs>(args?: SelectSubset<T, LimiteLoginFindFirstOrThrowArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LimiteLogins that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LimiteLogins
+     * const limiteLogins = await prisma.limiteLogin.findMany()
+     * 
+     * // Get first 10 LimiteLogins
+     * const limiteLogins = await prisma.limiteLogin.findMany({ take: 10 })
+     * 
+     * // Only select the `clave`
+     * const limiteLoginWithClaveOnly = await prisma.limiteLogin.findMany({ select: { clave: true } })
+     * 
+     */
+    findMany<T extends LimiteLoginFindManyArgs>(args?: SelectSubset<T, LimiteLoginFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LimiteLogin.
+     * @param {LimiteLoginCreateArgs} args - Arguments to create a LimiteLogin.
+     * @example
+     * // Create one LimiteLogin
+     * const LimiteLogin = await prisma.limiteLogin.create({
+     *   data: {
+     *     // ... data to create a LimiteLogin
+     *   }
+     * })
+     * 
+     */
+    create<T extends LimiteLoginCreateArgs>(args: SelectSubset<T, LimiteLoginCreateArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LimiteLogins.
+     * @param {LimiteLoginCreateManyArgs} args - Arguments to create many LimiteLogins.
+     * @example
+     * // Create many LimiteLogins
+     * const limiteLogin = await prisma.limiteLogin.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LimiteLoginCreateManyArgs>(args?: SelectSubset<T, LimiteLoginCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LimiteLogins and returns the data saved in the database.
+     * @param {LimiteLoginCreateManyAndReturnArgs} args - Arguments to create many LimiteLogins.
+     * @example
+     * // Create many LimiteLogins
+     * const limiteLogin = await prisma.limiteLogin.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LimiteLogins and only return the `clave`
+     * const limiteLoginWithClaveOnly = await prisma.limiteLogin.createManyAndReturn({
+     *   select: { clave: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LimiteLoginCreateManyAndReturnArgs>(args?: SelectSubset<T, LimiteLoginCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LimiteLogin.
+     * @param {LimiteLoginDeleteArgs} args - Arguments to delete one LimiteLogin.
+     * @example
+     * // Delete one LimiteLogin
+     * const LimiteLogin = await prisma.limiteLogin.delete({
+     *   where: {
+     *     // ... filter to delete one LimiteLogin
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LimiteLoginDeleteArgs>(args: SelectSubset<T, LimiteLoginDeleteArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LimiteLogin.
+     * @param {LimiteLoginUpdateArgs} args - Arguments to update one LimiteLogin.
+     * @example
+     * // Update one LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LimiteLoginUpdateArgs>(args: SelectSubset<T, LimiteLoginUpdateArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LimiteLogins.
+     * @param {LimiteLoginDeleteManyArgs} args - Arguments to filter LimiteLogins to delete.
+     * @example
+     * // Delete a few LimiteLogins
+     * const { count } = await prisma.limiteLogin.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LimiteLoginDeleteManyArgs>(args?: SelectSubset<T, LimiteLoginDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LimiteLogins.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LimiteLogins
+     * const limiteLogin = await prisma.limiteLogin.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LimiteLoginUpdateManyArgs>(args: SelectSubset<T, LimiteLoginUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LimiteLogins and returns the data updated in the database.
+     * @param {LimiteLoginUpdateManyAndReturnArgs} args - Arguments to update many LimiteLogins.
+     * @example
+     * // Update many LimiteLogins
+     * const limiteLogin = await prisma.limiteLogin.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LimiteLogins and only return the `clave`
+     * const limiteLoginWithClaveOnly = await prisma.limiteLogin.updateManyAndReturn({
+     *   select: { clave: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LimiteLoginUpdateManyAndReturnArgs>(args: SelectSubset<T, LimiteLoginUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LimiteLogin.
+     * @param {LimiteLoginUpsertArgs} args - Arguments to update or create a LimiteLogin.
+     * @example
+     * // Update or create a LimiteLogin
+     * const limiteLogin = await prisma.limiteLogin.upsert({
+     *   create: {
+     *     // ... data to create a LimiteLogin
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LimiteLogin we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LimiteLoginUpsertArgs>(args: SelectSubset<T, LimiteLoginUpsertArgs<ExtArgs>>): Prisma__LimiteLoginClient<$Result.GetResult<Prisma.$LimiteLoginPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LimiteLogins.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginCountArgs} args - Arguments to filter LimiteLogins to count.
+     * @example
+     * // Count the number of LimiteLogins
+     * const count = await prisma.limiteLogin.count({
+     *   where: {
+     *     // ... the filter for the LimiteLogins we want to count
+     *   }
+     * })
+    **/
+    count<T extends LimiteLoginCountArgs>(
+      args?: Subset<T, LimiteLoginCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LimiteLoginCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LimiteLogin.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LimiteLoginAggregateArgs>(args: Subset<T, LimiteLoginAggregateArgs>): Prisma.PrismaPromise<GetLimiteLoginAggregateType<T>>
+
+    /**
+     * Group by LimiteLogin.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LimiteLoginGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LimiteLoginGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LimiteLoginGroupByArgs['orderBy'] }
+        : { orderBy?: LimiteLoginGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LimiteLoginGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLimiteLoginGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LimiteLogin model
+   */
+  readonly fields: LimiteLoginFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LimiteLogin.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LimiteLoginClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LimiteLogin model
+   */
+  interface LimiteLoginFieldRefs {
+    readonly clave: FieldRef<"LimiteLogin", 'String'>
+    readonly intentos: FieldRef<"LimiteLogin", 'Int'>
+    readonly desde: FieldRef<"LimiteLogin", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LimiteLogin findUnique
+   */
+  export type LimiteLoginFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter, which LimiteLogin to fetch.
+     */
+    where: LimiteLoginWhereUniqueInput
+  }
+
+  /**
+   * LimiteLogin findUniqueOrThrow
+   */
+  export type LimiteLoginFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter, which LimiteLogin to fetch.
+     */
+    where: LimiteLoginWhereUniqueInput
+  }
+
+  /**
+   * LimiteLogin findFirst
+   */
+  export type LimiteLoginFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter, which LimiteLogin to fetch.
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LimiteLogins to fetch.
+     */
+    orderBy?: LimiteLoginOrderByWithRelationInput | LimiteLoginOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LimiteLogins.
+     */
+    cursor?: LimiteLoginWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LimiteLogins from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LimiteLogins.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LimiteLogins.
+     */
+    distinct?: LimiteLoginScalarFieldEnum | LimiteLoginScalarFieldEnum[]
+  }
+
+  /**
+   * LimiteLogin findFirstOrThrow
+   */
+  export type LimiteLoginFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter, which LimiteLogin to fetch.
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LimiteLogins to fetch.
+     */
+    orderBy?: LimiteLoginOrderByWithRelationInput | LimiteLoginOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LimiteLogins.
+     */
+    cursor?: LimiteLoginWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LimiteLogins from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LimiteLogins.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LimiteLogins.
+     */
+    distinct?: LimiteLoginScalarFieldEnum | LimiteLoginScalarFieldEnum[]
+  }
+
+  /**
+   * LimiteLogin findMany
+   */
+  export type LimiteLoginFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter, which LimiteLogins to fetch.
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LimiteLogins to fetch.
+     */
+    orderBy?: LimiteLoginOrderByWithRelationInput | LimiteLoginOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LimiteLogins.
+     */
+    cursor?: LimiteLoginWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LimiteLogins from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LimiteLogins.
+     */
+    skip?: number
+    distinct?: LimiteLoginScalarFieldEnum | LimiteLoginScalarFieldEnum[]
+  }
+
+  /**
+   * LimiteLogin create
+   */
+  export type LimiteLoginCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * The data needed to create a LimiteLogin.
+     */
+    data: XOR<LimiteLoginCreateInput, LimiteLoginUncheckedCreateInput>
+  }
+
+  /**
+   * LimiteLogin createMany
+   */
+  export type LimiteLoginCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LimiteLogins.
+     */
+    data: LimiteLoginCreateManyInput | LimiteLoginCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LimiteLogin createManyAndReturn
+   */
+  export type LimiteLoginCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * The data used to create many LimiteLogins.
+     */
+    data: LimiteLoginCreateManyInput | LimiteLoginCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LimiteLogin update
+   */
+  export type LimiteLoginUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * The data needed to update a LimiteLogin.
+     */
+    data: XOR<LimiteLoginUpdateInput, LimiteLoginUncheckedUpdateInput>
+    /**
+     * Choose, which LimiteLogin to update.
+     */
+    where: LimiteLoginWhereUniqueInput
+  }
+
+  /**
+   * LimiteLogin updateMany
+   */
+  export type LimiteLoginUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LimiteLogins.
+     */
+    data: XOR<LimiteLoginUpdateManyMutationInput, LimiteLoginUncheckedUpdateManyInput>
+    /**
+     * Filter which LimiteLogins to update
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * Limit how many LimiteLogins to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LimiteLogin updateManyAndReturn
+   */
+  export type LimiteLoginUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * The data used to update LimiteLogins.
+     */
+    data: XOR<LimiteLoginUpdateManyMutationInput, LimiteLoginUncheckedUpdateManyInput>
+    /**
+     * Filter which LimiteLogins to update
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * Limit how many LimiteLogins to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LimiteLogin upsert
+   */
+  export type LimiteLoginUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * The filter to search for the LimiteLogin to update in case it exists.
+     */
+    where: LimiteLoginWhereUniqueInput
+    /**
+     * In case the LimiteLogin found by the `where` argument doesn't exist, create a new LimiteLogin with this data.
+     */
+    create: XOR<LimiteLoginCreateInput, LimiteLoginUncheckedCreateInput>
+    /**
+     * In case the LimiteLogin was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LimiteLoginUpdateInput, LimiteLoginUncheckedUpdateInput>
+  }
+
+  /**
+   * LimiteLogin delete
+   */
+  export type LimiteLoginDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+    /**
+     * Filter which LimiteLogin to delete.
+     */
+    where: LimiteLoginWhereUniqueInput
+  }
+
+  /**
+   * LimiteLogin deleteMany
+   */
+  export type LimiteLoginDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LimiteLogins to delete
+     */
+    where?: LimiteLoginWhereInput
+    /**
+     * Limit how many LimiteLogins to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LimiteLogin without action
+   */
+  export type LimiteLoginDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LimiteLogin
+     */
+    select?: LimiteLoginSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LimiteLogin
+     */
+    omit?: LimiteLoginOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -8530,6 +9624,15 @@ export namespace Prisma {
   };
 
   export type RecuperacionPasswordScalarFieldEnum = (typeof RecuperacionPasswordScalarFieldEnum)[keyof typeof RecuperacionPasswordScalarFieldEnum]
+
+
+  export const LimiteLoginScalarFieldEnum: {
+    clave: 'clave',
+    intentos: 'intentos',
+    desde: 'desde'
+  };
+
+  export type LimiteLoginScalarFieldEnum = (typeof LimiteLoginScalarFieldEnum)[keyof typeof LimiteLoginScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -9143,6 +10246,50 @@ export namespace Prisma {
     creadoEn?: DateTimeWithAggregatesFilter<"RecuperacionPassword"> | Date | string
   }
 
+  export type LimiteLoginWhereInput = {
+    AND?: LimiteLoginWhereInput | LimiteLoginWhereInput[]
+    OR?: LimiteLoginWhereInput[]
+    NOT?: LimiteLoginWhereInput | LimiteLoginWhereInput[]
+    clave?: StringFilter<"LimiteLogin"> | string
+    intentos?: IntFilter<"LimiteLogin"> | number
+    desde?: DateTimeFilter<"LimiteLogin"> | Date | string
+  }
+
+  export type LimiteLoginOrderByWithRelationInput = {
+    clave?: SortOrder
+    intentos?: SortOrder
+    desde?: SortOrder
+  }
+
+  export type LimiteLoginWhereUniqueInput = Prisma.AtLeast<{
+    clave?: string
+    AND?: LimiteLoginWhereInput | LimiteLoginWhereInput[]
+    OR?: LimiteLoginWhereInput[]
+    NOT?: LimiteLoginWhereInput | LimiteLoginWhereInput[]
+    intentos?: IntFilter<"LimiteLogin"> | number
+    desde?: DateTimeFilter<"LimiteLogin"> | Date | string
+  }, "clave">
+
+  export type LimiteLoginOrderByWithAggregationInput = {
+    clave?: SortOrder
+    intentos?: SortOrder
+    desde?: SortOrder
+    _count?: LimiteLoginCountOrderByAggregateInput
+    _avg?: LimiteLoginAvgOrderByAggregateInput
+    _max?: LimiteLoginMaxOrderByAggregateInput
+    _min?: LimiteLoginMinOrderByAggregateInput
+    _sum?: LimiteLoginSumOrderByAggregateInput
+  }
+
+  export type LimiteLoginScalarWhereWithAggregatesInput = {
+    AND?: LimiteLoginScalarWhereWithAggregatesInput | LimiteLoginScalarWhereWithAggregatesInput[]
+    OR?: LimiteLoginScalarWhereWithAggregatesInput[]
+    NOT?: LimiteLoginScalarWhereWithAggregatesInput | LimiteLoginScalarWhereWithAggregatesInput[]
+    clave?: StringWithAggregatesFilter<"LimiteLogin"> | string
+    intentos?: IntWithAggregatesFilter<"LimiteLogin"> | number
+    desde?: DateTimeWithAggregatesFilter<"LimiteLogin"> | Date | string
+  }
+
   export type UsuarioCreateInput = {
     username: string
     email: string
@@ -9639,6 +10786,48 @@ export namespace Prisma {
     expiraEn?: DateTimeFieldUpdateOperationsInput | Date | string
     usadoEn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     creadoEn?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LimiteLoginCreateInput = {
+    clave: string
+    intentos?: number
+    desde?: Date | string
+  }
+
+  export type LimiteLoginUncheckedCreateInput = {
+    clave: string
+    intentos?: number
+    desde?: Date | string
+  }
+
+  export type LimiteLoginUpdateInput = {
+    clave?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    desde?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LimiteLoginUncheckedUpdateInput = {
+    clave?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    desde?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LimiteLoginCreateManyInput = {
+    clave: string
+    intentos?: number
+    desde?: Date | string
+  }
+
+  export type LimiteLoginUpdateManyMutationInput = {
+    clave?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    desde?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LimiteLoginUncheckedUpdateManyInput = {
+    clave?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    desde?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -10222,6 +11411,32 @@ export namespace Prisma {
   export type RecuperacionPasswordSumOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
+  }
+
+  export type LimiteLoginCountOrderByAggregateInput = {
+    clave?: SortOrder
+    intentos?: SortOrder
+    desde?: SortOrder
+  }
+
+  export type LimiteLoginAvgOrderByAggregateInput = {
+    intentos?: SortOrder
+  }
+
+  export type LimiteLoginMaxOrderByAggregateInput = {
+    clave?: SortOrder
+    intentos?: SortOrder
+    desde?: SortOrder
+  }
+
+  export type LimiteLoginMinOrderByAggregateInput = {
+    clave?: SortOrder
+    intentos?: SortOrder
+    desde?: SortOrder
+  }
+
+  export type LimiteLoginSumOrderByAggregateInput = {
+    intentos?: SortOrder
   }
 
   export type ProgresoCreateNestedManyWithoutUserInput = {
