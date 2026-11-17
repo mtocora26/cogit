@@ -92,7 +92,8 @@
     --accent-foreground: 230 40% 97%;
 
     --destructive: 0 72% 58%;
-    --destructive-foreground: 0 0% 100%;
+    /* Texto oscuro sobre el rojo claro: el blanco solo llegaba a 4.05:1 (REQ-014). */
+    --destructive-foreground: 229 43% 8%;
 
     --border: 229 28% 22%;
     --input: 229 20% 48%;

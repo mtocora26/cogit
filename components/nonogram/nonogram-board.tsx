@@ -143,11 +143,16 @@ export default function NonogramBoard({
           {/* Celdas del tablero */}
           {board.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
-              <div
+              <button
+                type="button"
                 key={`cell-${rowIndex}-${colIndex}`}
+                aria-label={`Fila ${rowIndex + 1}, columna ${colIndex + 1}: ${
+                  hasError(rowIndex, colIndex) ? "error" : cell === 1 ? "rellena" : cell === 2 ? "marcada con X" : "vacía"
+                }${shouldShowHint(rowIndex, colIndex) ? ", sugerida por la pista" : ""}`}
                 className={cn(
                   "border border-gray-700 cursor-pointer transition-all",
-                  "h-full w-full flex items-center justify-center",
+                  "h-full w-full flex items-center justify-center p-0",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:z-10",
                   cell === 1 ? "bg-purple-600" : "bg-background",
                   hasError(rowIndex, colIndex) && "bg-red-500",
                   shouldShowHint(rowIndex, colIndex) && "bg-green-500",
@@ -161,9 +166,27 @@ export default function NonogramBoard({
                   e.preventDefault()
                   onCellClick(rowIndex, colIndex, true)
                 }}
+                onKeyDown={(e) => {
+                  // Teclado: Enter o espacio rellenan; la tecla X (o Mayús+Enter) marca con X; flechas mueven el foco.
+                  if (e.key === "x" || e.key === "X" || (e.key === "Enter" && e.shiftKey)) {
+                    e.preventDefault()
+                    onCellClick(rowIndex, colIndex, true)
+                    return
+                  }
+                  const d: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }
+                  const mov = d[e.key]
+                  if (!mov) return
+                  e.preventDefault()
+                  const sig = boardRef.current?.querySelector<HTMLElement>(`[data-celda="${rowIndex + mov[0]}-${colIndex + mov[1]}"]`)
+                  sig?.focus()
+                }}
+                data-celda={`${rowIndex}-${colIndex}`}
               >
-                {cell === 2 && <span className="text-gray-400 font-bold">X</span>}
-              </div>
+                {cell === 2 && <span aria-hidden className="text-gray-400 font-bold">X</span>}
+                {/* El error y la pista no dependen solo del color: llevan un símbolo. */}
+                {hasError(rowIndex, colIndex) && <span aria-hidden className="font-bold text-white">!</span>}
+                {!hasError(rowIndex, colIndex) && shouldShowHint(rowIndex, colIndex) && <span aria-hidden className="font-bold text-black">•</span>}
+              </button>
             )),
           )}
         </div>
