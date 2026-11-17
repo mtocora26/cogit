@@ -303,7 +303,7 @@ export default function RobotProgrammerPage() {
               type="checkbox"
               checked={robot3D}
               onChange={() => setRobot3D((v) => !v)}
-              className="accent-purple-500 w-5 h-5"
+              className="accent-purple-500 w-5 h-5 m-3"
               aria-label="Alternar robot 3D"
             />
           </div>

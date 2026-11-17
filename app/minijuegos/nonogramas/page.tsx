@@ -405,7 +405,7 @@ export default function NonogramasPage() {
                 </ul>
                 <Button
                   variant="link"
-                  className="text-purple-400 p-0 h-auto mt-4"
+                  className="text-purple-400 px-0 min-h-11 mt-2"
                   onClick={() => setShowTutorial(true)}
                 >
                   Ver tutorial completo
@@ -414,7 +414,7 @@ export default function NonogramasPage() {
             </div>
 
             {/* Center Column - Game Board */}
-            <div className="md:col-span-2">
+            <div className="min-w-0 md:col-span-2">
               <div className="mb-3">
                 <AvisoPartida retomada={retomada} errorGuardado={errorGuardado} onEmpezarDeNuevo={resetLevel} />
               </div>
@@ -480,7 +480,7 @@ export default function NonogramasPage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-card rounded-lg p-6 border border-gray-800">
+                <div className="bg-card rounded-lg p-3 sm:p-6 border border-gray-800">
                   {/* Animación de completado */}
                   {showCompletionAnimation && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 rounded-lg animate-fade-in">
