@@ -12,7 +12,12 @@ Estado: **script listo, medición pendiente.** Los números de esta página son 
 ## Preparación
 
 1. Usar un **entorno de pruebas** (preview de Vercel con su propia base, o local con `pnpm dev` y una base de desarrollo), nunca producción: la prueba guarda progreso.
-2. Crear 100 cuentas `carga1` … `carga100` con la misma contraseña (REQ-019 pide 100 cuentas registradas; la prueba usa 25 a la vez). Se pueden crear por la pantalla de registro o con un script de base de datos propio; este repositorio no las crea.
+   **Un preview de Vercel comparte la base de producción** si `DATABASE_URL` del entorno *Preview* es la misma que la de *Production* (es el caso de este proyecto hasta que se separe). En ese caso hay que crear una base aparte y asignarla solo a *Preview*, aplicar las migraciones (`prisma migrate deploy`) y redesplegar antes de seguir.
+2. Crear 100 cuentas `carga1` … `carga100` con la misma contraseña (REQ-019 pide 100 cuentas registradas; la prueba usa 25 a la vez):
+   ```bash
+   node scripts/crear-cuentas-carga.mjs --url=https://<preview>.vercel.app --password=<clave> --confirmo
+   ```
+   Usa el registro normal de la API, es idempotente (las que ya existen se saltan) y las crea con correo `cargaN@carga.invalid`.
 3. Aplicar las condiciones de red al equipo que ejecuta la prueba:
    - Windows: [Clumsy](https://jagt.github.io/clumsy/) (retardo 100 ms) y limitar a 10 Mbps.
    - Linux: `tc qdisc add dev eth0 root netem delay 100ms rate 10mbit`.
