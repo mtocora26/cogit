@@ -13,6 +13,8 @@ export interface Session {
   uid: number
   rol: Rol
   exp: number
+  /** Huella de la contraseña con la que se abrió la sesión; al cambiarla, la sesión deja de servir. */
+  pv?: string
 }
 
 function secret(): string {
@@ -31,8 +33,14 @@ async function hmacKey(usage: "sign" | "verify") {
   return crypto.subtle.importKey("raw", enc.encode(secret()), { name: "HMAC", hash: "SHA-256" }, false, [usage])
 }
 
-export async function signSession(uid: number, rol: Rol): Promise<string> {
-  const payload = b64url(enc.encode(JSON.stringify({ uid, rol, exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS })))
+/** Huella corta del hash guardado de la contraseña (no permite recuperar la contraseña). */
+export async function huellaPassword(stored: string): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", enc.encode(`${secret()}:${stored}`))
+  return b64url(d).slice(0, 16)
+}
+
+export async function signSession(uid: number, rol: Rol, pv?: string): Promise<string> {
+  const payload = b64url(enc.encode(JSON.stringify({ uid, rol, exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS, ...(pv ? { pv } : {}) })))
   const sig = await crypto.subtle.sign("HMAC", await hmacKey("sign"), enc.encode(payload))
   return `${payload}.${b64url(sig)}`
 }
