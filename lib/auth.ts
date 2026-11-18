@@ -1,11 +1,27 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto"
 import { promisify } from "node:util"
+import type { NextRequest } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { SESSION_COOKIE, huellaPassword, readSession, type Session } from "@/lib/session"
 
 /**
  * Contraseñas y validación de cuentas (solo Node: no importar desde el middleware).
  * Hash scrypt con sal. Las cuentas antiguas en texto plano se migran al iniciar sesión.
  */
 export * from "@/lib/session"
+
+/**
+ * Sesión de la petición. Además de la firma, comprueba que la contraseña no haya cambiado desde que
+ * se abrió la sesión (huella `pv`): cambiar o restablecer la contraseña cierra las demás sesiones.
+ * Las cookies anteriores a este control no llevan `pv` y valen hasta que expiren (máx. 7 días).
+ */
+export async function getSession(req: NextRequest): Promise<Session | null> {
+  const s = await readSession(req.cookies.get(SESSION_COOKIE)?.value)
+  if (!s || !s.pv) return s
+  const u = await prisma.usuario.findUnique({ where: { id: s.uid }, select: { password: true } })
+  if (!u || (await huellaPassword(u.password)) !== s.pv) return null
+  return s
+}
 
 // ---------- Contraseñas (solo Node) ----------
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>

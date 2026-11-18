@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sincronizarNeuronas } from "@/lib/neuronas"
 import { claveIp, claveUsuario, ipDe, limpiarFallos, MAX_POR_IP, MAX_POR_USUARIO, registrarFallo, segundosBloqueado } from "@/lib/limite-login"
-import { hashPassword, normalizeUsername, setSessionCookie, signSession, verifyPassword } from "@/lib/auth"
+import { hashPassword, huellaPassword, normalizeUsername, setSessionCookie, signSession, verifyPassword } from "@/lib/auth"
 
 // POST: inicio de sesión con nombre de usuario. Las credenciales viajan en el cuerpo, no en la URL.
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       maxNeuronas: actual.maxNeuronas,
       ultimaRecarga: actual.ultimaRecarga,
     })
-    setSessionCookie(res, await signSession(actual.id, actual.rol))
+    setSessionCookie(res, await signSession(actual.id, actual.rol, await huellaPassword(actual.password)))
     return res
   } catch {
     return NextResponse.json({ error: "No pudimos iniciar sesión. Inténtalo de nuevo." }, { status: 500 })
